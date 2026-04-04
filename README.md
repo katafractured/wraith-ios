@@ -1,4 +1,4 @@
-# Katafract VPN — iOS & macOS Client
+# WraithVPN — iOS & macOS Client
 
 Privacy-focused WireGuard VPN client. Targets iOS 17+ and macOS 14+ (Mac Catalyst).
 
@@ -7,7 +7,7 @@ Privacy-focused WireGuard VPN client. Targets iOS 17+ and macOS 14+ (Mac Catalys
 ## Opening in Xcode
 
 ```
-open KatafractVPN.xcodeproj
+open WraithVPN.xcodeproj
 ```
 
 Requires Xcode 15.4 or later.
@@ -17,11 +17,11 @@ Requires Xcode 15.4 or later.
 ## Project structure
 
 ```
-KatafractVPN/
-├── KatafractVPN.xcodeproj/        Xcode project (two targets)
+WraithVPN/
+├── WraithVPN.xcodeproj/           Xcode project (two targets)
 │
-├── KatafractVPN/                  Main app target
-│   ├── KatafractVPNApp.swift      @main entry point; creates ObservableObject singletons
+├── WraithVPN/                     Main app target
+│   ├── WraithVPNApp.swift         @main entry point; creates ObservableObject singletons
 │   ├── Models/
 │   │   └── Models.swift           All Codable API models + VPNStatus + SubscriptionInfo
 │   ├── Managers/
@@ -41,7 +41,7 @@ KatafractVPN/
 │   │   └── PaywallView.swift      StoreKit 2 paywall: monthly vs annual, feature list
 │   ├── Assets.xcassets/           App icon + accent colour stubs
 │   ├── Info.plist
-│   └── KatafractVPN.entitlements
+│   └── WraithVPN.entitlements
 │
 └── WireGuardTunnel/               Network Extension target (out-of-process tunnel)
     ├── PacketTunnelProvider.swift  NEPacketTunnelProvider subclass (WireGuardKit stub)
@@ -59,16 +59,16 @@ Both the App Store Connect record and your local provisioning profile must have:
 |---|---|---|
 | `com.apple.developer.networking.networkextension` → `packet-tunnel-provider` | yes | yes |
 | `com.apple.developer.in-app-payments` (product IDs listed) | yes | no |
-| `keychain-access-groups` → `com.katafract.vpn` & `.tunnel` | yes | yes |
-| `com.apple.security.application-groups` → `group.com.katafract.vpn` | yes | yes |
+| `keychain-access-groups` → `com.katafract.wraith` & `.tunnel` | yes | yes |
+| `com.apple.security.application-groups` → `group.com.katafract.wraith` | yes | yes |
 
 ### How to configure
 
 1. Log into [developer.apple.com](https://developer.apple.com/account).
 2. Under **Certificates, IDs & Profiles → Identifiers**, register:
-   - `com.katafract.vpn` — enable *Network Extensions*, *In-App Purchase*, *App Groups*, *Keychain Sharing*
-   - `com.katafract.vpn.tunnel` — enable *Network Extensions*, *App Groups*, *Keychain Sharing*
-3. Create an App Group ID: `group.com.katafract.vpn`
+   - `com.katafract.wraith` — enable *Network Extensions*, *In-App Purchase*, *App Groups*, *Keychain Sharing*
+   - `com.katafract.wraith.tunnel` — enable *Network Extensions*, *App Groups*, *Keychain Sharing*
+3. Create an App Group ID: `group.com.katafract.wraith`
 4. Add your Team ID to the empty `DEVELOPMENT_TEAM = ""` lines in `project.pbxproj`.
 5. Xcode will auto-manage signing from there.
 
@@ -91,8 +91,8 @@ Register these product IDs in App Store Connect under the app's In-App Purchases
 
 | Product ID | Type | Price |
 |---|---|---|
-| `com.katafract.vpn_armor_monthly` | Auto-Renewable Subscription | $4.99/mo |
-| `com.katafract.vpn_armor_annual`  | Auto-Renewable Subscription | $39.99/yr |
+| `com.katafract.wraith_armor_monthly` | Auto-Renewable Subscription | $4.99/mo |
+| `com.katafract.wraith_armor_annual`  | Auto-Renewable Subscription | $39.99/yr |
 
 Both belong to the same Subscription Group so users can upgrade/downgrade between them.
 
@@ -125,7 +125,7 @@ Connect (subsequent)
 
 ## Bundle ID
 
-`com.katafract.vpn` — change this in `project.pbxproj` (`PRODUCT_BUNDLE_IDENTIFIER`) and `Info.plist` if you use a different Apple Developer account.
+`com.katafract.wraith` — change this in `project.pbxproj` (`PRODUCT_BUNDLE_IDENTIFIER`) and `Info.plist` if you use a different Apple Developer account.
 
 ---
 
@@ -139,4 +139,4 @@ Mac Catalyst is enabled (`SUPPORTS_MACCATALYST = YES`). The app compiles and run
 
 Base URL: `https://api.katafract.com`
 
-All authenticated endpoints require `Authorization: Bearer <token>` where `<token>` is the plaintext token returned by `/v1/token/validate/apple` after a successful StoreKit 2 purchase. The token is stored in Keychain under `com.katafract.vpn.subscriptionToken`.
+All authenticated endpoints require `Authorization: Bearer <token>` where `<token>` is the plaintext token returned by `/v1/token/validate/apple` after a successful StoreKit 2 purchase. The token is stored in Keychain under `com.katafract.wraith.subscriptionToken`.

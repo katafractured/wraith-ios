@@ -15,7 +15,7 @@
 //   URL: https://github.com/WireGuard/wireguard-apple
 //   Package: WireGuardKit
 //
-// The tunnel target's bundle ID must be: com.katafract.vpn.tunnel
+// The tunnel target's bundle ID must be: com.katafract.wraith.tunnel
 // and its entitlements must include packet-tunnel-provider + the same
 // keychain-access-groups and app-group as the main target.
 
@@ -25,7 +25,7 @@ import os.log
 // NOTE: Uncomment after adding WireGuardKit SPM dependency:
 // import WireGuardKit
 
-private let log = Logger(subsystem: "com.katafract.vpn.tunnel", category: "PacketTunnelProvider")
+private let log = Logger(subsystem: "com.katafract.wraith.tunnel", category: "PacketTunnelProvider")
 
 class PacketTunnelProvider: NEPacketTunnelProvider {
 
@@ -55,7 +55,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         //
         // let tunnelConfig: TunnelConfiguration
         // do {
-        //     tunnelConfig = try TunnelConfiguration(fromWgQuickConfig: wgConfig, called: "katafract")
+        //     tunnelConfig = try TunnelConfiguration(fromWgQuickConfig: wgConfig, called: "wraith")
         // } catch {
         //     completionHandler(error)
         //     return

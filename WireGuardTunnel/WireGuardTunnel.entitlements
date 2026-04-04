@@ -2,7 +2,7 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <!--
   WireGuardTunnel.entitlements
-  Network Extension target — com.katafract.vpn.tunnel
+  Network Extension target — com.katafract.wraith.tunnel
 -->
 <plist version="1.0">
 <dict>
@@ -13,13 +13,13 @@
 
     <key>keychain-access-groups</key>
     <array>
-        <string>$(AppIdentifierPrefix)com.katafract.vpn</string>
-        <string>$(AppIdentifierPrefix)com.katafract.vpn.tunnel</string>
+        <string>$(AppIdentifierPrefix)com.katafract.wraith</string>
+        <string>$(AppIdentifierPrefix)com.katafract.wraith.tunnel</string>
     </array>
 
     <key>com.apple.security.application-groups</key>
     <array>
-        <string>group.com.katafract.vpn</string>
+        <string>group.com.katafract.wraith</string>
     </array>
 </dict>
 </plist>

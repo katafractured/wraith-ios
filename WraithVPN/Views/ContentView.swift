@@ -1,0 +1,89 @@
+// ContentView.swift
+// WraithVPN
+//
+// Root view. Handles:
+//   - Onboarding (shown once on first launch)
+//   - Paywall gate (shown if no active subscription)
+//   - Main app shell (ConnectView + NavigationStack)
+//
+// Environment objects are injected here and passed down via @EnvironmentObject.
+
+import SwiftUI
+
+struct ContentView: View {
+
+    @EnvironmentObject var storeKit:  StoreKitManager
+    @EnvironmentObject var vpn:       WireGuardManager
+    @EnvironmentObject var servers:   ServerListManager
+
+    @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
+    @AppStorage("hasUnlockedFreeTier") private var hasUnlockedFreeTier = false
+
+    // MARK: - Body
+
+    var body: some View {
+        Group {
+            if !hasSeenOnboarding {
+                OnboardingView {
+                    withAnimation(.easeInOut(duration: 0.4)) {
+                        hasSeenOnboarding = true
+                    }
+                }
+                .transition(.asymmetric(
+                    insertion: .opacity,
+                    removal: .move(edge: .leading).combined(with: .opacity)
+                ))
+            } else if !storeKit.hasPurchased && !hasUnlockedFreeTier {
+                NavigationStack {
+                    PaywallView {
+                        withAnimation(.easeInOut(duration: 0.35)) {
+                            hasUnlockedFreeTier = true
+                        }
+                    }
+                        .environmentObject(storeKit)
+                }
+                .transition(.opacity)
+            } else {
+                // Main app
+                mainApp
+                    .transition(.asymmetric(
+                        insertion: .move(edge: .trailing).combined(with: .opacity),
+                        removal: .opacity
+                    ))
+            }
+        }
+        .animation(.easeInOut(duration: 0.4), value: hasSeenOnboarding)
+        .animation(.easeInOut(duration: 0.35), value: storeKit.hasPurchased)
+        .animation(.easeInOut(duration: 0.35), value: hasUnlockedFreeTier)
+    }
+
+    // MARK: - Main app shell
+
+    @ViewBuilder
+    private var mainApp: some View {
+        NavigationStack {
+            ConnectView()
+                .environmentObject(vpn)
+                .environmentObject(servers)
+                .navigationDestination(for: String.self) { route in
+                    switch route {
+                    case "settings":
+                        SettingsView()
+                            .environmentObject(storeKit)
+                            .environmentObject(vpn)
+                    default:
+                        EmptyView()
+                    }
+                }
+        }
+    }
+}
+
+// MARK: - Preview
+
+#Preview {
+    ContentView()
+        .environmentObject(StoreKitManager())
+        .environmentObject(WireGuardManager())
+        .environmentObject(ServerListManager())
+}

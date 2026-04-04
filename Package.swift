@@ -12,7 +12,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "KatafractVPN",
+    name: "WraithVPN",
     platforms: [
         .iOS(.v17),
         .macOS(.v14),
@@ -27,7 +27,7 @@ let package = Package(
         // This manifest is informational only for developers cloning the repo.
         // The actual linking is done inside the .xcodeproj.
         .target(
-            name: "KatafractVPNPlaceholder",
+            name: "WraithVPNPlaceholder",
             dependencies: []
         ),
     ]

@@ -111,9 +111,11 @@ struct Peer: Codable, Identifiable {
     let nodeId: String
     let assignedIpv4: String
     let label: String
-    let createdAt: String
+    let createdAt: Int          // Unix timestamp (seconds)
 
     var id: String { peerId }
+
+    var createdAtDate: Date { Date(timeIntervalSince1970: TimeInterval(createdAt)) }
 
     enum CodingKeys: String, CodingKey {
         case peerId       = "peer_id"
@@ -121,6 +123,18 @@ struct Peer: Codable, Identifiable {
         case assignedIpv4 = "assigned_ipv4"
         case label
         case createdAt    = "created_at"
+    }
+}
+
+struct PeerListResponse: Decodable {
+    let peers: [Peer]
+    let used: Int
+    let limit: Int
+    let canAdd: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case peers, used, limit
+        case canAdd = "can_add"
     }
 }
 

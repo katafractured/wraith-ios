@@ -97,7 +97,7 @@ final class APIClient {
     }
 
     /// Lists all peers provisioned for the current token.
-    func fetchPeers() async throws -> [Peer] {
+    func fetchPeers() async throws -> PeerListResponse {
         try await request(APIRequest(.GET, "/v1/peers", auth: true))
     }
 

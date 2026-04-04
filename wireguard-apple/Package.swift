@@ -2,10 +2,6 @@
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
-import Foundation
-
-let goLibDir = URL(fileURLWithPath: #file).deletingLastPathComponent()
-    .appendingPathComponent("Sources/WireGuardKitGo/prebuilt").path
 
 let package = Package(
     name: "WireGuardKit",
@@ -37,21 +33,9 @@ let package = Package(
                 "String+ArrayConversion.swift"
             ]
         ),
-        .target(
+        .binaryTarget(
             name: "WireGuardKitGo",
-            dependencies: [],
-            exclude: [
-                "goruntime-boottime-over-monotonic.diff",
-                "go.mod",
-                "go.sum",
-                "api-apple.go",
-                "Makefile"
-            ],
-            publicHeadersPath: ".",
-            linkerSettings: [
-                .linkedLibrary("wg-go"),
-                .unsafeFlags(["-L\(goLibDir)"])
-            ]
+            path: "Sources/WireGuardKitGo/WireGuardKitGo.xcframework"
         )
     ]
 )

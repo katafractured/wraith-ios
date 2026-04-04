@@ -28,6 +28,7 @@
 		AA000032 /* CryptoKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA100032 /* CryptoKit.framework */; };
 		AA000033 /* Network.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA100033 /* Network.framework */; };
 		AA000034 /* NetworkExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA100030 /* NetworkExtension.framework */; };
+		AA000035 /* WireGuardKit in Frameworks */ = {isa = PBXBuildFile; productRef = BCWGPROD001 /* WireGuardKit */; };
 		AACOPYREF001 /* WireGuardTunnel.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AAPROD002 /* WireGuardTunnel.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
@@ -136,6 +137,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AA000034 /* NetworkExtension.framework in Frameworks */,
+				AA000035 /* WireGuardKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -284,6 +286,9 @@
 			dependencies = (
 			);
 			name = WireGuardTunnel;
+			packageProductDependencies = (
+				BCWGPROD001 /* WireGuardKit */,
+			);
 			productName = WireGuardTunnel;
 			productReference = AAPROD002 /* WireGuardTunnel.appex */;
 			productType = "com.apple.product-type.app-extension";
@@ -667,6 +672,14 @@
 			relativePath = "wireguard-apple";
 		};
 /* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		BCWGPROD001 /* WireGuardKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = BC8F55772F80E2F4009FC332 /* XCLocalSwiftPackageReference "wireguard-apple" */;
+			productName = WireGuardKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = AAPROJ001 /* Project object */;
 }

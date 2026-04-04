@@ -260,27 +260,19 @@ private struct OnboardingPageView: View {
                 .blur(radius: layout.heroBlurRadius)
 
             RoundedRectangle(cornerRadius: 44, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color.white.opacity(0.03),
-                            Color.white.opacity(0.01)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+                .fill(Color.black)
                 .frame(maxWidth: .infinity)
                 .frame(height: layout.heroFrameHeight)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 44, style: .continuous)
-                        .stroke(page.accentColor.opacity(0.16), lineWidth: 1)
+                    Image(page.assetName)
+                        .resizable()
+                        .scaledToFill()
                 )
-
-            Image(page.assetName)
-                .resizable()
-                .scaledToFit()
-                .frame(maxWidth: layout.heroImageWidth, maxHeight: layout.heroImageHeight)
+                .clipShape(RoundedRectangle(cornerRadius: 44, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 44, style: .continuous)
+                        .stroke(page.accentColor.opacity(0.22), lineWidth: 1)
+                )
                 .shadow(color: page.accentColor.opacity(0.18), radius: 34, y: 18)
         }
         .frame(maxWidth: .infinity)
@@ -325,9 +317,6 @@ private struct OnboardingLayout {
     var heroGlowWidth: CGFloat { expansiveHeight ? 420 : (compactHeight ? 270 : 340) }
     var heroGlowHeight: CGFloat { expansiveHeight ? 320 : (compactHeight ? 210 : 260) }
     var heroBlurRadius: CGFloat { expansiveHeight ? 44 : 30 }
-    var heroImageWidth: CGFloat { min(size.width - (horizontalPadding * 2) - 24, expansiveHeight ? 380 : 336) }
-    var heroImageHeight: CGFloat { heroFrameHeight - (expansiveHeight ? 28 : 24) }
-
     var titleSize: CGFloat { expansiveHeight ? 44 : (compactHeight ? 31 : 35) }
     var bodySize: CGFloat { expansiveHeight ? 18 : (compactHeight ? 15 : 16) }
     var bodyLineSpacing: CGFloat { expansiveHeight ? 5 : (compactHeight ? 3 : 4) }

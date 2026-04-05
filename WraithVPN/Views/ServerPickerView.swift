@@ -156,6 +156,24 @@ struct ServerPickerView: View {
 
     private var serverList: some View {
         ScrollView {
+            // Pull-to-refresh hint banner when VPN is connected
+            if vpn.status == .connected {
+                HStack(spacing: KFSpacing.xs) {
+                    Image(systemName: "info.circle")
+                        .font(.system(size: 13))
+                    Text("Disconnect before refreshing — latency is measured from your current exit node.")
+                        .font(KFFont.caption(12))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .foregroundStyle(Color.kfTextMuted)
+                .padding(KFSpacing.sm)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.kfSurfaceElevated)
+                .clipShape(RoundedRectangle(cornerRadius: KFRadius.md, style: .continuous))
+                .padding(.horizontal, KFSpacing.md)
+                .padding(.top, KFSpacing.xs)
+            }
+
             LazyVStack(spacing: KFSpacing.xs) {
                 ForEach(displayedServers) { item in
                     ServerRowView(
@@ -169,6 +187,9 @@ struct ServerPickerView: View {
             }
             .padding(.horizontal, KFSpacing.md)
             .padding(.bottom, KFSpacing.lg)
+        }
+        .refreshable {
+            await servers.refresh()
         }
     }
 

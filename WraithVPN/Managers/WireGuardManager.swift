@@ -240,6 +240,11 @@ final class WireGuardManager: ObservableObject {
             "wgConfig": configText,
             "serverName": server.cityName,
         ]
+        // Tell iOS this tunnel handles all network traffic. Without this, apps that
+        // check reachability on the physical interface (e.g. Maps) see it as offline
+        // because AllowedIPs = 0.0.0.0/0 removes the default route from WiFi/cellular.
+        proto.includeAllNetworks = true
+        proto.excludeLocalNetworks = true
 
         let onDemandRule = NEOnDemandRuleConnect()
         onDemandRule.interfaceTypeMatch = .any

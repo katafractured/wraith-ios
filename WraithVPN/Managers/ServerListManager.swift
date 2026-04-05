@@ -21,7 +21,10 @@ final class ServerListManager: ObservableObject {
 
     // MARK: - Private
 
-    private let probePort: NWEndpoint.Port = 51820
+    // Probe port 22 (SSH) via TCP — it's open and accepting on all WraithGate nodes,
+    // giving a real .ready RTT. Port 51820 is WireGuard/UDP so TCP probing it never connects,
+    // and port 443 is typically DROP (no RST) on these nodes, causing full 3s timeouts.
+    private let probePort: NWEndpoint.Port = 22
     private let probeTimeout: TimeInterval = 3.0
 
     // MARK: - Public
@@ -90,22 +93,19 @@ final class ServerListManager: ObservableObject {
         }
     }
 
-    /// TCP connect to host:51820, returns round-trip in milliseconds or nil on failure.
+    /// TCP connect to host:probePort, returns round-trip in milliseconds or nil on failure.
     private func probe(host: String) async -> Double? {
-        // Strip scheme if present (endpoint may be "host:port")
+        // Strip any port suffix from the endpoint — we always probe on probePort (SSH).
+        // e.g. "vpn-eu1.katafract.com:51820" → "vpn-eu1.katafract.com"
         var hostname = host
-        var port = probePort
         if host.contains(":") {
             let parts = host.split(separator: ":", maxSplits: 1)
             hostname = String(parts[0])
-            if let p = UInt16(parts.last ?? ""), let nwp = NWEndpoint.Port(rawValue: p) {
-                port = nwp
-            }
         }
 
         let endpoint = NWEndpoint.hostPort(
             host: NWEndpoint.Host(hostname),
-            port: port
+            port: probePort
         )
         let params = NWParameters.tcp
         params.prohibitedInterfaceTypes = []
@@ -113,9 +113,9 @@ final class ServerListManager: ObservableObject {
 
         return await withCheckedContinuation { continuation in
             let start = Date()
-            var finished = false
             let finishLock = NSLock()
-            var timeout: DispatchWorkItem?
+            nonisolated(unsafe) var finished = false
+            nonisolated(unsafe) var timeout: DispatchWorkItem?
 
             @Sendable func finish(with result: Double?) {
                 finishLock.lock()
@@ -140,10 +140,17 @@ final class ServerListManager: ObservableObject {
             connection.stateUpdateHandler = { state in
                 switch state {
                 case .ready:
+                    // Full TCP connection established (port is open).
                     let ms = Date().timeIntervalSince(start) * 1000
                     connection.cancel()
                     finish(with: ms)
-                case .failed, .cancelled:
+                case .failed(let error):
+                    // ECONNREFUSED = server sent TCP RST — it's reachable, port just isn't open.
+                    // That RST is a real round-trip, so we still have a valid latency sample.
+                    let ms = Date().timeIntervalSince(start) * 1000
+                    let isRefused = (error as? POSIXError)?.code == .ECONNREFUSED
+                    finish(with: isRefused ? ms : nil)
+                case .cancelled:
                     finish(with: nil)
                 default:
                     break

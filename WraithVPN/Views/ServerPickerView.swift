@@ -202,9 +202,18 @@ struct ServerPickerView: View {
 
     private func selectServer(_ server: VPNServer) {
         servers.selectServer(server)
-        // Haptic feedback
         let gen = UIImpactFeedbackGenerator(style: .medium)
         gen.impactOccurred()
+
+        // If already connected to a different node, switch immediately.
+        let isConnected = vpn.status == .connected || vpn.status == .connecting
+        let isDifferent = vpn.connectedServer?.nodeId != server.nodeId
+        if isConnected && isDifferent {
+            Task {
+                try? await vpn.connectToServer(server)
+            }
+        }
+
         dismiss()
     }
 }

@@ -28,6 +28,14 @@ final class WireGuardManager: ObservableObject {
     @Published var connectedServer: VPNServer? = nil
     @Published var assignedIP: String? = nil
     @Published var activePeerId: String? = nil
+    @Published var isProvisioned: Bool = false
+    @Published var isAutoProvisioning: Bool = false
+    /// User's preference — persisted across launches. Distinct from the NE profile's
+    /// isOnDemandEnabled, which is temporarily disabled on manual disconnect so iOS
+    /// doesn't fight the user.
+    @Published var autoConnectEnabled: Bool = UserDefaults.standard.object(forKey: "autoConnectEnabled") == nil
+        ? true
+        : UserDefaults.standard.bool(forKey: "autoConnectEnabled")
 
     // MARK: - Private
 
@@ -49,45 +57,60 @@ final class WireGuardManager: ObservableObject {
 
     // MARK: - Public interface
 
-    /// Main entry point. Generates keys if needed, provisions peer, installs profile, connects.
-    func connectToServer(_ server: VPNServer) async throws {
-        status = .connecting
-
-        // 1. Ensure we have a keypair
-        let pubkey = try ensureKeypair()
-
-        // 2. Provision peer (or reuse existing one for this node)
-        let provision = try await provisionPeer(pubkey: pubkey, server: server)
-
-        // 3. Install / update VPN profile
-        let configText = provision.config
-        try await installProfile(configText: configText, server: server)
-
-        // 4. Connect
-        try startTunnel()
-
-        activePeerId = provision.peerId
-        assignedIP   = provision.assignedIpv4
-        connectedServer = server
-
-        // Persist peerId so we can revoke later
-        try? KeychainHelper.shared.save(provision.peerId, for: .activePeerId)
+    /// Provisions to nearest server and installs profile if no peer exists yet.
+    /// Called automatically after purchase/token entry and on app launch.
+    func autoProvisionIfNeeded() async {
+        guard !isProvisioned,
+              KeychainHelper.shared.readOptional(for: .subscriptionToken) != nil else { return }
+        isAutoProvisioning = true
+        defer { isAutoProvisioning = false }
+        do {
+            let server = try await APIClient.shared.fetchNearestServer()
+            try await provisionAndInstall(server: server)
+        } catch {
+            // Silent — user can still tap Connect to retry
+        }
     }
 
-    /// Reconnects using the already-installed VPN profile (no provisioning needed).
+    /// Provisions to a specific server, installs the profile, then connects.
+    func connectToServer(_ server: VPNServer) async throws {
+        // Stop any running tunnel first — NE ignores startTunnel on an active session.
+        if manager?.connection.status == .connected || manager?.connection.status == .connecting {
+            manager?.connection.stopVPNTunnel()
+            // Brief pause for the tunnel process to tear down before we overwrite the profile.
+            try await Task.sleep(for: .milliseconds(500))
+        }
+        status = .connecting
+        try await provisionAndInstall(server: server)
+        await applyOnDemand(autoConnectEnabled)
+        try startTunnel()
+    }
+
+    /// Starts the already-installed VPN profile.
     func connect() throws {
-        guard manager != nil else {
-            status = .failed("No VPN profile installed. Please connect to a server first.")
+        guard isProvisioned else {
+            status = .failed("No VPN profile installed.")
             return
         }
         status = .connecting
+        Task { await applyOnDemand(autoConnectEnabled) }
         try startTunnel()
     }
 
     /// Disconnects the active tunnel.
+    /// Temporarily disables on-demand so iOS doesn't immediately reconnect,
+    /// while leaving the user's autoConnectEnabled preference intact.
     func disconnect() {
         status = .disconnecting
         manager?.connection.stopVPNTunnel()
+        Task { await applyOnDemand(false) }
+    }
+
+    /// Persists the auto-connect preference and updates the live NE profile.
+    func setAutoConnect(_ enabled: Bool) async {
+        autoConnectEnabled = enabled
+        UserDefaults.standard.set(enabled, forKey: "autoConnectEnabled")
+        await applyOnDemand(enabled)
     }
 
     /// Revokes the active peer from the backend and removes the local profile.
@@ -97,10 +120,11 @@ final class WireGuardManager: ObservableObject {
         }
         await removeProfile()
         KeychainHelper.shared.delete(for: .activePeerId)
-        activePeerId = nil
-        assignedIP   = nil
+        activePeerId    = nil
+        assignedIP      = nil
         connectedServer = nil
-        status = .disconnected
+        isProvisioned   = false
+        status          = .disconnected
     }
 
     // MARK: - Keypair management
@@ -130,13 +154,52 @@ final class WireGuardManager: ObservableObject {
 
     // MARK: - Peer provisioning
 
-    private func provisionPeer(pubkey: String, server: VPNServer) async throws -> ProvisionResponse {
-        let label = "WraithVPN-\(UIDevice.current.name.prefix(20))"
-        return try await APIClient.shared.provisionPeer(
+    /// Provisions a peer for the given server, installs the NE profile. Does not connect.
+    private func provisionAndInstall(server: VPNServer) async throws {
+        let pubkey    = try ensureKeypair()
+        let label     = "WraithVPN-\(UIDevice.current.name.prefix(20))"
+        let provision = try await APIClient.shared.provisionPeer(
             pubkey: pubkey,
             region: server.region,
-            label: label
+            label:  label
         )
+        // The server only knows our public key, so the returned config has no private key.
+        // Inject it from Keychain before handing the config to the tunnel extension.
+        let config = try injectPrivateKey(into: provision.config)
+        try await installProfile(configText: config, server: server)
+        activePeerId    = provision.peerId
+        assignedIP      = provision.assignedIpv4
+        connectedServer = server
+        isProvisioned   = true
+        try? KeychainHelper.shared.save(provision.peerId,  for: .activePeerId)
+        try? KeychainHelper.shared.save(server.nodeId,     for: .activeNodeId)
+    }
+
+    /// Replaces an empty/missing PrivateKey line in a wg-quick config with the
+    /// key stored in the Keychain. Throws if no private key is available.
+    private func injectPrivateKey(into config: String) throws -> String {
+        guard let privKey = KeychainHelper.shared.readOptional(for: .wireguardPrivKey) else {
+            throw WGError.noPrivateKey
+        }
+        var lines = config.components(separatedBy: .newlines)
+        var injected = false
+        for (i, line) in lines.enumerated() {
+            if line.trimmingCharacters(in: .whitespaces).lowercased().hasPrefix("privatekey") {
+                lines[i] = "PrivateKey = \(privKey)"
+                injected = true
+                break
+            }
+        }
+        if !injected {
+            // No PrivateKey line at all — insert one right after [Interface]
+            for (i, line) in lines.enumerated() {
+                if line.trimmingCharacters(in: .whitespaces).lowercased() == "[interface]" {
+                    lines.insert("PrivateKey = \(privKey)", at: i + 1)
+                    break
+                }
+            }
+        }
+        return lines.joined(separator: "\n")
     }
 
     // MARK: - NetworkExtension profile management
@@ -148,7 +211,14 @@ final class WireGuardManager: ObservableObject {
                 ($0.protocolConfiguration as? NETunnelProviderProtocol)?
                     .providerBundleIdentifier == tunnelBundleId
             }) {
-                manager = existing
+                manager       = existing
+                isProvisioned = true
+                activePeerId  = KeychainHelper.shared.readOptional(for: .activePeerId)
+                // Restore which node this profile is provisioned for so server-change
+                // detection works after an app restart.
+                if let nodeId = KeychainHelper.shared.readOptional(for: .activeNodeId) {
+                    connectedServer = VPNServer.stub(nodeId: nodeId)
+                }
             } else {
                 manager = NETunnelProviderManager()
             }
@@ -171,14 +241,33 @@ final class WireGuardManager: ObservableObject {
             "serverName": server.cityName,
         ]
 
+        let onDemandRule = NEOnDemandRuleConnect()
+        onDemandRule.interfaceTypeMatch = .any
+
         mgr.protocolConfiguration = proto
         mgr.localizedDescription  = "WraithVPN — \(server.cityName)"
         mgr.isEnabled             = true
-        mgr.isOnDemandEnabled     = false
+        mgr.onDemandRules         = [onDemandRule]
+        mgr.isOnDemandEnabled     = autoConnectEnabled
 
         try await mgr.saveToPreferences()
         // Reload to pick up saved preferences (required before starting)
         try await mgr.loadFromPreferences()
+    }
+
+    /// Updates isOnDemandEnabled on the saved NE profile without touching the config.
+    private func applyOnDemand(_ enabled: Bool) async {
+        guard let mgr = manager else { return }
+        do {
+            try await mgr.loadFromPreferences()
+            if enabled {
+                let rule = NEOnDemandRuleConnect()
+                rule.interfaceTypeMatch = .any
+                mgr.onDemandRules = [rule]
+            }
+            mgr.isOnDemandEnabled = enabled
+            try await mgr.saveToPreferences()
+        } catch {}
     }
 
     private func removeProfile() async {
@@ -232,11 +321,13 @@ final class WireGuardManager: ObservableObject {
 enum WGError: LocalizedError {
     case noTunnelSession
     case keypairGenerationFailed
+    case noPrivateKey
 
     var errorDescription: String? {
         switch self {
-        case .noTunnelSession:       return "No tunnel session available."
+        case .noTunnelSession:         return "No tunnel session available."
         case .keypairGenerationFailed: return "Could not generate WireGuard keypair."
+        case .noPrivateKey:            return "WireGuard private key not found in Keychain."
         }
     }
 }

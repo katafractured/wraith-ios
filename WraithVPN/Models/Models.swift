@@ -43,6 +43,13 @@ struct VPNServer: Codable, Identifiable, Hashable {
         case geodnsWeight  = "geodns_weight"
     }
 
+    /// Minimal stub used only to persist the provisioned nodeId across restarts.
+    static func stub(nodeId: String) -> VPNServer {
+        VPNServer(nodeId: nodeId, site: "", region: "", displayName: "", ipv4: "",
+                  ipv6: nil, endpoints: Endpoints(primary: "", secondary: nil),
+                  publicKey: "", wgPort: 0, loadScore: 0, ipv6Available: false, geodnsWeight: 0)
+    }
+
     // Human-readable city name for the UI (falls back to displayName)
     var cityName: String {
         RegionInfo.cityName(for: region)
@@ -60,7 +67,9 @@ enum RegionInfo {
         "eu-west":      ("Frankfurt",  "🇩🇪"),
         "eu-north":     ("Helsinki",   "🇫🇮"),
         "ap-southeast": ("Singapore",  "🇸🇬"),
-        "us-central":   ("US Central", "🇺🇸"),
+        "us-central":   ("Chicago",    "🇺🇸"),
+        "us-east":      ("Virginia",   "🇺🇸"),
+        "us-west":      ("Oregon",     "🇺🇸"),
     ]
 
     static func cityName(for region: String) -> String {
@@ -91,6 +100,7 @@ struct ProvisionResponse: Decodable {
     let config: String        // Full WireGuard INI config text
     let configQr: String?     // Base64 PNG QR code (optional)
     let assignedIpv4: String
+    let assignedIpv6: String?
     let nodeId: String
     let endpoint: String
 
@@ -99,6 +109,7 @@ struct ProvisionResponse: Decodable {
         case config
         case configQr     = "config_qr"
         case assignedIpv4 = "assigned_ipv4"
+        case assignedIpv6 = "assigned_ipv6"
         case nodeId       = "node_id"
         case endpoint
     }
@@ -138,6 +149,34 @@ struct PeerListResponse: Decodable {
     }
 }
 
+// MARK: - Token info (GET /v1/token/info)
+
+struct TokenInfoResponse: Decodable {
+    let plan: String
+    let isFounder: Bool
+    let expiresAt: String?  // nil for founders (never expire)
+    let maxPeers: Int
+
+    enum CodingKeys: String, CodingKey {
+        case plan
+        case isFounder = "is_founder"
+        case expiresAt = "expires_at"
+        case maxPeers  = "max_peers"
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        plan      = try c.decode(String.self, forKey: .plan)
+        isFounder = try c.decode(Bool.self,   forKey: .isFounder)
+        maxPeers  = try c.decode(Int.self,    forKey: .maxPeers)
+        if let ts = try? c.decode(Int.self, forKey: .expiresAt) {
+            expiresAt = ISO8601DateFormatter().string(from: Date(timeIntervalSince1970: TimeInterval(ts)))
+        } else {
+            expiresAt = try? c.decode(String.self, forKey: .expiresAt)
+        }
+    }
+}
+
 // MARK: - Token validation (Apple)
 
 struct AppleTokenRequest: Encodable {
@@ -145,12 +184,14 @@ struct AppleTokenRequest: Encodable {
     let originalTransactionId: String
     let productId: String
     let bundleId: String
+    let jwsTransaction: String
 
     enum CodingKeys: String, CodingKey {
         case transactionId         = "transaction_id"
         case originalTransactionId = "original_transaction_id"
         case productId             = "product_id"
         case bundleId              = "bundle_id"
+        case jwsTransaction        = "jws_transaction"
     }
 }
 
@@ -228,8 +269,11 @@ struct SubscriptionInfo: Equatable {
 
     var planDisplayName: String {
         switch plan {
-        case "vpn_armor":         return "WraithVPN (Monthly)"
-        case "vpn_armor_annual":  return "WraithVPN (Annual)"
+        case "founder", "total":  return "Founder"
+        case "haven":             return "Haven (DNS)"
+        case "veil", "vpn_armor": return "Veil (VPN)"
+        case "vpn_armor_annual":  return "Veil (Annual)"
+        case "enclave":           return "Enclave"
         default:                  return plan
         }
     }

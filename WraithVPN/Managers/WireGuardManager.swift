@@ -36,6 +36,10 @@ final class WireGuardManager: ObservableObject {
     @Published var autoConnectEnabled: Bool = UserDefaults.standard.object(forKey: "autoConnectEnabled") == nil
         ? true
         : UserDefaults.standard.bool(forKey: "autoConnectEnabled")
+    /// Public exit IP of the connected server (set on provision, cleared on disconnect).
+    @Published var exitIP: String? = nil
+    /// Timestamp of when the tunnel last transitioned to .connected.
+    @Published var connectedSince: Date? = nil
 
     // MARK: - Private
 
@@ -122,6 +126,8 @@ final class WireGuardManager: ObservableObject {
         KeychainHelper.shared.delete(for: .activePeerId)
         activePeerId    = nil
         assignedIP      = nil
+        exitIP          = nil
+        connectedSince  = nil
         connectedServer = nil
         isProvisioned   = false
         status          = .disconnected
@@ -169,6 +175,7 @@ final class WireGuardManager: ObservableObject {
         try await installProfile(configText: config, server: server)
         activePeerId    = provision.peerId
         assignedIP      = provision.assignedIpv4
+        exitIP          = server.ipv4.isEmpty ? nil : server.ipv4
         connectedServer = server
         isProvisioned   = true
         try? KeychainHelper.shared.save(provision.peerId,  for: .activePeerId)
@@ -310,13 +317,26 @@ final class WireGuardManager: ObservableObject {
             return
         }
         switch connection.status {
-        case .invalid:       status = .disconnected
-        case .disconnected:  status = .disconnected
-        case .connecting:    status = .connecting
-        case .connected:     status = .connected
-        case .reasserting:   status = .connecting
-        case .disconnecting: status = .disconnecting
-        @unknown default:    status = .disconnected
+        case .invalid:
+            status = .disconnected
+            connectedSince = nil
+        case .disconnected:
+            status = .disconnected
+            connectedSince = nil
+        case .connecting:
+            status = .connecting
+            connectedSince = nil
+        case .connected:
+            if connectedSince == nil { connectedSince = Date() }
+            status = .connected
+        case .reasserting:
+            status = .connecting
+        case .disconnecting:
+            status = .disconnecting
+            connectedSince = nil
+        @unknown default:
+            status = .disconnected
+            connectedSince = nil
         }
     }
 }

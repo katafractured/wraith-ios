@@ -189,14 +189,22 @@ struct ConnectView: View {
                 .animation(.easeInOut(duration: 0.3), value: vpn.status)
                 .contentTransition(.numericText())
 
-            if let ip = vpn.assignedIP, vpn.status == .connected {
-                HStack(spacing: KFSpacing.xs) {
-                    Image(systemName: "network")
-                        .font(.system(size: 12))
-                    Text(ip)
-                        .font(KFFont.mono(13))
+            if vpn.status == .connected {
+                VStack(spacing: 4) {
+                    HStack(spacing: KFSpacing.xs) {
+                        Image(systemName: "globe")
+                            .font(.system(size: 12))
+                        Text(vpn.exitIP ?? vpn.assignedIP ?? "—")
+                            .font(KFFont.mono(13))
+                    }
+                    .foregroundStyle(Color.kfTextMuted)
+                    if let since = vpn.connectedSince {
+                        Text(since, style: .timer)
+                            .font(KFFont.mono(12))
+                            .foregroundStyle(Color.kfTextMuted.opacity(0.7))
+                            .monospacedDigit()
+                    }
                 }
-                .foregroundStyle(Color.kfTextMuted)
                 .transition(.opacity.combined(with: .move(edge: .bottom)))
             } else {
                 Text(statusCaption)
@@ -209,16 +217,23 @@ struct ConnectView: View {
     }
 
     private var connectionSummary: some View {
-        HStack(spacing: KFSpacing.md) {
+        VStack(spacing: KFSpacing.sm) {
+            HStack(spacing: KFSpacing.md) {
+                summaryPill(
+                    title: "Route",
+                    value: servers.selectedServer?.cityName ?? "Automatic",
+                    icon: servers.selectedServer == nil ? "sparkles" : "location.north.line.fill"
+                )
+                summaryPill(
+                    title: "Mode",
+                    value: vpn.status == .connected ? "Protected" : "Standby",
+                    icon: vpn.status == .connected ? "shield.fill" : "moon.stars.fill"
+                )
+            }
             summaryPill(
-                title: "Route",
-                value: servers.selectedServer?.cityName ?? "Automatic",
-                icon: servers.selectedServer == nil ? "sparkles" : "location.north.line.fill"
-            )
-            summaryPill(
-                title: "Mode",
-                value: vpn.status == .connected ? "Protected" : "Standby",
-                icon: vpn.status == .connected ? "shield.fill" : "moon.stars.fill"
+                title: "Kill Switch",
+                value: "Always On",
+                icon: "lock.shield.fill"
             )
         }
     }

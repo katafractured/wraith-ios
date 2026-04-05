@@ -43,7 +43,7 @@ private let pages: [OnboardingPage] = [
         eyebrow: "ENCLAVE",
         assetName: "OnboardingEnclave",
         title: "Enclave +\nHaven DNS.",
-        body: "Inside the Enclave, Haven DNS helps cut down ad and tracker traffic while we keep the product language grounded in what is actually live.",
+        body: "Haven DNS blocks ads, trackers, and malware before they load — at the DNS level, on every app and browser, no extra setup needed.",
         accentColor: .kfAccentPurple,
         secondaryColor: Color(hex: "#b68cff")
     ),

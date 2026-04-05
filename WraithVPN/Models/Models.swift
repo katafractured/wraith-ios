@@ -269,12 +269,12 @@ struct SubscriptionInfo: Equatable {
 
     var planDisplayName: String {
         switch plan {
-        case "founder", "total":  return "Founder"
-        case "haven":             return "Haven (DNS)"
-        case "veil", "vpn_armor": return "Veil (VPN)"
-        case "vpn_armor_annual":  return "Veil (Annual)"
-        case "enclave":           return "Enclave"
-        default:                  return plan
+        case "founder", "total", "total_annual": return "Founder"
+        case "haven":                            return "Haven DNS"
+        case "veil", "vpn_armor":               return "Wraith Veil"
+        case "vpn_armor_annual", "veil_annual":  return "Wraith Veil — Annual"
+        case "enclave", "enclave_annual":        return "Enclave"
+        default:                                 return plan
         }
     }
 

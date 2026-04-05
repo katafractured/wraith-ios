@@ -229,7 +229,7 @@ struct PaywallView: View {
                     .environmentObject(storeKit)
             }
 
-            Text("Payment will be charged to your Apple ID account at confirmation of purchase. Subscriptions automatically renew unless cancelled at least 24 hours before the end of the current period. You can manage and cancel your subscription in your App Store account settings.")
+            Text("Keep access to your Apple ID — that's how you recover your subscription. Payment will be charged to your Apple ID at confirmation of purchase. Subscriptions renew automatically unless cancelled at least 24 hours before the end of the current period.")
                 .font(KFFont.caption(11))
                 .foregroundStyle(Color.kfTextMuted)
                 .multilineTextAlignment(.center)
@@ -324,8 +324,8 @@ private struct ProductOptionView: View {
 
     private var displayName: String {
         product.id == WraithProduct.armorAnnual.rawValue
-            ? "Annual Plan"
-            : "Monthly Plan"
+            ? "Wraith Veil — Annual"
+            : "Wraith Veil — Monthly"
     }
 
     private var periodLabel: String {

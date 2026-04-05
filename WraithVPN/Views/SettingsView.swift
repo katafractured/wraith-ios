@@ -49,15 +49,15 @@ struct SettingsView: View {
             Button("Sign Out", role: .destructive) { storeKit.signOut() }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("Your subscription token will be removed from this device. You can sign in again by restoring your purchase.")
+            Text("Your subscription token will be removed from this device. To sign in again, use the same method you originally purchased through — Restore Purchase for App Store, or enter your token if you purchased via another gateway.")
         }
-        .alert("Revoke Active Peer", isPresented: $showRevokeAlert) {
-            Button("Revoke", role: .destructive) {
+        .alert("Reset VPN Configuration", isPresented: $showRevokeAlert) {
+            Button("Reset", role: .destructive) {
                 Task { await vpn.revokePeer() }
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("This will disconnect the VPN and delete your current WireGuard configuration from the server. A new one will be created on next connect.")
+            Text("This will disconnect the VPN and remove your current WireGuard configuration from the server. A new configuration will be created the next time you connect.")
         }
         .alert("Regenerate Keys", isPresented: $showRegenerateAlert) {
             Button("Regenerate", role: .destructive) { regenerateKeys() }
@@ -207,8 +207,8 @@ struct SettingsView: View {
 
             Divider().background(Color.kfBorder)
 
-            SettingsRow(icon: "network", label: "Assigned IP") {
-                Text(vpn.assignedIP ?? "—")
+            SettingsRow(icon: "network", label: "Exit IP") {
+                Text(vpn.exitIP ?? vpn.assignedIP ?? "—")
                     .font(KFFont.mono(13))
                     .foregroundStyle(Color.kfTextMuted)
             }
@@ -223,8 +223,26 @@ struct SettingsView: View {
 
             Divider().background(Color.kfBorder)
 
+            SettingsRow(icon: "lock.shield.fill", label: "Kill Switch") {
+                Text("Always On")
+                    .font(KFFont.caption(12))
+                    .foregroundStyle(Color.kfConnected)
+            }
+
+            Divider().background(Color.kfBorder)
+
+            if let since = vpn.connectedSince {
+                SettingsRow(icon: "timer", label: "Connected For") {
+                    Text(since, style: .timer)
+                        .font(KFFont.mono(13))
+                        .foregroundStyle(Color.kfTextMuted)
+                        .monospacedDigit()
+                }
+                Divider().background(Color.kfBorder)
+            }
+
             VStack(alignment: .leading, spacing: 4) {
-                SettingsRow(icon: "arrow.trianglehead.2.clockwise.rotate.90", label: "Auto-connect") {
+                SettingsRow(icon: "arrow.trianglehead.2.clockwise.rotate.90", label: "Stay Connected") {
                     Toggle("", isOn: Binding(
                         get: { vpn.autoConnectEnabled },
                         set: { enabled in Task { await vpn.setAutoConnect(enabled) } }
@@ -232,7 +250,7 @@ struct SettingsView: View {
                     .labelsHidden()
                     .tint(Color.kfAccentBlue)
                 }
-                Text("Reconnects automatically on network changes and after reboot. Disconnecting manually always overrides this until you reconnect.")
+                Text("Automatically reconnects when you switch networks or restart your device. Disconnecting manually will pause this until you reconnect.")
                     .font(KFFont.caption(11))
                     .foregroundStyle(Color.kfTextMuted)
                     .padding(.leading, 36)
@@ -244,7 +262,7 @@ struct SettingsView: View {
             Button {
                 showRevokeAlert = true
             } label: {
-                SettingsRow(icon: "arrow.counterclockwise", label: "Revoke & Reset Peer") {
+                SettingsRow(icon: "arrow.counterclockwise", label: "Reset VPN Configuration") {
                     Image(systemName: "chevron.right")
                         .font(.system(size: 13))
                         .foregroundStyle(Color.kfTextMuted)
@@ -271,7 +289,7 @@ struct SettingsView: View {
                     Text("Ad & Tracker Blocking")
                         .font(KFFont.body(15))
                         .foregroundStyle(.white)
-                    Text(haven.isEnabled ? "Active — DNS routed through WraithGate" : "Routes DNS through Katafract nodes to block ads and trackers. Free.")
+                    Text(haven.isEnabled ? "Active — filtering ads and trackers at the DNS level" : "Blocks ads, trackers, and malware at DNS level — works with or without VPN. Free tier included.")
                         .font(KFFont.caption(13))
                         .foregroundStyle(Color.kfTextSecondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -387,6 +405,42 @@ struct SettingsView: View {
     private var supportCard: some View {
         VStack(alignment: .leading, spacing: KFSpacing.md) {
             sectionHeader("Support")
+
+            HStack(spacing: KFSpacing.sm) {
+                Image(systemName: "checkmark.shield.fill")
+                    .font(.system(size: 15))
+                    .foregroundStyle(Color.kfConnected)
+                    .frame(width: 20)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Zero-Log Policy")
+                        .font(KFFont.body(14))
+                        .foregroundStyle(.white)
+                    Text("We do not log your traffic, DNS queries, or connection timestamps.")
+                        .font(KFFont.caption(12))
+                        .foregroundStyle(Color.kfTextMuted)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            Divider().background(Color.kfBorder)
+
+            HStack(spacing: KFSpacing.sm) {
+                Image(systemName: "key.fill")
+                    .font(.system(size: 15))
+                    .foregroundStyle(Color.kfAccentBlue)
+                    .frame(width: 20)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Access Recovery")
+                        .font(KFFont.body(14))
+                        .foregroundStyle(.white)
+                    Text("Keep access to your purchase gateway — App Store or token source. Recovery comes from where you bought, not from us.")
+                        .font(KFFont.caption(12))
+                        .foregroundStyle(Color.kfTextMuted)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            Divider().background(Color.kfBorder)
 
             Link(destination: URL(string: "https://katafract.com/privacy/wraith")!) {
                 SettingsRow(icon: "hand.raised.fill", label: "Privacy Policy") {

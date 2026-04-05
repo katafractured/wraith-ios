@@ -173,13 +173,11 @@ struct OnboardingView: View {
             }
             .padding(.horizontal, layout.horizontalPadding)
 
-            if currentPage < pages.count - 1 {
-                Button("Skip") { onComplete() }
-                    .font(KFFont.body(14))
-                    .foregroundStyle(Color.kfTextMuted)
-            } else {
-                Color.clear.frame(height: 20)
-            }
+            Button("Skip") { onComplete() }
+                .font(KFFont.body(14))
+                .foregroundStyle(Color.kfTextMuted)
+                .opacity(currentPage < pages.count - 1 ? 1 : 0)
+                .disabled(currentPage == pages.count - 1)
         }
         .padding(.top, layout.controlsTopPadding)
         .padding(.bottom, layout.bottomPadding)
@@ -238,7 +236,9 @@ private struct OnboardingPageView: View {
                     .offset(y: appeared ? 0 : 18)
             }
 
-            Spacer(minLength: layout.bottomSpacer)
+            if layout.bottomSpacer > 0 {
+                Spacer(minLength: layout.bottomSpacer)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .padding(.horizontal, layout.horizontalPadding)
@@ -297,6 +297,7 @@ private struct OnboardingLayout {
 
     private var compactHeight: Bool { size.height < 760 }
     private var expansiveHeight: Bool { size.height > 900 }
+    private var isIPad: Bool { size.width > 600 }
 
     var horizontalPadding: CGFloat { expansiveHeight ? 34 : 28 }
     var topPadding: CGFloat { safeTop + (expansiveHeight ? 18 : 10) }
@@ -313,18 +314,18 @@ private struct OnboardingLayout {
     var backgroundRingOffsetY: CGFloat { expansiveHeight ? -10 : 10 }
 
     var heroTopPadding: CGFloat { expansiveHeight ? 18 : (compactHeight ? 4 : 10) }
-    var heroFrameHeight: CGFloat { expansiveHeight ? 400 : (compactHeight ? 250 : 320) }
-    var heroGlowWidth: CGFloat { expansiveHeight ? 420 : (compactHeight ? 270 : 340) }
-    var heroGlowHeight: CGFloat { expansiveHeight ? 320 : (compactHeight ? 210 : 260) }
+    var heroFrameHeight: CGFloat { isIPad ? 660 : (expansiveHeight ? 480 : (compactHeight ? 280 : 370)) }
+    var heroGlowWidth: CGFloat { isIPad ? 580 : (expansiveHeight ? 480 : (compactHeight ? 300 : 390)) }
+    var heroGlowHeight: CGFloat { isIPad ? 440 : (expansiveHeight ? 370 : (compactHeight ? 230 : 300)) }
     var heroBlurRadius: CGFloat { expansiveHeight ? 44 : 30 }
     var titleSize: CGFloat { expansiveHeight ? 44 : (compactHeight ? 31 : 35) }
     var bodySize: CGFloat { expansiveHeight ? 18 : (compactHeight ? 15 : 16) }
     var bodyLineSpacing: CGFloat { expansiveHeight ? 5 : (compactHeight ? 3 : 4) }
-    var bodyWidth: CGFloat { min(size.width - (horizontalPadding * 2), expansiveHeight ? 360 : 320) }
+    var bodyWidth: CGFloat { min(size.width - (horizontalPadding * 2), isIPad ? 560 : (expansiveHeight ? 360 : 320)) }
 
     var contentSpacing: CGFloat { expansiveHeight ? 26 : (compactHeight ? 16 : 22) }
     var textSpacing: CGFloat { expansiveHeight ? 18 : (compactHeight ? 12 : 16) }
-    var bottomSpacer: CGFloat { expansiveHeight ? 56 : (compactHeight ? 10 : 20) }
+    var bottomSpacer: CGFloat { isIPad ? 0 : (expansiveHeight ? 20 : (compactHeight ? 4 : 8)) }
 
     var controlsSpacing: CGFloat { expansiveHeight ? 20 : (compactHeight ? 14 : 18) }
     var controlsTopPadding: CGFloat { expansiveHeight ? 28 : (compactHeight ? 16 : 22) }

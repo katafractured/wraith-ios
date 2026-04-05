@@ -329,3 +329,43 @@ enum LatencyTier {
         }
     }
 }
+
+// MARK: - Haven DNS preferences
+
+struct DnsPreferences: Decodable {
+    let tier: String
+    let protectionLevel: String
+    let protectionLevels: [String]
+    let safeBrowsing: Bool
+    let familyFilter: Bool
+    let blockedServices: [String]
+    let blockableServices: [String]
+    let updatedAt: Int?
+
+    var isPro: Bool { tier == "pro" || tier == "founder" }
+
+    enum CodingKeys: String, CodingKey {
+        case tier
+        case protectionLevel   = "protection_level"
+        case protectionLevels  = "protection_levels"
+        case safeBrowsing      = "safe_browsing"
+        case familyFilter      = "family_filter"
+        case blockedServices   = "blocked_services"
+        case blockableServices = "blockable_services"
+        case updatedAt         = "updated_at"
+    }
+}
+
+struct DnsPreferencesUpdate: Encodable {
+    var protectionLevel: String?
+    var safeBrowsing: Bool?
+    var familyFilter: Bool?
+    var blockedServices: [String]?
+
+    enum CodingKeys: String, CodingKey {
+        case protectionLevel = "protection_level"
+        case safeBrowsing    = "safe_browsing"
+        case familyFilter    = "family_filter"
+        case blockedServices = "blocked_services"
+    }
+}

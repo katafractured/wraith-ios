@@ -30,7 +30,7 @@ enum APIError: LocalizedError {
 // MARK: - Request descriptor
 
 private enum HTTPMethod: String {
-    case GET, POST, DELETE
+    case GET, POST, PUT, DELETE
 }
 
 private struct APIRequest {
@@ -130,6 +130,16 @@ final class APIClient {
             jwsTransaction: jwsTransaction
         )
         return try await request(APIRequest(.POST, "/v1/token/validate/apple", body: body))
+    }
+
+    /// Fetches the current DNS preferences for the token.
+    func fetchDnsPreferences() async throws -> DnsPreferences {
+        return try await request(APIRequest(.GET, "/v1/dns/preferences", auth: true))
+    }
+
+    /// Updates DNS preferences for the token.
+    func updateDnsPreferences(_ update: DnsPreferencesUpdate) async throws -> DnsPreferences {
+        return try await request(APIRequest(.PUT, "/v1/dns/preferences", body: update, auth: true))
     }
 
     // MARK: - Private core

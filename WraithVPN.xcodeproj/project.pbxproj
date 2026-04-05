@@ -24,6 +24,7 @@
 		AA000015 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA100015 /* Assets.xcassets */; };
 		AA000016 /* HavenDNSManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100018 /* HavenDNSManager.swift */; };
 		AA000019 /* TokenActivationSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100019 /* TokenActivationSheet.swift */; };
+		AA00001A /* HavenDNSSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10001A /* HavenDNSSettingsView.swift */; };
 		AA000020 /* PacketTunnelProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100020 /* PacketTunnelProvider.swift */; };
 		AA000021 /* TunnelConfiguration+WgQuickConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100022 /* TunnelConfiguration+WgQuickConfig.swift */; };
 		AA000022 /* String+ArrayConversion.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100023 /* String+ArrayConversion.swift */; };
@@ -127,6 +128,7 @@
 		AA100017 /* WraithVPN.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WraithVPN.entitlements; sourceTree = "<group>"; };
 		AA100018 /* HavenDNSManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HavenDNSManager.swift; sourceTree = "<group>"; };
 		AA100019 /* TokenActivationSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenActivationSheet.swift; sourceTree = "<group>"; };
+		AA10001A /* HavenDNSSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HavenDNSSettingsView.swift; sourceTree = "<group>"; };
 		AA100020 /* PacketTunnelProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PacketTunnelProvider.swift; sourceTree = "<group>"; };
 		AA100021 /* WireGuardTunnel.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WireGuardTunnel.entitlements; sourceTree = "<group>"; };
 		AA100022 /* TunnelConfiguration+WgQuickConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TunnelConfiguration+WgQuickConfig.swift"; sourceTree = "<group>"; };
@@ -217,6 +219,7 @@
 				AA100006 /* SettingsView.swift */,
 				AA100007 /* PaywallView.swift */,
 				AA100019 /* TokenActivationSheet.swift */,
+				AA10001A /* HavenDNSSettingsView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -488,6 +491,7 @@
 				AA000006 /* SettingsView.swift in Sources */,
 				AA000007 /* PaywallView.swift in Sources */,
 				AA000019 /* TokenActivationSheet.swift in Sources */,
+				AA00001A /* HavenDNSSettingsView.swift in Sources */,
 				AA000008 /* Models.swift in Sources */,
 				AA000009 /* APIClient.swift in Sources */,
 				AA000010 /* WireGuardManager.swift in Sources */,

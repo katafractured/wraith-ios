@@ -297,10 +297,36 @@ struct SettingsView: View {
                     .font(KFFont.caption(12))
                     .foregroundStyle(Color.kfError)
             }
+
+            if haven.isEnabled {
+                Divider().background(Color.kfBorder)
+
+                NavigationLink {
+                    HavenDNSSettingsView()
+                        .environmentObject(haven)
+                        .environmentObject(storeKit)
+                } label: {
+                    SettingsRow(icon: "slider.horizontal.3", label: "Configure Filters") {
+                        HStack(spacing: 4) {
+                            if let prefs = haven.preferences {
+                                Text(prefs.protectionLevel.capitalized)
+                                    .font(KFFont.caption(12))
+                                    .foregroundStyle(Color.kfTextMuted)
+                            }
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 13))
+                                .foregroundStyle(Color.kfTextMuted)
+                        }
+                    }
+                }
+            }
         }
         .padding(KFSpacing.md)
         .kfCard()
-        .task { await haven.refreshStatus() }
+        .task {
+            await haven.refreshStatus()
+            await haven.loadPreferences()
+        }
     }
 
     // MARK: - Subscription management card

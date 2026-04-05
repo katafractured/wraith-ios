@@ -148,7 +148,9 @@ final class ServerListManager: ObservableObject {
                     // ECONNREFUSED = server sent TCP RST — it's reachable, port just isn't open.
                     // That RST is a real round-trip, so we still have a valid latency sample.
                     let ms = Date().timeIntervalSince(start) * 1000
-                    let isRefused = (error as? POSIXError)?.code == .ECONNREFUSED
+                    let isRefused: Bool
+                    if case .posix(let code) = error, code == .ECONNREFUSED { isRefused = true }
+                    else { isRefused = false }
                     finish(with: isRefused ? ms : nil)
                 case .cancelled:
                     finish(with: nil)

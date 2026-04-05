@@ -33,6 +33,17 @@
 		AA000034 /* NetworkExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA100030 /* NetworkExtension.framework */; };
 		AA000035 /* WireGuardKit in Frameworks */ = {isa = PBXBuildFile; productRef = BCWGPROD001 /* WireGuardKit */; };
 		AACOPYREF001 /* WireGuardTunnel.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AAPROD002 /* WireGuardTunnel.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		BBMAC050 /* WraithVPNMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBMAC010 /* WraithVPNMacApp.swift */; };
+		BBMAC051 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBMAC011 /* MenuBarView.swift */; };
+		BBMAC052 /* MenuBarLabel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBMAC012 /* MenuBarLabel.swift */; };
+		BBMAC053 /* TokenEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBMAC013 /* TokenEntryView.swift */; };
+		BBMAC054 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100009 /* APIClient.swift */; };
+		BBMAC055 /* StoreKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100011 /* StoreKitManager.swift */; };
+		BBMAC056 /* HavenDNSManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100018 /* HavenDNSManager.swift */; };
+		BBMAC057 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100013 /* KeychainHelper.swift */; };
+		BBMAC058 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100008 /* Models.swift */; };
+		BBMAC059 /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = BBMAC014 /* Info.plist */; };
+		BBMAC060 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = BBMAC015 /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -124,6 +135,14 @@
 		AAPROD001 /* WraithVPN.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WraithVPN.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AAPROD002 /* WireGuardTunnel.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WireGuardTunnel.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		BC9FECE02F80E5140020F723 /* WireGuard.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = WireGuard.xcodeproj; sourceTree = "<group>"; };
+		BBMAC010 /* WraithVPNMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WraithVPNMacApp.swift; sourceTree = "<group>"; };
+		BBMAC011 /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
+		BBMAC012 /* MenuBarLabel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarLabel.swift; sourceTree = "<group>"; };
+		BBMAC013 /* TokenEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenEntryView.swift; sourceTree = "<group>"; };
+		BBMAC014 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		BBMAC015 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		BBMAC016 /* WraithVPNMac.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WraithVPNMac.entitlements; sourceTree = "<group>"; };
+		BBMACPROD001 /* WraithVPNMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WraithVPNMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -147,6 +166,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		BBMACBP001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -155,6 +181,7 @@
 			children = (
 				AAGRP001 /* WraithVPN */,
 				AAGRP005 /* WireGuardTunnel */,
+				BBMACGRP001 /* WraithVPNMac */,
 				AAGRP009 /* Frameworks */,
 				AAGRP010 /* Products */,
 				BC9FECE02F80E5140020F723 /* WireGuard.xcodeproj */,
@@ -245,8 +272,23 @@
 			children = (
 				AAPROD001 /* WraithVPN.app */,
 				AAPROD002 /* WireGuardTunnel.appex */,
+				BBMACPROD001 /* WraithVPNMac.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		BBMACGRP001 /* WraithVPNMac */ = {
+			isa = PBXGroup;
+			children = (
+				BBMAC010 /* WraithVPNMacApp.swift */,
+				BBMAC011 /* MenuBarView.swift */,
+				BBMAC012 /* MenuBarLabel.swift */,
+				BBMAC013 /* TokenEntryView.swift */,
+				BBMAC014 /* Info.plist */,
+				BBMAC015 /* PrivacyInfo.xcprivacy */,
+				BBMAC016 /* WraithVPNMac.entitlements */,
+			);
+			path = WraithVPNMac;
 			sourceTree = "<group>";
 		};
 		BC9FECE12F80E5140020F723 /* Products */ = {
@@ -302,6 +344,23 @@
 			productReference = AAPROD002 /* WireGuardTunnel.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		BBMACTGT001 /* WraithVPNMac */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BBMACCL001 /* Build configuration list for PBXNativeTarget "WraithVPNMac" */;
+			buildPhases = (
+				BBMACBP001 /* Frameworks */,
+				BBMACSP001 /* Sources */,
+				BBMACRES001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = WraithVPNMac;
+			productName = WraithVPNMac;
+			productReference = BBMACPROD001 /* WraithVPNMac.app */;
+			productType = "com.apple.product-type.application";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -316,6 +375,9 @@
 						CreatedOnToolsVersion = 15.4;
 					};
 					AATGT002 = {
+						CreatedOnToolsVersion = 15.4;
+					};
+					BBMACTGT001 = {
 						CreatedOnToolsVersion = 15.4;
 					};
 				};
@@ -344,6 +406,7 @@
 			targets = (
 				AATGT001 /* WraithVPN */,
 				AATGT002 /* WireGuardTunnel */,
+				BBMACTGT001 /* WraithVPNMac */,
 			);
 		};
 /* End PBXProject section */
@@ -395,6 +458,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		BBMACRES001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BBMAC059 /* Info.plist in Resources */,
+				BBMAC060 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -427,6 +499,22 @@
 				AA000020 /* PacketTunnelProvider.swift in Sources */,
 				AA000021 /* TunnelConfiguration+WgQuickConfig.swift in Sources */,
 				AA000022 /* String+ArrayConversion.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BBMACSP001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BBMAC050 /* WraithVPNMacApp.swift in Sources */,
+				BBMAC051 /* MenuBarView.swift in Sources */,
+				BBMAC052 /* MenuBarLabel.swift in Sources */,
+				BBMAC053 /* TokenEntryView.swift in Sources */,
+				BBMAC054 /* APIClient.swift in Sources */,
+				BBMAC055 /* StoreKitManager.swift in Sources */,
+				BBMAC056 /* HavenDNSManager.swift in Sources */,
+				BBMAC057 /* KeychainHelper.swift in Sources */,
+				BBMAC058 /* Models.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -646,6 +734,52 @@
 			};
 			name = Release;
 		};
+		BBMACXC001D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = WraithVPNMac/WraithVPNMac.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2SGGP65W6C;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = WraithVPNMac/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.katafract.wraith.mac;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		BBMACXC001R /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = WraithVPNMac/WraithVPNMac.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2SGGP65W6C;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = WraithVPNMac/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.katafract.wraith.mac;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -672,6 +806,15 @@
 			buildConfigurations = (
 				AAXC002D /* Debug */,
 				AAXC002R /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BBMACCL001 /* Build configuration list for PBXNativeTarget "WraithVPNMac" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BBMACXC001D /* Debug */,
+				BBMACXC001R /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

@@ -38,12 +38,14 @@ private struct APIRequest {
     let path: String
     let body: (any Encodable)?
     let requiresAuth: Bool
+    let extraHeaders: [String: String]
 
-    init(_ method: HTTPMethod, _ path: String, body: (any Encodable)? = nil, auth: Bool = false) {
+    init(_ method: HTTPMethod, _ path: String, body: (any Encodable)? = nil, auth: Bool = false, extraHeaders: [String: String] = [:]) {
         self.method = method
         self.path = path
         self.body = body
         self.requiresAuth = auth
+        self.extraHeaders = extraHeaders
     }
 }
 
@@ -106,6 +108,12 @@ final class APIClient {
         let _: EmptyResponse = try await request(APIRequest(.DELETE, "/v1/peers/\(peerId)", auth: true))
     }
 
+    /// Validates an existing subscription token and returns its info.
+    /// Used on macOS to activate via a token from connect.katafract.com or iOS.
+    func validateToken(_ token: String) async throws -> TokenResponse {
+        return try await request(APIRequest(.GET, "/v1/token/info", auth: false, extraHeaders: ["Authorization": "Bearer \(token)"]))
+    }
+
     /// Validates an Apple transaction and exchanges it for a subscription token.
     func validateApplePurchase(
         transactionId: String,
@@ -139,6 +147,11 @@ final class APIClient {
                 throw APIError.noToken
             }
             urlRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+
+        // Extra headers (e.g. token validation with explicit Bearer)
+        for (key, value) in req.extraHeaders {
+            urlRequest.setValue(value, forHTTPHeaderField: key)
         }
 
         // Encode body

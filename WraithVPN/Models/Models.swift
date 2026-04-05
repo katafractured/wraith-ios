@@ -145,12 +145,14 @@ struct AppleTokenRequest: Encodable {
     let originalTransactionId: String
     let productId: String
     let bundleId: String
+    let jwsTransaction: String
 
     enum CodingKeys: String, CodingKey {
         case transactionId         = "transaction_id"
         case originalTransactionId = "original_transaction_id"
         case productId             = "product_id"
         case bundleId              = "bundle_id"
+        case jwsTransaction        = "jws_transaction"
     }
 }
 

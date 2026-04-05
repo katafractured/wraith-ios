@@ -324,8 +324,8 @@ private struct ProductOptionView: View {
 
     private var displayName: String {
         product.id == WraithProduct.armorAnnual.rawValue
-            ? "Wraith Veil — Annual"
-            : "Wraith Veil — Monthly"
+            ? "WraithVPN — Annual"
+            : "WraithVPN — Monthly"
     }
 
     private var periodLabel: String {

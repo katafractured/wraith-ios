@@ -22,6 +22,8 @@ struct HavenDNSSettingsView: View {
             Group {
                 if let prefs = haven.preferences {
                     content(prefs)
+                } else if haven.loadPreferencesError {
+                    errorState
                 } else {
                     loadingState
                 }
@@ -287,7 +289,7 @@ struct HavenDNSSettingsView: View {
         }
     }
 
-    // MARK: - Loading state
+    // MARK: - Loading / error states
 
     private var loadingState: some View {
         VStack(spacing: KFSpacing.lg) {
@@ -298,6 +300,27 @@ struct HavenDNSSettingsView: View {
                 .font(KFFont.body())
                 .foregroundStyle(Color.kfTextMuted)
         }
+    }
+
+    private var errorState: some View {
+        VStack(spacing: KFSpacing.lg) {
+            Image(systemName: "wifi.exclamationmark")
+                .font(.system(size: 36))
+                .foregroundStyle(Color.kfTextMuted)
+            Text("Couldn't load settings")
+                .font(KFFont.heading(16))
+                .foregroundStyle(.white)
+            Text("Check your connection and try again.")
+                .font(KFFont.caption(13))
+                .foregroundStyle(Color.kfTextMuted)
+            Button("Retry") {
+                Task { await haven.loadPreferences() }
+            }
+            .font(KFFont.body(14))
+            .foregroundStyle(Color.kfAccentBlue)
+        }
+        .multilineTextAlignment(.center)
+        .padding(KFSpacing.xl)
     }
 
     // MARK: - Helpers

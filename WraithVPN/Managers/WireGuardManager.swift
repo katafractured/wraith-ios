@@ -120,6 +120,8 @@ final class WireGuardManager: ObservableObject {
         }
         await removeProfile()
         KeychainHelper.shared.delete(for: .activePeerId)
+        KeychainHelper.shared.delete(for: .wgAssignedIP)
+        KeychainHelper.shared.delete(for: .wgExitIP)
         activePeerId    = nil
         assignedIP      = nil
         exitIP          = nil
@@ -176,6 +178,10 @@ final class WireGuardManager: ObservableObject {
         isProvisioned   = true
         try? KeychainHelper.shared.save(provision.peerId,  for: .activePeerId)
         try? KeychainHelper.shared.save(server.nodeId,     for: .activeNodeId)
+        if let ip = provision.assignedIpv4.isEmpty ? nil : Optional(provision.assignedIpv4) {
+            try? KeychainHelper.shared.save(ip, for: .wgAssignedIP)
+        }
+        if let ip = exitIP { try? KeychainHelper.shared.save(ip, for: .wgExitIP) }
     }
 
     /// Replaces an empty/missing PrivateKey line in a wg-quick config with the
@@ -217,6 +223,8 @@ final class WireGuardManager: ObservableObject {
                 manager       = existing
                 isProvisioned = true
                 activePeerId  = KeychainHelper.shared.readOptional(for: .activePeerId)
+                assignedIP    = KeychainHelper.shared.readOptional(for: .wgAssignedIP)
+                exitIP        = KeychainHelper.shared.readOptional(for: .wgExitIP)
                 // Restore which node this profile is provisioned for so server-change
                 // detection works after an app restart.
                 if let nodeId = KeychainHelper.shared.readOptional(for: .activeNodeId) {

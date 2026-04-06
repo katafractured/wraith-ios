@@ -20,6 +20,8 @@ final class HavenDNSManager: ObservableObject {
     @Published var error: String? = nil
     @Published var preferences: DnsPreferences? = nil
     @Published var isUpdatingPreferences: Bool = false
+    @Published var isLoadingPreferences: Bool = false
+    @Published var loadPreferencesError: Bool = false
 
     // MARK: - Private
 
@@ -96,10 +98,13 @@ final class HavenDNSManager: ObservableObject {
 
     func loadPreferences() async {
         guard KeychainHelper.shared.readOptional(for: .subscriptionToken) != nil else { return }
+        isLoadingPreferences = true
+        loadPreferencesError = false
+        defer { isLoadingPreferences = false }
         do {
             preferences = try await APIClient.shared.fetchDnsPreferences()
         } catch {
-            // Non-fatal — UI falls back gracefully if nil
+            loadPreferencesError = preferences == nil  // only flag error if we have nothing to show
         }
     }
 

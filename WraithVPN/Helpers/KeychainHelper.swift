@@ -41,6 +41,7 @@ final class KeychainHelper {
         case wgPeerId           = "com.katafract.wraith.wgPeerId"
         case wgNodeId           = "com.katafract.wraith.wgNodeId"
         case wgAssignedIP       = "com.katafract.wraith.wgAssignedIP"
+        case wgExitIP           = "com.katafract.wraith.wgExitIP"
         case activeNodeId       = "com.katafract.wraith.activeNodeId"
     }
 

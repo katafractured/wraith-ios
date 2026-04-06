@@ -330,14 +330,17 @@ struct ConnectView: View {
                     vpn.disconnect()
                 } else if vpn.isProvisioned,
                           let selected = servers.selectedServer,
-                          selected.nodeId == vpn.connectedServer?.nodeId {
-                    // Same server already provisioned — just start the tunnel.
+                          selected.nodeId != vpn.connectedServer?.nodeId {
+                    // Different server explicitly selected — re-provision.
+                    try await vpn.connectToServer(selected)
+                } else if vpn.isProvisioned {
+                    // Already provisioned (no conflicting selection) — just start.
                     try await vpn.connect()
                 } else if let server = servers.selectedServer {
-                    // No profile yet — provision to selected server
+                    // Not provisioned, but RTT probe already picked a server.
                     try await vpn.connectToServer(server)
                 } else {
-                    // Fallback: provision to nearest
+                    // Fallback: provision to nearest (GeoIP).
                     let nearest = try await APIClient.shared.fetchNearestServer()
                     try await vpn.connectToServer(nearest)
                 }

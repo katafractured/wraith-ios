@@ -332,7 +332,7 @@ struct ConnectView: View {
                           let selected = servers.selectedServer,
                           selected.nodeId == vpn.connectedServer?.nodeId {
                     // Same server already provisioned — just start the tunnel.
-                    try vpn.connect()
+                    try await vpn.connect()
                 } else if let server = servers.selectedServer {
                     // No profile yet — provision to selected server
                     try await vpn.connectToServer(server)

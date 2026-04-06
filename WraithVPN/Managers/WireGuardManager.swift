@@ -78,12 +78,7 @@ final class WireGuardManager: ObservableObject {
 
     /// Provisions to a specific server, installs the profile, then connects.
     func connectToServer(_ server: VPNServer) async throws {
-        // Stop any running tunnel first — NE ignores startTunnel on an active session.
-        if manager?.connection.status == .connected || manager?.connection.status == .connecting {
-            manager?.connection.stopVPNTunnel()
-            // Brief pause for the tunnel process to tear down before we overwrite the profile.
-            try await Task.sleep(for: .milliseconds(500))
-        }
+        await stopAllActiveTunnels()
         status = .connecting
         try await provisionAndInstall(server: server)
         await applyOnDemand(autoConnectEnabled)
@@ -91,11 +86,12 @@ final class WireGuardManager: ObservableObject {
     }
 
     /// Starts the already-installed VPN profile.
-    func connect() throws {
+    func connect() async throws {
         guard isProvisioned else {
             status = .failed("No VPN profile installed.")
             return
         }
+        await stopAllActiveTunnels()
         status = .connecting
         Task { await applyOnDemand(autoConnectEnabled) }
         try startTunnel()
@@ -289,6 +285,24 @@ final class WireGuardManager: ObservableObject {
     }
 
     // MARK: - Tunnel start
+
+    /// Stops every active VPN tunnel on the device (ours and any other app's)
+    /// before starting ours. iOS silently ignores startTunnel while another
+    /// tunnel is connected, so we must clear the field first.
+    private func stopAllActiveTunnels() async {
+        guard let allManagers = try? await NETunnelProviderManager.loadAllFromPreferences() else { return }
+        var stopped = false
+        for mgr in allManagers {
+            let s = mgr.connection.status
+            if s == .connected || s == .connecting {
+                mgr.connection.stopVPNTunnel()
+                stopped = true
+            }
+        }
+        if stopped {
+            try? await Task.sleep(for: .milliseconds(500))
+        }
+    }
 
     private func startTunnel() throws {
         guard let connection = manager?.connection as? NETunnelProviderSession else {

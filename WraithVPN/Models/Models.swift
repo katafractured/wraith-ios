@@ -332,7 +332,7 @@ enum LatencyTier {
 
 // MARK: - Haven DNS preferences
 
-struct DnsPreferences: Decodable {
+struct DnsPreferences: Codable {
     let tier: String
     let protectionLevel: String
     let protectionLevels: [String]

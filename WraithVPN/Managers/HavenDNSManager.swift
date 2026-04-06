@@ -27,10 +27,12 @@ final class HavenDNSManager: ObservableObject {
 
     private let dohURL = "https://dns.katafract.com/dns-query"
     private let profileDescription = "Haven DNS — Ad & tracker blocking by WraithVPN"
+    private let prefsKey = "havenDnsPreferences"
 
     // MARK: - Init
 
     init() {
+        preferences = Self.loadCachedPreferences()
         Task { await refreshStatus() }
         NotificationCenter.default.addObserver(
             self,
@@ -112,7 +114,9 @@ final class HavenDNSManager: ObservableObject {
         loadPreferencesError = false
         defer { isLoadingPreferences = false }
         do {
-            preferences = try await APIClient.shared.fetchDnsPreferences()
+            let fetched = try await APIClient.shared.fetchDnsPreferences()
+            preferences = fetched
+            Self.cachePreferences(fetched)
         } catch {
             loadPreferencesError = preferences == nil  // only flag error if we have nothing to show
         }
@@ -121,6 +125,21 @@ final class HavenDNSManager: ObservableObject {
     func updatePreferences(_ update: DnsPreferencesUpdate) async throws {
         isUpdatingPreferences = true
         defer { isUpdatingPreferences = false }
-        preferences = try await APIClient.shared.updateDnsPreferences(update)
+        let updated = try await APIClient.shared.updateDnsPreferences(update)
+        preferences = updated
+        Self.cachePreferences(updated)
+    }
+
+    // MARK: - Cache helpers
+
+    private static func cachePreferences(_ prefs: DnsPreferences) {
+        if let data = try? JSONEncoder().encode(prefs) {
+            UserDefaults.standard.set(data, forKey: "havenDnsPreferences")
+        }
+    }
+
+    private static func loadCachedPreferences() -> DnsPreferences? {
+        guard let data = UserDefaults.standard.data(forKey: "havenDnsPreferences") else { return nil }
+        return try? JSONDecoder().decode(DnsPreferences.self, from: data)
     }
 }

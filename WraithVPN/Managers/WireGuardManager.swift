@@ -36,6 +36,11 @@ final class WireGuardManager: ObservableObject {
     @Published var autoConnectEnabled: Bool = UserDefaults.standard.object(forKey: "autoConnectEnabled") == nil
         ? true
         : UserDefaults.standard.bool(forKey: "autoConnectEnabled")
+    /// Whether to enable the OS-level kill switch (includeAllNetworks). When off, traffic
+    /// still routes through WireGuard but iOS can fall back if the tunnel drops.
+    @Published var tunnelMode: TunnelMode = TunnelMode(
+        rawValue: UserDefaults.standard.string(forKey: "tunnelMode") ?? ""
+    ) ?? .standard
     /// Public exit IP of the connected server (set on provision, cleared on disconnect).
     @Published var exitIP: String? = nil
     /// Timestamp of when the tunnel last transitioned to .connected.
@@ -104,6 +109,15 @@ final class WireGuardManager: ObservableObject {
         status = .disconnecting
         manager?.connection.stopVPNTunnel()
         Task { await applyOnDemand(false) }
+    }
+
+    /// Persists the tunnel mode and reconnects if currently connected to apply it.
+    func setTunnelMode(_ mode: TunnelMode) async {
+        tunnelMode = mode
+        UserDefaults.standard.set(mode.rawValue, forKey: "tunnelMode")
+        if status == .connected, let server = connectedServer {
+            try? await connectToServer(server)
+        }
     }
 
     /// Persists the auto-connect preference and updates the live NE profile.
@@ -251,10 +265,9 @@ final class WireGuardManager: ObservableObject {
             "wgConfig": configText,
             "serverName": server.cityName,
         ]
-        // Tell iOS this tunnel handles all network traffic. Without this, apps that
-        // check reachability on the physical interface (e.g. Maps) see it as offline
-        // because AllowedIPs = 0.0.0.0/0 removes the default route from WiFi/cellular.
-        proto.includeAllNetworks = true
+        // Full mode: OS-level kill switch — no internet if tunnel drops.
+        // Standard mode: traffic routes through WireGuard but iOS can fall back.
+        proto.includeAllNetworks = (tunnelMode == .full)
         proto.excludeLocalNetworks = true
 
         let onDemandRule = NEOnDemandRuleConnect()

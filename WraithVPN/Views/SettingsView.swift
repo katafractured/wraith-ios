@@ -223,10 +223,22 @@ struct SettingsView: View {
 
             Divider().background(Color.kfBorder)
 
-            SettingsRow(icon: "lock.shield.fill", label: "Kill Switch") {
-                Text("Always On")
-                    .font(KFFont.caption(12))
-                    .foregroundStyle(Color.kfConnected)
+            VStack(alignment: .leading, spacing: 4) {
+                SettingsRow(icon: "lock.shield.fill", label: "Kill Switch") {
+                    Toggle("", isOn: Binding(
+                        get: { vpn.tunnelMode == .full },
+                        set: { on in Task { await vpn.setTunnelMode(on ? .full : .standard) } }
+                    ))
+                    .labelsHidden()
+                    .tint(Color.kfAccentBlue)
+                }
+                Text(vpn.tunnelMode == .full
+                     ? "Full mode: iOS forces all traffic through the tunnel. If the VPN drops, there is no internet until it reconnects."
+                     : "Standard mode: your traffic still routes through the VPN exit, but if the tunnel drops iOS falls back to your normal connection. System apps like Mail and Maps stay functional.")
+                    .font(KFFont.caption(11))
+                    .foregroundStyle(Color.kfTextMuted)
+                    .padding(.leading, 36)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
             Divider().background(Color.kfBorder)

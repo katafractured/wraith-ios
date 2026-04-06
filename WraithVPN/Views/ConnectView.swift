@@ -232,8 +232,8 @@ struct ConnectView: View {
             }
             summaryPill(
                 title: "Kill Switch",
-                value: "Always On",
-                icon: "lock.shield.fill"
+                value: vpn.tunnelMode == .full ? "On" : "Off",
+                icon: vpn.tunnelMode == .full ? "lock.shield.fill" : "lock.shield"
             )
         }
     }

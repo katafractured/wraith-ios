@@ -67,7 +67,7 @@ enum RegionInfo {
         "eu-west":      ("Frankfurt",  "🇩🇪"),
         "eu-north":     ("Helsinki",   "🇫🇮"),
         "ap-southeast": ("Singapore",  "🇸🇬"),
-        "us-central":   ("Chicago",    "🇺🇸"),
+        "us-central":   ("Missouri",    "🇺🇸"),
         "us-east":      ("Virginia",   "🇺🇸"),
         "us-west":      ("Oregon",     "🇺🇸"),
     ]
@@ -353,6 +353,24 @@ struct DnsPreferences: Decodable {
         case blockedServices   = "blocked_services"
         case blockableServices = "blockable_services"
         case updatedAt         = "updated_at"
+    }
+}
+
+// MARK: - Tunnel mode
+
+enum TunnelMode: String {
+    /// All traffic routes through WireGuard. If the tunnel drops, iOS falls back to
+    /// the native connection. System apps (Mail, Maps) remain functional.
+    case standard
+    /// OS-level kill switch. All traffic is forced through the tunnel; if it drops,
+    /// there is no internet connection until the tunnel is restored.
+    case full
+
+    var displayName: String {
+        switch self {
+        case .standard: return "Standard"
+        case .full:     return "Full (Kill Switch)"
+        }
     }
 }
 

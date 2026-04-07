@@ -146,9 +146,13 @@ final class HavenDNSManager: ObservableObject {
         try? await updatePreferences(update)
     }
 
-    /// Enables Haven DNS profile if the user has a subscription and it isn't already active.
-    func ensureEnabledForSubscriber() async {
-        guard KeychainHelper.shared.readOptional(for: .subscriptionToken) != nil else { return }
+    /// Enables Haven DNS profile if the user has any active entitlement.
+    /// Pass `hasPurchased: true` for IAP/free-tier subscribers who may not yet
+    /// have a Keychain token (e.g. first launch after reinstall, timing race
+    /// between StoreKit init and ContentView task).
+    func ensureEnabledForSubscriber(hasPurchased: Bool = false) async {
+        let hasToken = KeychainHelper.shared.readOptional(for: .subscriptionToken) != nil
+        guard hasToken || hasPurchased else { return }
         await refreshStatus()
         if !isEnabled { await enable() }
     }

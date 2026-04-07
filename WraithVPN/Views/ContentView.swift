@@ -59,13 +59,13 @@ struct ContentView: View {
         .animation(.easeInOut(duration: 0.35), value: hasUnlockedFreeTier)
         .task {
             await vpn.autoProvisionIfNeeded()
-            await haven.ensureEnabledForSubscriber()
+            await haven.ensureEnabledForSubscriber(hasPurchased: storeKit.hasPurchased || hasUnlockedFreeTier)
         }
         .onChange(of: storeKit.hasPurchased) { _, purchased in
             if purchased {
                 Task {
                     await vpn.autoProvisionIfNeeded()
-                    await haven.ensureEnabledForSubscriber()
+                    await haven.ensureEnabledForSubscriber(hasPurchased: true)
                 }
             }
         }

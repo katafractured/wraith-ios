@@ -57,11 +57,22 @@ if [[ "${CONFIRM,,}" != "y" ]]; then
   exit 0
 fi
 
-# ── Commit any pending changes ───────────────────────────────────────────────
-if ! git diff --quiet || ! git diff --cached --quiet; then
-  git add -A
-  git commit -m "Bump to $TAG"
-fi
+# ── Update version + build number in Xcode project ──────────────────────────
+PBXPROJ="WraithVPN.xcodeproj/project.pbxproj"
+
+# MARKETING_VERSION → git tag version (e.g. 1.0.73)
+sed -i "s/MARKETING_VERSION = [0-9][0-9.]*;/MARKETING_VERSION = ${NEXT};/g" "$PBXPROJ"
+
+# CURRENT_PROJECT_VERSION → increment by 1 (build number for TestFlight)
+CURRENT_BUILD=$(grep -m1 'CURRENT_PROJECT_VERSION = ' "$PBXPROJ" | grep -oE '[0-9]+')
+NEXT_BUILD=$(( CURRENT_BUILD + 1 ))
+sed -i "s/CURRENT_PROJECT_VERSION = ${CURRENT_BUILD};/CURRENT_PROJECT_VERSION = ${NEXT_BUILD};/g" "$PBXPROJ"
+
+echo "  version : ${NEXT} (build ${NEXT_BUILD})"
+
+# ── Commit all pending changes (code + project version bump) ─────────────────
+git add -A
+git commit -m "Bump to $TAG"
 
 # ── Tag and push ─────────────────────────────────────────────────────────────
 # Push main first (separate from the tag so Xcode Cloud doesn't fire twice).

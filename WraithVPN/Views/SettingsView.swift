@@ -695,19 +695,6 @@ struct SettingsView: View {
 
             Divider().background(Color.kfBorder)
 
-            NavigationLink {
-                AchievementsView()
-            } label: {
-                SettingsRow(icon: "trophy.fill", label: "Achievements") {
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 13))
-                        .foregroundStyle(Color.kfTextMuted)
-                }
-            }
-            .foregroundStyle(Color(hex: "#eab308"))
-
-            Divider().background(Color.kfBorder)
-
             Button { showTokenEntry = true } label: {
                 SettingsRow(icon: "key.fill", label: "Activate with Token") {
                     Image(systemName: "chevron.right")

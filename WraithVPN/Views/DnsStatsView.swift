@@ -28,6 +28,7 @@ struct DnsStatsView: View {
                         }
                         .padding(KFSpacing.lg)
                     }
+                    .refreshable { await load() }
                 } else if let error = error {
                     errorState(error)
                 } else {

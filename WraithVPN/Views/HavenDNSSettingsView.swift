@@ -12,7 +12,8 @@ struct HavenDNSSettingsView: View {
     @EnvironmentObject var haven:    HavenDNSManager
     @EnvironmentObject var storeKit: StoreKitManager
     @Environment(\.dismiss) private var dismiss
-    @State private var showAchievements = false
+    @AppStorage("simpleMode") private var simpleMode = true
+    @State private var showBlockedServices = false
 
     // MARK: - Body
 
@@ -47,7 +48,9 @@ struct HavenDNSSettingsView: View {
                 statsAndAchievementsRow
                 protectionLevelCard(prefs)
                 advancedCard(prefs)
-                blockedServicesCard(prefs)
+                if !simpleMode {
+                    blockedServicesAccordion(prefs)
+                }
             }
             .padding(KFSpacing.md)
         }
@@ -280,32 +283,45 @@ struct HavenDNSSettingsView: View {
         }
     }
 
-    // MARK: - Blocked services
+    // MARK: - Blocked services (accordion, advanced mode only)
 
-    private func blockedServicesCard(_ prefs: DnsPreferences) -> some View {
+    private func blockedServicesAccordion(_ prefs: DnsPreferences) -> some View {
         VStack(alignment: .leading, spacing: KFSpacing.md) {
-            HStack {
-                sectionHeader("Block Services")
-                Spacer()
-                if !prefs.isPro { proTag }
-            }
-
-            if prefs.isPro {
-                ForEach(ServiceCategory.allCases, id: \.label) { category in
-                    let services = category.services.filter { prefs.blockableServices.contains($0.id) }
-                    if !services.isEmpty {
-                        serviceCategory(label: category.label, services: services, prefs: prefs)
-                    }
+            Button {
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    showBlockedServices.toggle()
                 }
-            } else {
-                Text("Block specific services like YouTube, TikTok, or gambling sites. Available with Haven Pro.")
-                    .font(KFFont.caption(13))
-                    .foregroundStyle(Color.kfTextMuted)
-                    .fixedSize(horizontal: false, vertical: true)
+            } label: {
+                HStack {
+                    sectionHeader("Block Services")
+                    Spacer()
+                    if !prefs.isPro { proTag }
+                    Image(systemName: showBlockedServices ? "chevron.up" : "chevron.down")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(Color.kfTextMuted)
+                }
+            }
+            .buttonStyle(.plain)
+
+            if showBlockedServices {
+                if prefs.isPro {
+                    ForEach(ServiceCategory.allCases, id: \.label) { category in
+                        let services = category.services.filter { prefs.blockableServices.contains($0.id) }
+                        if !services.isEmpty {
+                            serviceCategory(label: category.label, services: services, prefs: prefs)
+                        }
+                    }
+                } else {
+                    Text("Block specific services like YouTube, TikTok, or gambling sites. Available with Haven Pro.")
+                        .font(KFFont.caption(13))
+                        .foregroundStyle(Color.kfTextMuted)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
         }
         .padding(KFSpacing.md)
         .kfCard()
+        .animation(.easeInOut(duration: 0.25), value: showBlockedServices)
     }
 
     private func serviceCategory(label: String, services: [ServiceEntry], prefs: DnsPreferences) -> some View {

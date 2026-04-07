@@ -64,8 +64,13 @@ if ! git diff --quiet || ! git diff --cached --quiet; then
 fi
 
 # ── Tag and push ─────────────────────────────────────────────────────────────
+# Push main first (separate from the tag so Xcode Cloud doesn't fire twice).
+# Only the tag push triggers a build — remove the branch trigger in Xcode Cloud
+# UI (Product → Xcode Cloud → Manage Workflows → Default → Start Conditions)
+# to prevent the branch push from also starting a build.
 git tag "$TAG"
-git push origin HEAD "$TAG"
+git push origin main
+git push origin "$TAG"
 
 echo ""
 echo "✓ Tagged $TAG and pushed."

@@ -26,6 +26,7 @@ struct SettingsView: View {
     @State private var revokingPeerIds: Set<String> = []
     @State private var platformStatus: PlatformStatus? = nil
     @State private var statusCheckDone = false
+    @State private var statusCheckTask: Task<Void, Never>? = nil
     @State private var showRecovery = false
     @State private var showIdentityLink = false
     @State private var identityLinkEmail = ""
@@ -58,19 +59,12 @@ struct SettingsView: View {
                 .padding(KFSpacing.md)
             }
         }
-        .task {
-            if !statusCheckDone {
-                platformStatus = await withTaskGroup(of: PlatformStatus?.self) { group in
-                    group.addTask { try? await APIClient.shared.fetchPlatformStatus() }
-                    group.addTask {
-                        try? await Task.sleep(nanoseconds: 6_000_000_000)
-                        return nil
-                    }
-                    let result = await group.next() ?? nil
-                    group.cancelAll()
-                    return result
-                }
+        .onAppear {
+            guard !statusCheckDone, statusCheckTask == nil else { return }
+            statusCheckTask = Task {
+                platformStatus = try? await APIClient.shared.fetchPlatformStatus()
                 statusCheckDone = true
+                statusCheckTask = nil
             }
         }
         .navigationTitle("Account & Settings")

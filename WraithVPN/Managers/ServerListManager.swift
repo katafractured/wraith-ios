@@ -79,8 +79,8 @@ final class ServerListManager: ObservableObject {
                 }
             }
 
-            // Auto-select the fastest measured server if nothing is picked yet.
-            // This overrides GeoIP-based pre-selection with real RTT.
+            // Auto-select: if selectedServer is already set (e.g. synced from the
+            // connected node), leave it alone. Otherwise pick the fastest measured node.
             if selectedServer == nil, let fastest = servers.first(where: { $0.milliseconds != nil }) {
                 selectedServer = fastest.server
             }

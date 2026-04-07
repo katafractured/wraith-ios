@@ -134,8 +134,28 @@ final class WireGuardManager: ObservableObject {
         }
         await stopAllActiveTunnels()
         status = .connecting
-        Task { await applyOnDemand(autoConnectEnabled) }
-        try startTunnel()
+        // Reload preferences so the manager reflects the latest saved profile,
+        // then apply on-demand before starting. Running applyOnDemand as a
+        // detached Task races with startTunnel; await it here instead.
+        await applyOnDemand(autoConnectEnabled)
+        // One extra load after the save so the connection object is fresh.
+        try? await manager?.loadFromPreferences()
+        do {
+            try startTunnel()
+        } catch let err as NEVPNError where err.code == .configurationInvalid {
+            // Profile is stale (e.g. signing identity changed after rebuild,
+            // or concurrent provision left the NE manager in an invalid state).
+            // Remove the stale profile and re-provision to the nearest server.
+            await removeProfile()
+            isProvisioned = false
+            activePeerId  = nil
+            KeychainHelper.shared.delete(for: .activePeerId)
+            let nearest = try await APIClient.shared.fetchNearestServer()
+            try await provisionAndInstall(server: nearest)
+            await applyOnDemand(autoConnectEnabled)
+            try? await manager?.loadFromPreferences()
+            try startTunnel()
+        }
     }
 
     /// Disconnects the active tunnel.

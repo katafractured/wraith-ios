@@ -167,6 +167,24 @@ private struct AchievementCard: View {
                     Text(label)
                         .font(KFFont.mono(10))
                         .foregroundStyle(Color.white.opacity(0.6))
+                } else if !item.unlocked, let label = item.progressLabel {
+                    // Progress gauge for threshold achievements
+                    VStack(alignment: .leading, spacing: 3) {
+                        GeometryReader { geo in
+                            ZStack(alignment: .leading) {
+                                RoundedRectangle(cornerRadius: 2)
+                                    .fill(Color.kfBorder.opacity(0.5))
+                                    .frame(height: 4)
+                                RoundedRectangle(cornerRadius: 2)
+                                    .fill(tier.glowColor.opacity(0.7))
+                                    .frame(width: geo.size.width * CGFloat(item.progress), height: 4)
+                            }
+                        }
+                        .frame(height: 4)
+                        Text(label)
+                            .font(KFFont.mono(9))
+                            .foregroundStyle(Color.kfTextMuted)
+                    }
                 }
             }
             .padding(KFSpacing.md)

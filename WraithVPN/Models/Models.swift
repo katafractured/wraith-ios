@@ -462,10 +462,14 @@ struct AchievementItem: Codable, Identifiable {
     let icon: String          // SF Symbol name
     let unlocked: Bool
     let unlockedAt: Int?      // Unix timestamp
+    let progress: Double      // 0.0–1.0; 1.0 when unlocked
+    let progressLabel: String? // e.g. "283 / 1,000"; nil for binary achievements
 
     enum CodingKeys: String, CodingKey {
         case id, title, description, icon, unlocked
-        case unlockedAt = "unlocked_at"
+        case unlockedAt     = "unlocked_at"
+        case progress
+        case progressLabel  = "progress_label"
     }
 }
 

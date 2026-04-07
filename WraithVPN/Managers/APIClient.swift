@@ -63,6 +63,9 @@ final class APIClient {
     // MARK: Configuration
 
     private let baseURL = URL(string: "https://api.katafract.com")!
+    /// Direct (non-CF-proxied) endpoint for peer provisioning. Excluded from the VPN
+    /// split tunnel so provisioning always works even when the VPN itself is broken.
+    private let provisionURL = URL(string: "https://provision.katafract.com")!
     private let session: URLSession = {
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = 15
@@ -95,16 +98,19 @@ final class APIClient {
     }
 
     /// Provisions a new WireGuard peer and returns the full config.
+    /// Uses provision.katafract.com (direct, non-CF-proxied) so this works even
+    /// when the VPN tunnel is active — the provisioning endpoint is excluded from
+    /// the split tunnel AllowedIPs.
     func provisionPeer(pubkey: String, region: String?, nodeId: String? = nil, label: String) async throws -> ProvisionResponse {
         let body = ProvisionRequest(clientPubkey: pubkey, region: region, nodeId: nodeId, label: label)
-        return try await request(APIRequest(.POST, "/v1/peers/provision", body: body, auth: true))
+        return try await request(APIRequest(.POST, "/v1/peers/provision", body: body, auth: true), baseOverride: provisionURL)
     }
 
     /// Atomically revokes an existing peer and provisions a new one on a different node.
     /// Uses the same device slot — does not consume an additional seat.
     func switchPeer(fromPeerId: String, pubkey: String, region: String?, nodeId: String? = nil, label: String) async throws -> ProvisionResponse {
         let body = SwitchPeerRequest(fromPeerId: fromPeerId, region: region, nodeId: nodeId, label: label, clientPubkey: pubkey)
-        return try await request(APIRequest(.POST, "/v1/peers/switch", body: body, auth: true))
+        return try await request(APIRequest(.POST, "/v1/peers/switch", body: body, auth: true), baseOverride: provisionURL)
     }
 
     /// Lists all peers provisioned for the current token.
@@ -205,8 +211,8 @@ final class APIClient {
 
     // MARK: - Private core
 
-    private func request<T: Decodable>(_ req: APIRequest) async throws -> T {
-        let url = baseURL.appendingPathComponent(req.path)
+    private func request<T: Decodable>(_ req: APIRequest, baseOverride: URL? = nil) async throws -> T {
+        let url = (baseOverride ?? baseURL).appendingPathComponent(req.path)
         var urlRequest = URLRequest(url: url)
         urlRequest.httpMethod = req.method.rawValue
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")

@@ -304,7 +304,12 @@ struct SubscriptionInfo: Equatable {
     }
 
     var expiryFormatted: String {
-        guard let exp = expiresAt else { return "Unknown" }
+        guard let exp = expiresAt else {
+            switch plan {
+            case "founder", "total", "total_annual": return "Never"
+            default: return "Unknown"
+            }
+        }
         let f = DateFormatter()
         f.dateStyle = .medium
         f.timeStyle = .none

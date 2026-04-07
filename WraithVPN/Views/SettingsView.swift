@@ -25,6 +25,7 @@ struct SettingsView: View {
     @State private var peerListError: String? = nil
     @State private var revokingPeerIds: Set<String> = []
     @State private var platformStatus: PlatformStatus? = nil
+    @State private var statusCheckDone = false
     @State private var showRecovery = false
     @State private var showIdentityLink = false
     @State private var identityLinkEmail = ""
@@ -58,8 +59,18 @@ struct SettingsView: View {
             }
         }
         .task {
-            if platformStatus == nil {
-                platformStatus = try? await APIClient.shared.fetchPlatformStatus()
+            if !statusCheckDone {
+                platformStatus = await withTaskGroup(of: PlatformStatus?.self) { group in
+                    group.addTask { try? await APIClient.shared.fetchPlatformStatus() }
+                    group.addTask {
+                        try? await Task.sleep(nanoseconds: 6_000_000_000)
+                        return nil
+                    }
+                    let result = await group.next() ?? nil
+                    group.cancelAll()
+                    return result
+                }
+                statusCheckDone = true
             }
         }
         .navigationTitle("Account & Settings")
@@ -698,7 +709,7 @@ struct SettingsView: View {
                     Text("System Status")
                         .font(KFFont.body(14))
                         .foregroundStyle(.white)
-                    Text(platformStatus?.displayStatus ?? "Checking…")
+                    Text(platformStatus?.displayStatus ?? (statusCheckDone ? "Unavailable" : "Checking…"))
                         .font(KFFont.caption(12))
                         .foregroundStyle(Color.kfTextMuted)
                 }

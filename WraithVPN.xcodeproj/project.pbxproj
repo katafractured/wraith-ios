@@ -50,6 +50,12 @@
 		BBMAC060 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = BBMAC015 /* PrivacyInfo.xcprivacy */; };
 		BBMAC061 /* VPNConfigManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBMAC016B /* VPNConfigManager.swift */; };
 		BBMAC062 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA100015 /* Assets.xcassets */; };
+		BBMAC068 /* NetworkExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA100030 /* NetworkExtension.framework */; };
+		BBMAC063 /* WireGuardManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100010 /* WireGuardManager.swift */; };
+		BBMAC064 /* ServerListManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100012 /* ServerListManager.swift */; };
+		BBMAC065 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100014 /* DesignSystem.swift */; };
+		BBMAC066 /* MainMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBMAC020 /* MainMenuView.swift */; };
+		BBMAC067 /* MacAccountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBMAC021 /* MacAccountView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -153,6 +159,8 @@
 		BBMAC015 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		BBMAC016 /* WraithVPNMac.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WraithVPNMac.entitlements; sourceTree = "<group>"; };
 		BBMAC016B /* VPNConfigManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VPNConfigManager.swift; sourceTree = "<group>"; };
+		BBMAC020 /* MainMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainMenuView.swift; sourceTree = "<group>"; };
+		BBMAC021 /* MacAccountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacAccountView.swift; sourceTree = "<group>"; };
 		BBMACPROD001 /* WraithVPNMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WraithVPNMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BC9FECE02F80E5140020F723 /* WireGuard.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = WireGuard.xcodeproj; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -182,6 +190,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BBMAC068 /* NetworkExtension.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -298,6 +307,8 @@
 			isa = PBXGroup;
 			children = (
 				BBMAC010 /* WraithVPNMacApp.swift */,
+				BBMAC020 /* MainMenuView.swift */,
+				BBMAC021 /* MacAccountView.swift */,
 				BBMAC011 /* MenuBarView.swift */,
 				BBMAC012 /* MenuBarLabel.swift */,
 				BBMAC013 /* TokenEntryView.swift */,
@@ -539,6 +550,11 @@
 				BBMAC057 /* KeychainHelper.swift in Sources */,
 				BBMAC058 /* Models.swift in Sources */,
 				BBMAC061 /* VPNConfigManager.swift in Sources */,
+				BBMAC063 /* WireGuardManager.swift in Sources */,
+				BBMAC064 /* ServerListManager.swift in Sources */,
+				BBMAC065 /* DesignSystem.swift in Sources */,
+				BBMAC066 /* MainMenuView.swift in Sources */,
+				BBMAC067 /* MacAccountView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -665,7 +681,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = WraithVPN/WraithVPN.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 57;
+				CURRENT_PROJECT_VERSION = 58;
 				DEVELOPMENT_TEAM = 2SGGP65W6C;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = WraithVPN/Info.plist;
@@ -692,7 +708,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = WraithVPN/WraithVPN.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 57;
+				CURRENT_PROJECT_VERSION = 58;
 				DEVELOPMENT_TEAM = 2SGGP65W6C;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = WraithVPN/Info.plist;
@@ -717,7 +733,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = WireGuardTunnel/WireGuardTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 57;
+				CURRENT_PROJECT_VERSION = 58;
 				DEVELOPMENT_TEAM = 2SGGP65W6C;
 				INFOPLIST_FILE = WireGuardTunnel/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
@@ -740,7 +756,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = WireGuardTunnel/WireGuardTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 57;
+				CURRENT_PROJECT_VERSION = 58;
 				DEVELOPMENT_TEAM = 2SGGP65W6C;
 				INFOPLIST_FILE = WireGuardTunnel/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
@@ -765,7 +781,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = WraithVPNMac/WraithVPNMac.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 57;
+				CURRENT_PROJECT_VERSION = 58;
 				DEVELOPMENT_TEAM = 2SGGP65W6C;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = WraithVPNMac/Info.plist;
@@ -790,7 +806,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = WraithVPNMac/WraithVPNMac.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 57;
+				CURRENT_PROJECT_VERSION = 58;
 				DEVELOPMENT_TEAM = 2SGGP65W6C;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = WraithVPNMac/Info.plist;

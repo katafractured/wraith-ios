@@ -50,7 +50,11 @@ final class WireGuardManager: ObservableObject {
 
     private var manager: NETunnelProviderManager?
     private var statusObserver: NSObjectProtocol?
+    #if os(macOS)
+    private let tunnelBundleId = "com.katafract.wraith.mac.tunnel"
+    #else
     private let tunnelBundleId = "com.katafract.wraith.tunnel"
+    #endif
 
     // MARK: - Init / lifecycle
 

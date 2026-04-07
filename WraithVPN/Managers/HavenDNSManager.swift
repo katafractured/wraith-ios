@@ -88,8 +88,16 @@ final class HavenDNSManager: ObservableObject {
             try await manager.saveToPreferences()
             isEnabled = true
         } catch {
-            self.error = "Could not enable Haven DNS: \(error.localizedDescription)"
-            await refreshStatus()
+            // "The configuration is unchanged" means the profile is already installed
+            // but not yet user-enabled (requires Settings > VPN & Device Management > DNS).
+            // Treat this as success — the profile is there, the user just needs to activate it.
+            let msg = error.localizedDescription.lowercased()
+            if msg.contains("unchanged") || msg.contains("no changes") {
+                await refreshStatus()
+            } else {
+                self.error = "Could not enable Haven DNS: \(error.localizedDescription)"
+                await refreshStatus()
+            }
         }
     }
 

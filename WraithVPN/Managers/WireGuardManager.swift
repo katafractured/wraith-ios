@@ -51,11 +51,7 @@ final class WireGuardManager: ObservableObject {
     private var manager: NETunnelProviderManager?
     private var statusObserver: NSObjectProtocol?
     private var previousStatus: VPNStatus = .disconnected
-    #if os(macOS)
-    private let tunnelBundleId = "com.katafract.wraith.mac.tunnel"
-    #else
     private let tunnelBundleId = "com.katafract.wraith.tunnel"
-    #endif
 
     // MARK: - Init / lifecycle
 

@@ -87,8 +87,9 @@ final class WireGuardManager: ObservableObject {
     }
 
     /// Provisions to a specific server, installs the profile, then connects.
-    /// If a peer already exists on a different node, uses /v1/peers/switch (atomic,
-    /// no extra slot consumed). If the target node is the same, re-provisions idempotently.
+    /// - Same node + existing peer: reconnects without touching the backend.
+    /// - Different node + existing peer: atomic switch (no extra slot consumed).
+    /// - No existing peer, or stale peer (404): fresh provision.
     func connectToServer(_ server: VPNServer) async throws {
         await stopAllActiveTunnels()
         status = .connecting
@@ -96,10 +97,22 @@ final class WireGuardManager: ObservableObject {
         let existingPeerId = activePeerId ?? KeychainHelper.shared.readOptional(for: .activePeerId)
         let existingNodeId = connectedServer?.nodeId ?? KeychainHelper.shared.readOptional(for: .activeNodeId)
 
-        if let peerId = existingPeerId,
-           let nodeId = existingNodeId,
-           nodeId != server.nodeId {
-            try await switchAndInstall(fromPeerId: peerId, server: server)
+        if let peerId = existingPeerId, let nodeId = existingNodeId {
+            if nodeId == server.nodeId {
+                // Same node — profile already installed, just reconnect.
+            } else {
+                // Different node — switch atomically. Fall back to fresh provision
+                // if the source peer is already revoked or missing (e.g. after reinstall).
+                do {
+                    try await switchAndInstall(fromPeerId: peerId, server: server)
+                } catch let error as APIError {
+                    if case .httpError(let code, _) = error, code == 404 {
+                        try await provisionAndInstall(server: server)
+                    } else {
+                        throw error
+                    }
+                }
+            }
         } else {
             try await provisionAndInstall(server: server)
         }

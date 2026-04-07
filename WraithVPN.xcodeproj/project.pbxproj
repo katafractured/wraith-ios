@@ -56,6 +56,12 @@
 		BBMAC065 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100014 /* DesignSystem.swift */; };
 		BBMAC066 /* MainMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBMAC020 /* MainMenuView.swift */; };
 		BBMAC067 /* MacAccountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBMAC021 /* MacAccountView.swift */; };
+		AATST200 /* ModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AATST100 /* ModelTests.swift */; };
+		AATST201 /* KeychainHelperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AATST101 /* KeychainHelperTests.swift */; };
+		AATST202 /* APIClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AATST102 /* APIClientTests.swift */; };
+		AATST203 /* StoreKitManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AATST103 /* StoreKitManagerTests.swift */; };
+		AATST204 /* ServerListManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AATST104 /* ServerListManagerTests.swift */; };
+		AATST205 /* HavenDNSManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AATST105 /* HavenDNSManagerTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -163,6 +169,13 @@
 		BBMAC021 /* MacAccountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacAccountView.swift; sourceTree = "<group>"; };
 		BBMACPROD001 /* WraithVPNMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WraithVPNMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BC9FECE02F80E5140020F723 /* WireGuard.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = WireGuard.xcodeproj; sourceTree = "<group>"; };
+		AATST100 /* ModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelTests.swift; sourceTree = "<group>"; };
+		AATST101 /* KeychainHelperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelperTests.swift; sourceTree = "<group>"; };
+		AATST102 /* APIClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClientTests.swift; sourceTree = "<group>"; };
+		AATST103 /* StoreKitManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitManagerTests.swift; sourceTree = "<group>"; };
+		AATST104 /* ServerListManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerListManagerTests.swift; sourceTree = "<group>"; };
+		AATST105 /* HavenDNSManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HavenDNSManagerTests.swift; sourceTree = "<group>"; };
+		AATST_PROD /* WraithVPNTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WraithVPNTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -203,10 +216,24 @@
 				AAGRP001 /* WraithVPN */,
 				AAGRP005 /* WireGuardTunnel */,
 				BBMACGRP001 /* WraithVPNMac */,
+				AAGRP006 /* WraithVPNTests */,
 				AAGRP009 /* Frameworks */,
 				AAGRP010 /* Products */,
 				BC9FECE02F80E5140020F723 /* WireGuard.xcodeproj */,
 			);
+			sourceTree = "<group>";
+		};
+		AAGRP006 /* WraithVPNTests */ = {
+			isa = PBXGroup;
+			children = (
+				AATST100 /* ModelTests.swift */,
+				AATST101 /* KeychainHelperTests.swift */,
+				AATST102 /* APIClientTests.swift */,
+				AATST103 /* StoreKitManagerTests.swift */,
+				AATST104 /* ServerListManagerTests.swift */,
+				AATST105 /* HavenDNSManagerTests.swift */,
+			);
+			path = WraithVPNTests;
 			sourceTree = "<group>";
 		};
 		AAGRP001 /* WraithVPN */ = {
@@ -299,6 +326,7 @@
 				AAPROD001 /* WraithVPN.app */,
 				AAPROD002 /* WireGuardTunnel.appex */,
 				BBMACPROD001 /* WraithVPNMac.app */,
+				AATST_PROD /* WraithVPNTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -333,6 +361,16 @@
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
+
+/* Begin PBXContainerItemProxy section (test) */
+		AATST_PROXY /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AAPROJ001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AATGT001;
+			remoteInfo = WraithVPN;
+		};
+/* End PBXContainerItemProxy section (test) */
 
 /* Begin PBXNativeTarget section */
 		AATGT001 /* WraithVPN */ = {
@@ -390,6 +428,22 @@
 			productReference = BBMACPROD001 /* WraithVPNMac.app */;
 			productType = "com.apple.product-type.application";
 		};
+		AATST001 /* WraithVPNTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AACL003 /* Build configuration list for PBXNativeTarget "WraithVPNTests" */;
+			buildPhases = (
+				AATST010 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AATST_DEP /* PBXTargetDependency */,
+			);
+			name = WraithVPNTests;
+			productName = WraithVPNTests;
+			productReference = AATST_PROD /* WraithVPNTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -408,6 +462,10 @@
 					};
 					BBMACTGT001 = {
 						CreatedOnToolsVersion = 15.4;
+					};
+					AATST001 = {
+						CreatedOnToolsVersion = 15.4;
+						TestTargetID = AATGT001;
 					};
 				};
 			};
@@ -436,6 +494,7 @@
 				AATGT001 /* WraithVPN */,
 				AATGT002 /* WireGuardTunnel */,
 				BBMACTGT001 /* WraithVPNMac */,
+				AATST001 /* WraithVPNTests */,
 			);
 		};
 /* End PBXProject section */
@@ -497,6 +556,22 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section (tests) */
+		AATST010 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AATST200 /* ModelTests.swift in Sources */,
+				AATST201 /* KeychainHelperTests.swift in Sources */,
+				AATST202 /* APIClientTests.swift in Sources */,
+				AATST203 /* StoreKitManagerTests.swift in Sources */,
+				AATST204 /* ServerListManagerTests.swift in Sources */,
+				AATST205 /* HavenDNSManagerTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section (tests) */
 
 /* Begin PBXSourcesBuildPhase section */
 		AASP001 /* Sources */ = {
@@ -565,6 +640,11 @@
 			isa = PBXTargetDependency;
 			target = AATGT002 /* WireGuardTunnel */;
 			targetProxy = AADEPPROXY001 /* PBXContainerItemProxy */;
+		};
+		AATST_DEP /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AATGT001 /* WraithVPN */;
+			targetProxy = AATST_PROXY /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -774,6 +854,38 @@
 			};
 			name = Release;
 		};
+		AAXC003D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 2SGGP65W6C;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.katafract.wraith.tests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/WraithVPN.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/WraithVPN";
+			};
+			name = Debug;
+		};
+		AAXC003R /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 2SGGP65W6C;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.katafract.wraith.tests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/WraithVPN.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/WraithVPN";
+			};
+			name = Release;
+		};
 		BBMACXC001D /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -859,6 +971,15 @@
 			buildConfigurations = (
 				BBMACXC001D /* Debug */,
 				BBMACXC001R /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AACL003 /* Build configuration list for PBXNativeTarget "WraithVPNTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AAXC003D /* Debug */,
+				AAXC003R /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

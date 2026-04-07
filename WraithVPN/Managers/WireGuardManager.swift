@@ -52,11 +52,15 @@ final class WireGuardManager: ObservableObject {
     private var statusObserver: NSObjectProtocol?
     private var previousStatus: VPNStatus = .disconnected
     private let tunnelBundleId = "com.katafract.wraith.tunnel"
+    /// Tracks the manager-load task so `autoProvisionIfNeeded` can await it
+    /// before inspecting `isProvisioned`, preventing a race condition that
+    /// causes spurious re-provisioning on launch.
+    private var managerLoadTask: Task<Void, Never>?
 
     // MARK: - Init / lifecycle
 
     init() {
-        Task { await loadOrCreateManager() }
+        managerLoadTask = Task { await loadOrCreateManager() }
     }
 
     deinit {
@@ -70,6 +74,11 @@ final class WireGuardManager: ObservableObject {
     /// Provisions to nearest server and installs profile if no peer exists yet.
     /// Called automatically after purchase/token entry and on app launch.
     func autoProvisionIfNeeded() async {
+        // Wait for the manager to finish loading from NE preferences so that
+        // `isProvisioned` reflects reality before we check it. Without this,
+        // a race between init's Task and ContentView.task would see
+        // isProvisioned == false and provision a duplicate peer.
+        await managerLoadTask?.value
         guard !isProvisioned,
               KeychainHelper.shared.readOptional(for: .subscriptionToken) != nil else { return }
         isAutoProvisioning = true

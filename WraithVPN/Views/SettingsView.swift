@@ -558,31 +558,25 @@ struct SettingsView: View {
             HStack(spacing: KFSpacing.sm) {
                 Image(systemName: "shield.lefthalf.filled")
                     .font(.system(size: 18))
-                    .foregroundStyle(haven.isEnabled ? Color.kfConnected : Color.kfTextMuted)
+                    .foregroundStyle(Color.kfConnected)
                     .frame(width: 36)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Ad & Tracker Blocking")
                         .font(KFFont.body(15))
                         .foregroundStyle(.white)
-                    Text(haven.isEnabled ? "Active — filtering ads and trackers at the DNS level" : "Blocks ads, trackers, and malware at DNS level — works with or without VPN. Free tier included.")
+                    let levelLabel = haven.preferences.map { p in
+                        p.protectionLevel == "NONE" ? "Off — no filtering active" : "\(p.protectionLevel.capitalized) protection active"
+                    } ?? "Filtering ads, trackers, and malware at DNS level"
+                    Text(levelLabel)
                         .font(KFFont.caption(13))
                         .foregroundStyle(Color.kfTextSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
                 }
 
                 Spacer()
 
                 if haven.isLoading {
-                    ProgressView()
-                        .tint(Color.kfAccentBlue)
-                } else {
-                    Toggle("", isOn: Binding(
-                        get: { haven.isEnabled },
-                        set: { _ in Task { await haven.toggle() } }
-                    ))
-                    .labelsHidden()
-                    .tint(Color.kfAccentBlue)
+                    ProgressView().tint(Color.kfAccentBlue)
                 }
             }
 
@@ -592,25 +586,23 @@ struct SettingsView: View {
                     .foregroundStyle(Color.kfError)
             }
 
-            if haven.isEnabled {
-                Divider().background(Color.kfBorder)
+            Divider().background(Color.kfBorder)
 
-                NavigationLink {
-                    HavenDNSSettingsView()
-                        .environmentObject(haven)
-                        .environmentObject(storeKit)
-                } label: {
-                    SettingsRow(icon: "slider.horizontal.3", label: "Configure Filters") {
-                        HStack(spacing: 4) {
-                            if let prefs = haven.preferences {
-                                Text(prefs.protectionLevel.capitalized)
-                                    .font(KFFont.caption(12))
-                                    .foregroundStyle(Color.kfTextMuted)
-                            }
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 13))
-                                .foregroundStyle(Color.kfTextMuted)
+            NavigationLink {
+                HavenDNSSettingsView()
+                    .environmentObject(haven)
+                    .environmentObject(storeKit)
+            } label: {
+                SettingsRow(icon: "slider.horizontal.3", label: "Configure Filters") {
+                    HStack(spacing: 4) {
+                        if let prefs = haven.preferences {
+                            Text(prefs.protectionLevel == "NONE" ? "Off" : prefs.protectionLevel.capitalized)
+                                .font(KFFont.caption(12))
+                                .foregroundStyle(prefs.protectionLevel == "NONE" ? Color.kfError : Color.kfTextMuted)
                         }
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 13))
+                            .foregroundStyle(Color.kfTextMuted)
                     }
                 }
             }

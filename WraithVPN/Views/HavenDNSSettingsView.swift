@@ -214,7 +214,7 @@ struct HavenDNSSettingsView: View {
                 label: "Safe Browsing",
                 description: "Blocks known malware, phishing, and deceptive sites.",
                 isOn: prefs.safeBrowsing,
-                locked: !prefs.isPro
+                locked: prefs.protectionLevel == "NONE"
             ) { enabled in
                 save(DnsPreferencesUpdate(safeBrowsing: enabled))
             }
@@ -413,7 +413,7 @@ struct HavenDNSSettingsView: View {
 // MARK: - Protection level enum
 
 private enum ProtectionLevel: String, CaseIterable {
-    case none     = "NONE"
+    case off      = "NONE"
     case low      = "LOW"
     case standard = "STANDARD"
     case high     = "HIGH"
@@ -421,7 +421,7 @@ private enum ProtectionLevel: String, CaseIterable {
 
     var label: String {
         switch self {
-        case .none:     return "None"
+        case .off:      return "Off"
         case .low:      return "Low"
         case .standard: return "Standard"
         case .high:     return "High"
@@ -431,7 +431,7 @@ private enum ProtectionLevel: String, CaseIterable {
 
     var description: String {
         switch self {
-        case .none:     return "No filtering — all DNS requests pass through."
+        case .off:      return "No filtering — all DNS requests pass through unblocked."
         case .low:      return "Blocks ads and basic trackers."
         case .standard: return "Blocks ads, trackers, and malicious domains."
         case .high:     return "Aggressive blocking including telemetry."

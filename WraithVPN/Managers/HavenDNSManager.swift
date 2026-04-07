@@ -117,9 +117,34 @@ final class HavenDNSManager: ObservableObject {
             let fetched = try await APIClient.shared.fetchDnsPreferences()
             preferences = fetched
             Self.cachePreferences(fetched)
+            await applyDefaultsIfNeeded(fetched)
         } catch {
-            loadPreferencesError = preferences == nil  // only flag error if we have nothing to show
+            loadPreferencesError = preferences == nil
         }
+    }
+
+    /// On first load for a paid user, ensure safe browsing is on and protection is at least Low.
+    private func applyDefaultsIfNeeded(_ prefs: DnsPreferences) async {
+        let key = "havenDefaultsApplied"
+        guard !UserDefaults.standard.bool(forKey: key) else { return }
+        UserDefaults.standard.set(true, forKey: key)
+
+        var update = DnsPreferencesUpdate()
+        if prefs.protectionLevel == "NONE" {
+            update.protectionLevel = "LOW"
+        }
+        if prefs.isPro && !prefs.safeBrowsing {
+            update.safeBrowsing = true
+        }
+        guard update.protectionLevel != nil || update.safeBrowsing != nil else { return }
+        try? await updatePreferences(update)
+    }
+
+    /// Enables Haven DNS profile if the user has a subscription and it isn't already active.
+    func ensureEnabledForSubscriber() async {
+        guard KeychainHelper.shared.readOptional(for: .subscriptionToken) != nil else { return }
+        await refreshStatus()
+        if !isEnabled { await enable() }
     }
 
     func updatePreferences(_ update: DnsPreferencesUpdate) async throws {

@@ -176,6 +176,30 @@ final class APIClient {
         try await request(APIRequest(.GET, "/v1/token/recover/\(token)"))
     }
 
+    /// Validates an Apple seat-pack consumable IAP and adds seats to the token.
+    func addSeats(
+        jwsTransaction: String,
+        productId: String,
+        transactionId: String,
+        originalTransactionId: String,
+        bundleId: String
+    ) async throws -> SeatsAddResponse {
+        let body = SeatsAddRequest(
+            jwsTransaction:        jwsTransaction,
+            productId:             productId,
+            transactionId:         transactionId,
+            originalTransactionId: originalTransactionId,
+            bundleId:              bundleId
+        )
+        return try await request(APIRequest(.POST, "/v1/token/seats/add", body: body, auth: true))
+    }
+
+    /// Links a recovery identity (email, apple_id, phone) to the current token.
+    func linkIdentity(type identityType: String, value identityValue: String) async throws -> IdentityLinkResponse {
+        let body = IdentityLinkRequest(identityType: identityType, identityValue: identityValue)
+        return try await request(APIRequest(.POST, "/v1/token/identity/link", body: body, auth: true))
+    }
+
     // MARK: - Private core
 
     private func request<T: Decodable>(_ req: APIRequest) async throws -> T {

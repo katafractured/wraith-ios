@@ -422,15 +422,18 @@ struct SettingsView: View {
 
             Spacer()
 
-            if revokingPeerIds.contains(peer.peerId) {
-                ProgressView().tint(Color.kfError).scaleEffect(0.7)
-            } else {
-                Button {
-                    Task { await revokePeer(peer) }
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 18))
-                        .foregroundStyle(Color.kfError.opacity(0.7))
+            if !isActive {
+                if revokingPeerIds.contains(peer.peerId) {
+                    ProgressView().tint(Color.kfError).scaleEffect(0.7)
+                } else {
+                    Button {
+                        Task { await revokePeer(peer) }
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 18))
+                            .foregroundStyle(Color.kfError.opacity(0.7))
+                    }
+                    .buttonStyle(.plain)
                 }
             }
         }

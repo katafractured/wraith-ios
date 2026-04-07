@@ -39,13 +39,15 @@ private struct APIRequest {
     let body: (any Encodable)?
     let requiresAuth: Bool
     let extraHeaders: [String: String]
+    let timeoutInterval: TimeInterval?
 
-    init(_ method: HTTPMethod, _ path: String, body: (any Encodable)? = nil, auth: Bool = false, extraHeaders: [String: String] = [:]) {
+    init(_ method: HTTPMethod, _ path: String, body: (any Encodable)? = nil, auth: Bool = false, extraHeaders: [String: String] = [:], timeout: TimeInterval? = nil) {
         self.method = method
         self.path = path
         self.body = body
         self.requiresAuth = auth
         self.extraHeaders = extraHeaders
+        self.timeoutInterval = timeout
     }
 }
 
@@ -161,7 +163,8 @@ final class APIClient {
 
     /// Returns platform node health summary (public, no auth required).
     func fetchPlatformStatus() async throws -> PlatformStatus {
-        try await request(APIRequest(.GET, "/v1/status"))
+        // 5-second hard timeout — status is a health check, not a data fetch.
+        try await request(APIRequest(.GET, "/v1/status", timeout: 5))
     }
 
     /// Initiates email-based token recovery for Stripe subscribers.
@@ -225,6 +228,10 @@ final class APIClient {
         // Encode body
         if let body = req.body {
             urlRequest.httpBody = try encoder.encode(AnyEncodable(body))
+        }
+
+        if let t = req.timeoutInterval {
+            urlRequest.timeoutInterval = t
         }
 
         let (data, response) = try await session.data(for: urlRequest)

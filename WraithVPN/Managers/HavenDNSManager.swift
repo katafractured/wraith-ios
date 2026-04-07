@@ -57,21 +57,25 @@ final class HavenDNSManager: ObservableObject {
             let manager = NEDNSSettingsManager.shared()
             try await manager.loadFromPreferences()
 
-            // If profile is installed but deactivated (e.g. device set back to Automatic),
-            // remove it first so iOS re-activates on the next save.
-            if manager.dnsSettings != nil && !manager.isEnabled {
-                try await manager.removeFromPreferences()
-                try await manager.loadFromPreferences()
+            // Already enabled — nothing to do.
+            if manager.isEnabled {
+                isEnabled = true
+                return
             }
 
+            // Remove stale disabled profile if one exists. Use try? so a removal
+            // hiccup doesn't block installing a fresh profile.
+            if manager.dnsSettings != nil {
+                try? await manager.removeFromPreferences()
+            }
+
+            // Install fresh profile.
             let settings = NEDNSOverHTTPSSettings(servers: [])
             settings.serverURL = URL(string: dohURL)
             manager.dnsSettings = settings
             manager.localizedDescription = profileDescription
 
             try await manager.saveToPreferences()
-            // Set optimistically — the immediate loadFromPreferences round-trip can
-            // return stale state before iOS has fully activated the profile.
             isEnabled = true
         } catch {
             self.error = "Could not enable Haven DNS: \(error.localizedDescription)"
@@ -103,6 +107,8 @@ final class HavenDNSManager: ObservableObject {
         do {
             try await manager.loadFromPreferences()
             isEnabled = manager.isEnabled
+            // Clear any stale enable error now that we've confirmed current state.
+            if isEnabled { error = nil }
         } catch {
             isEnabled = false
         }

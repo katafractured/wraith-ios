@@ -17,11 +17,13 @@ import Combine
 enum WraithProduct: String, CaseIterable {
     case armorMonthly = "com.katafract.wraith.monthly"
     case armorAnnual  = "com.katafract.wraith.annual"
+    case seatPack5    = "com.katafract.wraith.seats.5"
 
     var displayName: String {
         switch self {
         case .armorMonthly: return "WraithVPN — Monthly"
         case .armorAnnual:  return "WraithVPN — Annual"
+        case .seatPack5:    return "5 Device Slots"
         }
     }
 }
@@ -38,6 +40,8 @@ final class StoreKitManager: ObservableObject {
     @Published var purchaseError: String? = nil
     @Published var subscription: SubscriptionInfo? = nil
     @Published var hasPurchased: Bool = false
+    @Published var seatPurchaseError: String? = nil
+    @Published var isPurchasingSeatPack: Bool = false
 
     // MARK: Private
 
@@ -117,6 +121,48 @@ final class StoreKitManager: ObservableObject {
             purchaseError = "Restore failed: \(error.localizedDescription)"
         }
         await reloadFromKeychain()
+    }
+
+    // MARK: - Seat pack purchase
+
+    /// Purchase a 5-seat consumable pack and apply it to the backend token.
+    func purchaseSeatPack() async {
+        guard let product = products.first(where: { $0.id == WraithProduct.seatPack5.rawValue }) else {
+            seatPurchaseError = "Seat pack not available. Try again later."
+            return
+        }
+        seatPurchaseError = nil
+        isPurchasingSeatPack = true
+        defer { isPurchasingSeatPack = false }
+
+        do {
+            let result = try await product.purchase()
+            switch result {
+            case .success(let verification):
+                let jws = verification.jwsRepresentation
+                let transaction = try checkVerified(verification)
+                try await applySeats(transaction: transaction, jws: jws)
+                await transaction.finish()
+            case .userCancelled:
+                break
+            case .pending:
+                seatPurchaseError = "Purchase pending approval."
+            @unknown default:
+                seatPurchaseError = "Unknown purchase result."
+            }
+        } catch {
+            seatPurchaseError = error.localizedDescription
+        }
+    }
+
+    private func applySeats(transaction: Transaction, jws: String) async throws {
+        let _ = try await APIClient.shared.addSeats(
+            jwsTransaction:        jws,
+            productId:             transaction.productID,
+            transactionId:         String(transaction.id),
+            originalTransactionId: String(transaction.originalID),
+            bundleId:              bundleId
+        )
     }
 
     // MARK: - Sign-out / revoke

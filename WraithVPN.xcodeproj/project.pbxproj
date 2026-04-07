@@ -25,6 +25,9 @@
 		AA000016 /* HavenDNSManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100018 /* HavenDNSManager.swift */; };
 		AA000019 /* TokenActivationSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100019 /* TokenActivationSheet.swift */; };
 		AA00001A /* HavenDNSSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10001A /* HavenDNSSettingsView.swift */; };
+		AA00001B /* AchievementsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10001B /* AchievementsView.swift */; };
+		AA00001C /* DnsStatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10001C /* DnsStatsView.swift */; };
+		AA00001D /* TokenRecoverySheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10001D /* TokenRecoverySheet.swift */; };
 		AA000020 /* PacketTunnelProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100020 /* PacketTunnelProvider.swift */; };
 		AA000021 /* TunnelConfiguration+WgQuickConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100022 /* TunnelConfiguration+WgQuickConfig.swift */; };
 		AA000022 /* String+ArrayConversion.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100023 /* String+ArrayConversion.swift */; };
@@ -129,6 +132,9 @@
 		AA100018 /* HavenDNSManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HavenDNSManager.swift; sourceTree = "<group>"; };
 		AA100019 /* TokenActivationSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenActivationSheet.swift; sourceTree = "<group>"; };
 		AA10001A /* HavenDNSSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HavenDNSSettingsView.swift; sourceTree = "<group>"; };
+		AA10001B /* AchievementsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AchievementsView.swift; sourceTree = "<group>"; };
+		AA10001C /* DnsStatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DnsStatsView.swift; sourceTree = "<group>"; };
+		AA10001D /* TokenRecoverySheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenRecoverySheet.swift; sourceTree = "<group>"; };
 		AA100020 /* PacketTunnelProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PacketTunnelProvider.swift; sourceTree = "<group>"; };
 		AA100021 /* WireGuardTunnel.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WireGuardTunnel.entitlements; sourceTree = "<group>"; };
 		AA100022 /* TunnelConfiguration+WgQuickConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TunnelConfiguration+WgQuickConfig.swift"; sourceTree = "<group>"; };
@@ -220,6 +226,9 @@
 				AA100007 /* PaywallView.swift */,
 				AA100019 /* TokenActivationSheet.swift */,
 				AA10001A /* HavenDNSSettingsView.swift */,
+				AA10001B /* AchievementsView.swift */,
+				AA10001C /* DnsStatsView.swift */,
+				AA10001D /* TokenRecoverySheet.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -492,6 +501,9 @@
 				AA000007 /* PaywallView.swift in Sources */,
 				AA000019 /* TokenActivationSheet.swift in Sources */,
 				AA00001A /* HavenDNSSettingsView.swift in Sources */,
+				AA00001B /* AchievementsView.swift in Sources */,
+				AA00001C /* DnsStatsView.swift in Sources */,
+				AA00001D /* TokenRecoverySheet.swift in Sources */,
 				AA000008 /* Models.swift in Sources */,
 				AA000009 /* APIClient.swift in Sources */,
 				AA000010 /* WireGuardManager.swift in Sources */,
@@ -653,7 +665,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = WraithVPN/WraithVPN.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 55;
+				CURRENT_PROJECT_VERSION = 57;
 				DEVELOPMENT_TEAM = 2SGGP65W6C;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = WraithVPN/Info.plist;
@@ -680,7 +692,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = WraithVPN/WraithVPN.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 55;
+				CURRENT_PROJECT_VERSION = 57;
 				DEVELOPMENT_TEAM = 2SGGP65W6C;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = WraithVPN/Info.plist;
@@ -705,7 +717,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = WireGuardTunnel/WireGuardTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 55;
+				CURRENT_PROJECT_VERSION = 57;
 				DEVELOPMENT_TEAM = 2SGGP65W6C;
 				INFOPLIST_FILE = WireGuardTunnel/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
@@ -728,7 +740,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = WireGuardTunnel/WireGuardTunnel.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 55;
+				CURRENT_PROJECT_VERSION = 57;
 				DEVELOPMENT_TEAM = 2SGGP65W6C;
 				INFOPLIST_FILE = WireGuardTunnel/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
@@ -753,7 +765,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = WraithVPNMac/WraithVPNMac.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 55;
+				CURRENT_PROJECT_VERSION = 57;
 				DEVELOPMENT_TEAM = 2SGGP65W6C;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = WraithVPNMac/Info.plist;
@@ -778,7 +790,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = WraithVPNMac/WraithVPNMac.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 55;
+				CURRENT_PROJECT_VERSION = 57;
 				DEVELOPMENT_TEAM = 2SGGP65W6C;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = WraithVPNMac/Info.plist;

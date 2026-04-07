@@ -86,7 +86,7 @@ private struct StreakBanner: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Text("\(activeStreak) Day Streak")
-                    .font(KFFont.heading(22, weight: .bold))
+                    .font(KFFont.heading(22))
                     .foregroundStyle(Color.white)
                 Text("Longest: \(longestStreak) days")
                     .font(KFFont.body(14))
@@ -306,7 +306,7 @@ struct AchievementsView: View {
                 Task { await load() }
             } label: {
                 Text("Retry")
-                    .font(KFFont.body(15, weight: .semibold))
+                    .font(KFFont.caption(15, weight: .semibold))
                     .foregroundStyle(Color.white)
                     .padding(.horizontal, KFSpacing.lg)
                     .padding(.vertical, KFSpacing.sm)

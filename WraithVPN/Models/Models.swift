@@ -220,6 +220,12 @@ struct TokenResponse: Decodable {
         case plan
     }
 
+    init(token: String, expiresAt: String, plan: String) {
+        self.token = token
+        self.expiresAt = expiresAt
+        self.plan = plan
+    }
+
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         token = try c.decode(String.self, forKey: .token)

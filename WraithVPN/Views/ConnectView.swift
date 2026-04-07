@@ -11,6 +11,8 @@ struct ConnectView: View {
     @EnvironmentObject var vpn:    WireGuardManager
     @EnvironmentObject var servers: ServerListManager
 
+    @AppStorage("simpleMode") private var simpleMode = true
+
     @State private var showServerPicker = false
     @State private var isAnimatingRing  = false
     @State private var errorMessage: String? = nil
@@ -221,8 +223,8 @@ struct ConnectView: View {
             HStack(spacing: KFSpacing.md) {
                 summaryPill(
                     title: "Route",
-                    value: servers.selectedServer?.cityName ?? "Automatic",
-                    icon: servers.selectedServer == nil ? "sparkles" : "location.north.line.fill"
+                    value: simpleMode ? "Automatic" : (servers.selectedServer?.cityName ?? "Automatic"),
+                    icon: (simpleMode || servers.selectedServer == nil) ? "sparkles" : "location.north.line.fill"
                 )
                 summaryPill(
                     title: "Mode",
@@ -230,11 +232,13 @@ struct ConnectView: View {
                     icon: vpn.status == .connected ? "shield.fill" : "moon.stars.fill"
                 )
             }
-            summaryPill(
-                title: "Kill Switch",
-                value: vpn.tunnelMode == .full ? "On" : "Off",
-                icon: vpn.tunnelMode == .full ? "lock.shield.fill" : "lock.shield"
-            )
+            if !simpleMode {
+                summaryPill(
+                    title: "Kill Switch",
+                    value: vpn.tunnelMode == .full ? "On" : "Off",
+                    icon: vpn.tunnelMode == .full ? "lock.shield.fill" : "lock.shield"
+                )
+            }
         }
     }
 
@@ -274,10 +278,29 @@ struct ConnectView: View {
 
     private var serverButton: some View {
         Button {
-            showServerPicker = true
+            if !simpleMode { showServerPicker = true }
         } label: {
             HStack(spacing: KFSpacing.md) {
-                if let server = servers.selectedServer {
+                if simpleMode {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(Color.kfAccentBlue)
+                        .frame(width: 40, height: 40)
+                        .background(Color.kfAccentBlue.opacity(0.12))
+                        .clipShape(Circle())
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("WRAITHGATE")
+                            .font(KFFont.caption(10, weight: .bold))
+                            .kerning(1.3)
+                            .foregroundStyle(Color.kfTextMuted)
+                        Text(vpn.connectedServer?.cityName ?? "Nearest Server")
+                            .font(KFFont.heading(17))
+                            .foregroundStyle(.white)
+                        Text("Automatically selected for best speed")
+                            .font(KFFont.caption(12))
+                            .foregroundStyle(Color.kfTextMuted)
+                    }
+                } else if let server = servers.selectedServer {
                     Text(server.flagEmoji)
                         .font(.system(size: 26))
                     VStack(alignment: .leading, spacing: 4) {
@@ -286,8 +309,8 @@ struct ConnectView: View {
                             .kerning(1.3)
                             .foregroundStyle(Color.kfTextMuted)
                         Text(server.cityName)
-                        .font(KFFont.heading(17))
-                        .foregroundStyle(.white)
+                            .font(KFFont.heading(17))
+                            .foregroundStyle(.white)
                         Text("Tap to change route")
                             .font(KFFont.caption(12))
                             .foregroundStyle(Color.kfTextMuted)
@@ -312,13 +335,16 @@ struct ConnectView: View {
 
                 Spacer()
 
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(Color.kfTextMuted)
+                if !simpleMode {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(Color.kfTextMuted)
+                }
             }
             .padding(KFSpacing.md)
             .kfCard()
         }
+        .disabled(simpleMode)
     }
 
     // MARK: - Actions

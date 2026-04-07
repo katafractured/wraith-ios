@@ -13,6 +13,7 @@ struct SettingsView: View {
     @EnvironmentObject var vpn:      WireGuardManager
     @EnvironmentObject var haven:    HavenDNSManager
     @AppStorage("hasUnlockedFreeTier") private var hasUnlockedFreeTier = false
+    @AppStorage("simpleMode") private var simpleMode = true
 
     @State private var showSignOutAlert    = false
     @State private var showRevokeAlert     = false
@@ -41,10 +42,13 @@ struct SettingsView: View {
             ScrollView {
                 VStack(spacing: KFSpacing.lg) {
                     overviewCard
+                    modeCard
                     accountCard
                     devicesCard
                     havenDNSCard
-                    connectionCard
+                    if !simpleMode {
+                        connectionCard
+                    }
                     subscriptionCard
                     supportCard
                     dangerCard
@@ -83,6 +87,62 @@ struct SettingsView: View {
         } message: {
             Text("Your existing WireGuard keypair will be replaced. You will need to reconnect afterwards. This is useful if you believe your private key has been compromised.")
         }
+    }
+
+    // MARK: - Mode card
+
+    private var modeCard: some View {
+        VStack(alignment: .leading, spacing: KFSpacing.sm) {
+            HStack(spacing: KFSpacing.md) {
+                ZStack {
+                    Circle()
+                        .fill(simpleMode ? Color.kfAccentBlue.opacity(0.15) : Color.kfAccentPurple.opacity(0.15))
+                        .frame(width: 44, height: 44)
+                    Image(systemName: simpleMode ? "sparkles" : "slider.horizontal.3")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundStyle(simpleMode ? Color.kfAccentBlue : Color.kfAccentPurple)
+                }
+
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 6) {
+                        Text(simpleMode ? "Simple Mode" : "Advanced Mode")
+                            .font(KFFont.heading(16))
+                            .foregroundStyle(.white)
+                        Text(simpleMode ? "ON" : "ON")
+                            .font(KFFont.caption(10, weight: .bold))
+                            .kerning(1)
+                            .foregroundStyle(simpleMode ? Color.kfAccentBlue : Color.kfAccentPurple)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background((simpleMode ? Color.kfAccentBlue : Color.kfAccentPurple).opacity(0.15))
+                            .clipShape(Capsule())
+                    }
+                    Text(simpleMode
+                         ? "DNS protection + nearest VPN. Tap to unlock advanced controls."
+                         : "Kill switch, manual server selection, and all connection controls.")
+                        .font(KFFont.caption(12))
+                        .foregroundStyle(Color.kfTextMuted)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer()
+
+                Toggle("", isOn: Binding(
+                    get: { !simpleMode },
+                    set: { advanced in
+                        simpleMode = !advanced
+                        if !advanced {
+                            // Switching back to simple — disable kill switch
+                            Task { await vpn.setTunnelMode(.standard) }
+                        }
+                    }
+                ))
+                .labelsHidden()
+                .tint(Color.kfAccentPurple)
+            }
+        }
+        .padding(KFSpacing.md)
+        .kfCard()
     }
 
     // MARK: - Account card

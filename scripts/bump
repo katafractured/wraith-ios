@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+# bump — tag a new WraithVPN release and push to trigger Xcode Cloud
+#
+# Usage:
+#   ./scripts/bump            # auto-increments patch (v1.0.59 → v1.0.60)
+#   ./scripts/bump minor      # increments minor (v1.0.59 → v1.1.0)
+#   ./scripts/bump major      # increments major (v1.0.59 → v2.0.0)
+#   ./scripts/bump 1.2.3      # sets explicit version
+#
+# What it does:
+#   1. Reads the latest v* tag from git
+#   2. Computes the next version
+#   3. Commits any staged or unstaged changes with a version bump message
+#   4. Tags HEAD with vX.Y.Z
+#   5. Pushes commit + tag → triggers Xcode Cloud Default workflow
+#      → archives iOS build → uploads to TestFlight
+#      → internal testers get it automatically (hasAccessToAllBuilds=true)
+
+set -euo pipefail
+
+# ── Find current version ────────────────────────────────────────────────────
+CURRENT=$(git tag --list 'v*' --sort=-version:refname | head -1)
+if [[ -z "$CURRENT" ]]; then
+  echo "No v* tags found. Set an explicit version: ./scripts/bump 1.0.0"
+  exit 1
+fi
+
+# Strip leading v
+CURRENT_VER="${CURRENT#v}"
+IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VER"
+
+# ── Compute next version ────────────────────────────────────────────────────
+ARG="${1:-patch}"
+case "$ARG" in
+  major)
+    NEXT="$((MAJOR + 1)).0.0" ;;
+  minor)
+    NEXT="${MAJOR}.$((MINOR + 1)).0" ;;
+  patch)
+    NEXT="${MAJOR}.${MINOR}.$((PATCH + 1))" ;;
+  [0-9]*.[0-9]*.[0-9]*)
+    NEXT="$ARG" ;;
+  *)
+    echo "Usage: bump [major|minor|patch|X.Y.Z]"
+    exit 1 ;;
+esac
+
+TAG="v${NEXT}"
+
+# ── Confirm ─────────────────────────────────────────────────────────────────
+echo "  current : $CURRENT"
+echo "  next    : $TAG"
+echo ""
+read -r -p "Tag and push $TAG? [y/N] " CONFIRM
+if [[ "${CONFIRM,,}" != "y" ]]; then
+  echo "Aborted."
+  exit 0
+fi
+
+# ── Commit any pending changes ───────────────────────────────────────────────
+if ! git diff --quiet || ! git diff --cached --quiet; then
+  git add -A
+  git commit -m "Bump to $TAG"
+fi
+
+# ── Tag and push ─────────────────────────────────────────────────────────────
+git tag "$TAG"
+git push origin HEAD "$TAG"
+
+echo ""
+echo "✓ Tagged $TAG and pushed."
+echo "  Xcode Cloud will build and upload to TestFlight."
+echo "  Internal testers will receive the build automatically."
+echo ""
+echo "  Monitor: ./check-builds"

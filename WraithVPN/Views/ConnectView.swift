@@ -53,6 +53,24 @@ struct ConnectView: View {
         .preferredColorScheme(.dark)
         .task {
             await servers.refresh()
+            syncSelectedToConnected()
+        }
+        // When the connected node changes (switch, provision, restore), keep the
+        // picker's selectedServer in sync so the UI never shows the wrong location.
+        .onChange(of: vpn.connectedServer?.nodeId) { _, _ in
+            syncSelectedToConnected()
+        }
+    }
+
+    // MARK: - Helpers
+
+    /// Sets `servers.selectedServer` to the full server object whose nodeId matches
+    /// `vpn.connectedServer`. Falls back to leaving the selection unchanged if the
+    /// connected node isn't in the server list yet (e.g. list hasn't loaded).
+    private func syncSelectedToConnected() {
+        guard let nodeId = vpn.connectedServer?.nodeId else { return }
+        if let match = servers.servers.first(where: { $0.server.nodeId == nodeId }) {
+            servers.selectedServer = match.server
         }
     }
 

@@ -149,6 +149,33 @@ final class APIClient {
         return try await request(APIRequest(.PUT, "/v1/dns/preferences", body: update, auth: true))
     }
 
+    /// Returns 30-day rolling DNS query statistics for the current token.
+    func fetchDnsStats() async throws -> DnsStatsResponse {
+        try await request(APIRequest(.GET, "/v1/dns/stats", auth: true))
+    }
+
+    /// Returns Haven DNS achievements and streak info for the current token.
+    func fetchAchievements() async throws -> AchievementsResponse {
+        try await request(APIRequest(.GET, "/v1/dns/achievements", auth: true))
+    }
+
+    /// Returns platform node health summary (public, no auth required).
+    func fetchPlatformStatus() async throws -> PlatformStatus {
+        try await request(APIRequest(.GET, "/v1/status"))
+    }
+
+    /// Initiates email-based token recovery for Stripe subscribers.
+    /// Returns a short-lived recovery_token on success.
+    func recoverByEmail(_ email: String) async throws -> RecoveryInitResponse {
+        struct Body: Encodable { let email: String }
+        return try await request(APIRequest(.POST, "/v1/store/recover", body: Body(email: email)))
+    }
+
+    /// Redeems a recovery token (kfr_...) and returns the subscription TokenResponse.
+    func redeemRecoveryToken(_ token: String) async throws -> TokenResponse {
+        try await request(APIRequest(.GET, "/v1/token/recover/\(token)"))
+    }
+
     // MARK: - Private core
 
     private func request<T: Decodable>(_ req: APIRequest) async throws -> T {

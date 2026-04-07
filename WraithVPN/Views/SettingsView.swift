@@ -23,6 +23,8 @@ struct SettingsView: View {
     @State private var isPeerListLoading = false
     @State private var peerListError: String? = nil
     @State private var revokingPeerIds: Set<String> = []
+    @State private var platformStatus: PlatformStatus? = nil
+    @State private var showRecovery = false
 
     // MARK: - Body
 
@@ -43,6 +45,11 @@ struct SettingsView: View {
                     versionFooter
                 }
                 .padding(KFSpacing.md)
+            }
+        }
+        .task {
+            if platformStatus == nil {
+                platformStatus = try? await APIClient.shared.fetchPlatformStatus()
             }
         }
         .navigationTitle("Account & Settings")
@@ -554,6 +561,19 @@ struct SettingsView: View {
 
             Divider().background(Color.kfBorder)
 
+            NavigationLink {
+                AchievementsView()
+            } label: {
+                SettingsRow(icon: "trophy.fill", label: "Achievements") {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Color.kfTextMuted)
+                }
+            }
+            .foregroundStyle(Color(hex: "#eab308"))
+
+            Divider().background(Color.kfBorder)
+
             Button { showTokenEntry = true } label: {
                 SettingsRow(icon: "key.fill", label: "Activate with Token") {
                     Image(systemName: "chevron.right")
@@ -575,6 +595,26 @@ struct SettingsView: View {
     private var supportCard: some View {
         VStack(alignment: .leading, spacing: KFSpacing.md) {
             sectionHeader("Support")
+
+            HStack(spacing: KFSpacing.sm) {
+                Circle()
+                    .fill(platformStatus == nil ? Color.kfTextMuted :
+                          platformStatus!.isHealthy ? Color.kfConnected :
+                          platformStatus!.isDegraded ? Color.kfConnecting : Color.kfError)
+                    .frame(width: 8, height: 8)
+                    .padding(.leading, 6)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("System Status")
+                        .font(KFFont.body(14))
+                        .foregroundStyle(.white)
+                    Text(platformStatus?.displayStatus ?? "Checking…")
+                        .font(KFFont.caption(12))
+                        .foregroundStyle(Color.kfTextMuted)
+                }
+                Spacer()
+            }
+
+            Divider().background(Color.kfBorder)
 
             HStack(spacing: KFSpacing.sm) {
                 Image(systemName: "checkmark.shield.fill")
@@ -656,6 +696,20 @@ struct SettingsView: View {
                         .font(.system(size: 13))
                         .foregroundStyle(Color.kfTextMuted)
                 }
+            }
+
+            Divider().background(Color.kfBorder)
+
+            Button { showRecovery = true } label: {
+                SettingsRow(icon: "arrow.down.circle.fill", label: "Recover Access") {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Color.kfTextMuted)
+                }
+            }
+            .sheet(isPresented: $showRecovery) {
+                TokenRecoverySheet()
+                    .environmentObject(storeKit)
             }
 
             Divider().background(Color.kfBorder)

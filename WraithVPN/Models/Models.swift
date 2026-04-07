@@ -401,3 +401,106 @@ struct DnsPreferencesUpdate: Encodable {
         case blockedServices = "blocked_services"
     }
 }
+
+// MARK: - DNS Stats (GET /v1/dns/stats)
+
+struct DailyDNSStat: Codable, Identifiable {
+    let date: String
+    let queries: Int
+    let blocked: Int
+
+    var id: String { date }
+}
+
+struct DnsStatsResponse: Codable {
+    let totalQueries: Int
+    let adsBlocked: Int
+    let trackersBlocked: Int
+    let malwareBlocked: Int
+    let blockedTotal: Int
+    let blockRatePercent: Double
+    let since: String?
+    let updatedAt: String?
+    let dailyHistory: [DailyDNSStat]
+
+    enum CodingKeys: String, CodingKey {
+        case totalQueries      = "total_queries"
+        case adsBlocked        = "ads_blocked"
+        case trackersBlocked   = "trackers_blocked"
+        case malwareBlocked    = "malware_blocked"
+        case blockedTotal      = "blocked_total"
+        case blockRatePercent  = "block_rate_percent"
+        case since
+        case updatedAt         = "updated_at"
+        case dailyHistory      = "daily_history"
+    }
+}
+
+// MARK: - Achievements (GET /v1/dns/achievements)
+
+struct AchievementItem: Codable, Identifiable {
+    let id: String
+    let title: String
+    let description: String
+    let icon: String          // SF Symbol name
+    let unlocked: Bool
+    let unlockedAt: Int?      // Unix timestamp
+
+    enum CodingKeys: String, CodingKey {
+        case id, title, description, icon, unlocked
+        case unlockedAt = "unlocked_at"
+    }
+}
+
+struct AchievementsResponse: Codable {
+    let achievements: [AchievementItem]
+    let activeStreakDays: Int
+    let longestStreakDays: Int
+
+    enum CodingKeys: String, CodingKey {
+        case achievements
+        case activeStreakDays  = "active_streak_days"
+        case longestStreakDays = "longest_streak_days"
+    }
+}
+
+// MARK: - Platform Status (GET /v1/status)
+
+struct PlatformStatus: Codable {
+    let status: String        // "healthy" | "degraded" | "down"
+    let totalNodes: Int
+    let healthyNodes: Int
+    let degradedNodes: Int
+    let uptimePct: Double
+
+    enum CodingKeys: String, CodingKey {
+        case status
+        case totalNodes    = "total_nodes"
+        case healthyNodes  = "healthy_nodes"
+        case degradedNodes = "degraded_nodes"
+        case uptimePct     = "uptime_pct"
+    }
+
+    var displayStatus: String {
+        switch status {
+        case "healthy":  return "All Systems Operational"
+        case "degraded": return "Partial Degradation"
+        default:         return "Service Disruption"
+        }
+    }
+
+    var isHealthy: Bool { status == "healthy" }
+    var isDegraded: Bool { status == "degraded" }
+}
+
+// MARK: - Token Recovery
+
+struct RecoveryInitResponse: Codable {
+    let recoveryToken: String
+    let expiresIn: Int
+
+    enum CodingKeys: String, CodingKey {
+        case recoveryToken = "recovery_token"
+        case expiresIn     = "expires_in"
+    }
+}

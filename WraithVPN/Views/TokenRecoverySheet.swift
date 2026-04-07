@@ -17,6 +17,10 @@ struct TokenRecoverySheet: View {
     @State private var isLoading = false
     @State private var errorMessage: String? = nil
     @State private var successMessage: String? = nil
+    @State private var identityType = "email"     // "email" | "apple_id"
+    @State private var identityValue = ""
+    @State private var identityDeliveryEmail = ""
+    @State private var identitySuccessMessage: String? = nil
 
     var body: some View {
         ZStack {
@@ -26,12 +30,13 @@ struct TokenRecoverySheet: View {
                 header
                     .padding(KFSpacing.lg)
 
-                Picker("Recovery method", selection: $selectedTab) {
+                Picker("Recovery Method", selection: $selectedTab) {
                     Text("Email Recovery").tag(0)
                     Text("Enter Token").tag(1)
+                    Text("By Identity").tag(2)
                 }
                 .pickerStyle(.segmented)
-                .padding(.horizontal, KFSpacing.lg)
+                .padding(.horizontal, KFSpacing.md)
                 .padding(.vertical, KFSpacing.md)
 
                 Divider()
@@ -40,8 +45,10 @@ struct TokenRecoverySheet: View {
                 VStack(spacing: KFSpacing.lg) {
                     if selectedTab == 0 {
                         emailTab
-                    } else {
+                    } else if selectedTab == 1 {
                         tokenTab
+                    } else {
+                        identityTab
                     }
 
                     Spacer()
@@ -197,6 +204,92 @@ struct TokenRecoverySheet: View {
         }
     }
 
+    // MARK: - Identity recovery tab
+
+    private var identityTab: some View {
+        VStack(alignment: .leading, spacing: KFSpacing.md) {
+            Text("Enter the email address or Apple ID you linked to your account. We'll send a recovery link to the delivery email.")
+                .font(KFFont.body(14))
+                .foregroundStyle(Color.kfTextSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            // Identity type picker
+            Picker("Identity Type", selection: $identityType) {
+                Text("Email").tag("email")
+                Text("Apple ID").tag("apple_id")
+            }
+            .pickerStyle(.segmented)
+
+            // Linked identity value
+            TextField(identityType == "email" ? "linked@email.com" : "Apple ID email", text: $identityValue)
+                .font(KFFont.body(14))
+                .foregroundStyle(Color.kfTextPrimary)
+                .autocapitalization(.none)
+                .keyboardType(.emailAddress)
+                .padding(KFSpacing.sm)
+                .background(Color.kfSurfaceElevated)
+                .clipShape(RoundedRectangle(cornerRadius: KFRadius.md, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: KFRadius.md, style: .continuous).stroke(Color.kfBorder, lineWidth: 1))
+
+            // Delivery email
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Send recovery link to:")
+                    .font(KFFont.caption(12))
+                    .foregroundStyle(Color.kfTextMuted)
+                TextField("delivery@email.com", text: $identityDeliveryEmail)
+                    .font(KFFont.body(14))
+                    .foregroundStyle(Color.kfTextPrimary)
+                    .autocapitalization(.none)
+                    .keyboardType(.emailAddress)
+                    .padding(KFSpacing.sm)
+                    .background(Color.kfSurfaceElevated)
+                    .clipShape(RoundedRectangle(cornerRadius: KFRadius.md, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: KFRadius.md, style: .continuous).stroke(Color.kfBorder, lineWidth: 1))
+            }
+
+            Button {
+                Task { await sendIdentityRecovery() }
+            } label: {
+                Group {
+                    if isLoading {
+                        ProgressView().tint(.white)
+                    } else {
+                        Text("Send Recovery Link")
+                            .font(KFFont.body(15))
+                            .foregroundStyle(.white)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, KFSpacing.sm)
+                .background(
+                    (identityValue.isEmpty || identityDeliveryEmail.isEmpty || isLoading)
+                        ? Color.kfAccentBlue.opacity(0.4)
+                        : Color.kfAccentBlue
+                )
+                .clipShape(RoundedRectangle(cornerRadius: KFRadius.lg, style: .continuous))
+            }
+            .disabled(identityValue.isEmpty || identityDeliveryEmail.isEmpty || isLoading)
+
+            if let msg = identitySuccessMessage {
+                Text(msg)
+                    .font(KFFont.caption(13))
+                    .foregroundStyle(Color.kfConnected)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if let err = errorMessage {
+                Text(err)
+                    .font(KFFont.caption(13))
+                    .foregroundStyle(Color.kfError)
+            }
+
+            Text("The recovery link expires in 15 minutes. Paste the kfr_ token from the link into the \"Enter Token\" tab.")
+                .font(KFFont.caption(11))
+                .foregroundStyle(Color.kfTextMuted)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(KFSpacing.md)
+    }
+
     // MARK: - Recovery actions
 
     private func emailRecovery() async {
@@ -246,6 +339,45 @@ struct TokenRecoverySheet: View {
         try? KeychainHelper.shared.save(resp.plan, for: .tokenPlan)
         await storeKit.reloadFromKeychain()
         dismiss()
+    }
+
+    private func sendIdentityRecovery() async {
+        isLoading = true
+        errorMessage = nil
+        identitySuccessMessage = nil
+        defer { isLoading = false }
+        do {
+            let body = IdentityRecoverBody(
+                identityType:  identityType,
+                identityValue: identityValue.trimmingCharacters(in: .whitespacesAndNewlines),
+                email:         identityDeliveryEmail.trimmingCharacters(in: .whitespacesAndNewlines)
+            )
+            let _ = try await URLSession.shared.data(for: identityRecoverRequest(body))
+            identitySuccessMessage = "If your identity is on file, a recovery link has been sent. Check your email."
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private struct IdentityRecoverBody: Encodable {
+        let identityType:  String
+        let identityValue: String
+        let email:         String
+
+        enum CodingKeys: String, CodingKey {
+            case identityType  = "identity_type"
+            case identityValue = "identity_value"
+            case email
+        }
+    }
+
+    private func identityRecoverRequest(_ body: IdentityRecoverBody) throws -> URLRequest {
+        let url = URL(string: "https://api.katafract.com/v1/token/recover/identity")!
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = try JSONEncoder().encode(body)
+        return req
     }
 }
 

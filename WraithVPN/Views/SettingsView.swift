@@ -25,6 +25,12 @@ struct SettingsView: View {
     @State private var revokingPeerIds: Set<String> = []
     @State private var platformStatus: PlatformStatus? = nil
     @State private var showRecovery = false
+    @State private var showIdentityLink = false
+    @State private var identityLinkEmail = ""
+    @State private var isLinkingIdentity = false
+    @State private var identityLinked = UserDefaults.standard.bool(forKey: "identityLinked")
+    @State private var identityLinkError: String? = nil
+    @State private var showSeatPurchaseError = false
 
     // MARK: - Body
 
@@ -259,10 +265,43 @@ struct SettingsView: View {
 
                 if !list.canAdd {
                     Divider().background(Color.kfBorder)
+
+                    // Seat pack IAP — available for active subscribers
+                    if storeKit.products.contains(where: { $0.id == "com.katafract.wraith.seats.5" }) {
+                        Button {
+                            Task {
+                                await storeKit.purchaseSeatPack()
+                                if storeKit.seatPurchaseError != nil {
+                                    showSeatPurchaseError = true
+                                } else {
+                                    await loadPeerList()
+                                }
+                            }
+                        } label: {
+                            SettingsRow(icon: "plus.circle.fill", label: "Add 5 Device Slots") {
+                                if storeKit.isPurchasingSeatPack {
+                                    ProgressView().tint(Color.kfAccentBlue)
+                                } else {
+                                    Text(storeKit.products.first(where: { $0.id == "com.katafract.wraith.seats.5" })?.displayPrice ?? "")
+                                        .font(KFFont.caption(12))
+                                        .foregroundStyle(Color.kfAccentBlue)
+                                }
+                            }
+                        }
+                        .disabled(storeKit.isPurchasingSeatPack)
+                        .alert("Purchase Failed", isPresented: $showSeatPurchaseError) {
+                            Button("OK", role: .cancel) {}
+                        } message: {
+                            Text(storeKit.seatPurchaseError ?? "Unknown error")
+                        }
+
+                        Divider().background(Color.kfBorder)
+                    }
+
                     NavigationLink {
                         PaywallView().environmentObject(storeKit)
                     } label: {
-                        SettingsRow(icon: "plus.circle.fill", label: "Add More Devices") {
+                        SettingsRow(icon: "arrow.up.circle.fill", label: "Upgrade Plan") {
                             Image(systemName: "chevron.right")
                                 .font(.system(size: 13))
                                 .foregroundStyle(Color.kfAccentBlue)
@@ -700,6 +739,21 @@ struct SettingsView: View {
 
             Divider().background(Color.kfBorder)
 
+            Button { showIdentityLink = true } label: {
+                SettingsRow(icon: identityLinked ? "checkmark.shield.fill" : "link.badge.plus",
+                            label: identityLinked ? "Recovery Identity Linked" : "Link Recovery Identity") {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Color.kfTextMuted)
+                }
+            }
+            .foregroundStyle(identityLinked ? Color.kfConnected : Color.kfTextPrimary)
+            .sheet(isPresented: $showIdentityLink) {
+                identityLinkSheet
+            }
+
+            Divider().background(Color.kfBorder)
+
             Button { showRecovery = true } label: {
                 SettingsRow(icon: "arrow.down.circle.fill", label: "Recover Access") {
                     Image(systemName: "chevron.right")
@@ -723,6 +777,84 @@ struct SettingsView: View {
         }
         .padding(KFSpacing.md)
         .kfCard()
+    }
+
+    private var identityLinkSheet: some View {
+        ZStack {
+            Color.kfBackground.ignoresSafeArea()
+            VStack(alignment: .leading, spacing: KFSpacing.lg) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Link Recovery Identity")
+                            .font(KFFont.heading(20))
+                            .foregroundStyle(.white)
+                        Text("Link your email so you can recover your token on a new device without App Store access.")
+                            .font(KFFont.caption(13))
+                            .foregroundStyle(Color.kfTextSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer()
+                    Button {
+                        showIdentityLink = false
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 24))
+                            .foregroundStyle(Color.kfTextMuted)
+                    }
+                }
+
+                TextField("your@email.com", text: $identityLinkEmail)
+                    .font(KFFont.body(15))
+                    .foregroundStyle(Color.kfTextPrimary)
+                    .autocapitalization(.none)
+                    .keyboardType(.emailAddress)
+                    .padding(KFSpacing.sm)
+                    .background(Color.kfSurfaceElevated)
+                    .clipShape(RoundedRectangle(cornerRadius: KFRadius.md, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: KFRadius.md, style: .continuous).stroke(Color.kfBorder, lineWidth: 1))
+
+                if let err = identityLinkError {
+                    Text(err)
+                        .font(KFFont.caption(12))
+                        .foregroundStyle(Color.kfError)
+                }
+
+                Button {
+                    Task {
+                        isLinkingIdentity = true
+                        identityLinkError = nil
+                        defer { isLinkingIdentity = false }
+                        do {
+                            let _ = try await APIClient.shared.linkIdentity(type: "email", value: identityLinkEmail.trimmingCharacters(in: .whitespacesAndNewlines))
+                            UserDefaults.standard.set(true, forKey: "identityLinked")
+                            identityLinked = true
+                            showIdentityLink = false
+                        } catch {
+                            identityLinkError = "Failed to link: \(error.localizedDescription)"
+                        }
+                    }
+                } label: {
+                    Group {
+                        if isLinkingIdentity {
+                            ProgressView().tint(.white)
+                        } else {
+                            Text("Link Email")
+                                .font(KFFont.body(15))
+                                .foregroundStyle(.white)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, KFSpacing.sm)
+                    .background(identityLinkEmail.isEmpty || isLinkingIdentity ? Color.kfAccentBlue.opacity(0.4) : Color.kfAccentBlue)
+                    .clipShape(RoundedRectangle(cornerRadius: KFRadius.lg, style: .continuous))
+                }
+                .disabled(identityLinkEmail.isEmpty || isLinkingIdentity)
+
+                Spacer()
+            }
+            .padding(KFSpacing.lg)
+        }
+        .presentationDetents([.medium])
     }
 
     private var versionFooter: some View {

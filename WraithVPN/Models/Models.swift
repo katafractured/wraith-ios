@@ -504,3 +504,55 @@ struct RecoveryInitResponse: Codable {
         case expiresIn     = "expires_in"
     }
 }
+
+// MARK: - Seats (POST /v1/token/seats/add)
+
+struct SeatsAddRequest: Encodable {
+    let jwsTransaction:        String
+    let productId:             String
+    let transactionId:         String
+    let originalTransactionId: String
+    let bundleId:              String
+
+    enum CodingKeys: String, CodingKey {
+        case jwsTransaction        = "jws_transaction"
+        case productId             = "product_id"
+        case transactionId         = "transaction_id"
+        case originalTransactionId = "original_transaction_id"
+        case bundleId              = "bundle_id"
+    }
+}
+
+struct SeatsAddResponse: Decodable {
+    let maxPeers:      Int
+    let added:         Int
+    let alreadyApplied: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case maxPeers       = "max_peers"
+        case added
+        case alreadyApplied = "already_applied"
+    }
+}
+
+// MARK: - Identity link (POST /v1/token/identity/link)
+
+struct IdentityLinkRequest: Encodable {
+    let identityType:  String
+    let identityValue: String
+
+    enum CodingKeys: String, CodingKey {
+        case identityType  = "identity_type"
+        case identityValue = "identity_value"
+    }
+}
+
+struct IdentityLinkResponse: Decodable {
+    let linked:       Bool
+    let identityType: String
+
+    enum CodingKeys: String, CodingKey {
+        case linked
+        case identityType = "identity_type"
+    }
+}

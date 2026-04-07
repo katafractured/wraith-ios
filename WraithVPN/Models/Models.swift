@@ -44,8 +44,8 @@ struct VPNServer: Codable, Identifiable, Hashable {
     }
 
     /// Minimal stub used only to persist the provisioned nodeId across restarts.
-    static func stub(nodeId: String) -> VPNServer {
-        VPNServer(nodeId: nodeId, site: "", region: "", displayName: "", ipv4: "",
+    static func stub(nodeId: String, region: String = "") -> VPNServer {
+        VPNServer(nodeId: nodeId, site: "", region: region, displayName: "", ipv4: "",
                   ipv6: nil, endpoints: Endpoints(primary: "", secondary: nil),
                   publicKey: "", wgPort: 0, loadScore: 0, ipv6Available: false, geodnsWeight: 0)
     }
@@ -86,11 +86,13 @@ enum RegionInfo {
 struct ProvisionRequest: Encodable {
     let clientPubkey: String
     let region: String?
+    let nodeId: String?
     let label: String
 
     enum CodingKeys: String, CodingKey {
         case clientPubkey = "client_pubkey"
         case region
+        case nodeId       = "node_id"
         case label
     }
 }
@@ -103,6 +105,7 @@ struct ProvisionResponse: Decodable {
     let assignedIpv6: String?
     let nodeId: String
     let endpoint: String
+    let exitIpv4: String?
 
     enum CodingKeys: String, CodingKey {
         case peerId       = "peer_id"
@@ -112,18 +115,21 @@ struct ProvisionResponse: Decodable {
         case assignedIpv6 = "assigned_ipv6"
         case nodeId       = "node_id"
         case endpoint
+        case exitIpv4     = "exit_ipv4"
     }
 }
 
 struct SwitchPeerRequest: Encodable {
     let fromPeerId: String
     let region: String?
+    let nodeId: String?
     let label: String
     let clientPubkey: String?
 
     enum CodingKeys: String, CodingKey {
         case fromPeerId   = "from_peer_id"
         case region
+        case nodeId       = "node_id"
         case label
         case clientPubkey = "client_pubkey"
     }

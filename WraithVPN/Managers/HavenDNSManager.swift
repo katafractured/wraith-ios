@@ -5,6 +5,17 @@
 // Haven DNS is available for free — no subscription required.
 // It installs a system DNS profile that routes all DNS queries through
 // Katafract's WraithGate nodes (AdGuard Home, blocking ads + trackers).
+//
+// IMPORTANT — single profile contract:
+//   - NEDNSSettingsManager.shared() is a per-app singleton: only ONE DNS profile
+//     can exist per app at any time. Never call removeFromPreferences() followed
+//     by saveToPreferences() — iOS treats that as a new profile and shows the
+//     user a second approval prompt.
+//   - The profile is NEVER toggled in response to VPN state. It stays installed
+//     and active through VPN connect/disconnect/switch cycles. DoH requests queue
+//     during the ~2s tunnel restart window and complete when the tunnel is up.
+//     Removing the profile during VPN connect causes a 30s DNS blackout (kill
+//     switch blocks all traffic including DNS until the profile is reinstalled).
 
 import Foundation
 import NetworkExtension
@@ -27,7 +38,6 @@ final class HavenDNSManager: ObservableObject {
 
     private let dohURL = "https://dns.katafract.com/dns-query"
     private let profileDescription = "Haven DNS — Ad & tracker blocking by WraithVPN"
-    private let prefsKey = "havenDnsPreferences"
 
     // MARK: - Init
 
@@ -48,6 +58,9 @@ final class HavenDNSManager: ObservableObject {
 
     // MARK: - Public
 
+    /// Installs (or updates in-place) the Haven DNS-over-HTTPS profile.
+    /// Shows the iOS system approval prompt on first install; subsequent calls
+    /// update the existing profile silently.
     func enable() async {
         isLoading = true
         error = nil
@@ -57,19 +70,16 @@ final class HavenDNSManager: ObservableObject {
             let manager = NEDNSSettingsManager.shared()
             try await manager.loadFromPreferences()
 
-            // Already enabled — nothing to do.
+            // Already installed and active — nothing to do.
             if manager.isEnabled {
                 isEnabled = true
                 return
             }
 
-            // Remove stale disabled profile if one exists. Use try? so a removal
-            // hiccup doesn't block installing a fresh profile.
-            if manager.dnsSettings != nil {
-                try? await manager.removeFromPreferences()
-            }
-
-            // Install fresh profile.
+            // Update or install the profile in-place.
+            // Do NOT call removeFromPreferences() first — that causes iOS to treat
+            // the next save as a brand-new profile, showing a second approval prompt
+            // and creating a duplicate visible in Settings.
             let settings = NEDNSOverHTTPSSettings(servers: [])
             settings.serverURL = URL(string: dohURL)
             manager.dnsSettings = settings
@@ -83,6 +93,8 @@ final class HavenDNSManager: ObservableObject {
         }
     }
 
+    /// Removes the Haven DNS profile. Only call this in response to an explicit
+    /// user action — never call it automatically on VPN state changes.
     func disable() async {
         isLoading = true
         error = nil
@@ -107,7 +119,6 @@ final class HavenDNSManager: ObservableObject {
         do {
             try await manager.loadFromPreferences()
             isEnabled = manager.isEnabled
-            // Clear any stale enable error now that we've confirmed current state.
             if isEnabled { error = nil }
         } catch {
             isEnabled = false
@@ -147,9 +158,6 @@ final class HavenDNSManager: ObservableObject {
     }
 
     /// Enables Haven DNS profile if the user has any active entitlement.
-    /// Pass `hasPurchased: true` for IAP/free-tier subscribers who may not yet
-    /// have a Keychain token (e.g. first launch after reinstall, timing race
-    /// between StoreKit init and ContentView task).
     func ensureEnabledForSubscriber(hasPurchased: Bool = false) async {
         let hasToken = KeychainHelper.shared.readOptional(for: .subscriptionToken) != nil
         guard hasToken || hasPurchased else { return }

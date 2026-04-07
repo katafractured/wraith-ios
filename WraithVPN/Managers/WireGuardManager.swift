@@ -50,6 +50,7 @@ final class WireGuardManager: ObservableObject {
 
     private var manager: NETunnelProviderManager?
     private var statusObserver: NSObjectProtocol?
+    private var previousStatus: VPNStatus = .disconnected
     #if os(macOS)
     private let tunnelBundleId = "com.katafract.wraith.mac.tunnel"
     #else
@@ -204,6 +205,7 @@ final class WireGuardManager: ObservableObject {
         let provision = try await APIClient.shared.provisionPeer(
             pubkey: pubkey,
             region: server.region,
+            nodeId: server.nodeId,
             label:  label
         )
         // The server only knows our public key, so the returned config has no private key.
@@ -212,12 +214,13 @@ final class WireGuardManager: ObservableObject {
         try await installProfile(configText: config, server: server)
         activePeerId    = provision.peerId
         assignedIP      = provision.assignedIpv4
-        exitIP          = server.ipv4.isEmpty ? nil : server.ipv4
+        exitIP          = provision.exitIpv4 ?? (server.ipv4.isEmpty ? nil : server.ipv4)
         connectedServer = server
         isProvisioned   = true
         NotificationCenter.default.post(name: .vpnServerDidChange, object: nil)
         try? KeychainHelper.shared.save(provision.peerId,  for: .activePeerId)
-        try? KeychainHelper.shared.save(server.nodeId,     for: .activeNodeId)
+        try? KeychainHelper.shared.save(provision.nodeId,  for: .activeNodeId)
+        try? KeychainHelper.shared.save(server.region,     for: .activeRegion)
         if let ip = provision.assignedIpv4.isEmpty ? nil : Optional(provision.assignedIpv4) {
             try? KeychainHelper.shared.save(ip, for: .wgAssignedIP)
         }
@@ -232,18 +235,20 @@ final class WireGuardManager: ObservableObject {
             fromPeerId: fromPeerId,
             pubkey:     pubkey,
             region:     server.region,
+            nodeId:     server.nodeId,
             label:      label
         )
         let config = try injectPrivateKey(into: provision.config)
         try await installProfile(configText: config, server: server)
         activePeerId    = provision.peerId
         assignedIP      = provision.assignedIpv4
-        exitIP          = server.ipv4.isEmpty ? nil : server.ipv4
+        exitIP          = provision.exitIpv4 ?? (server.ipv4.isEmpty ? nil : server.ipv4)
         connectedServer = server
         isProvisioned   = true
         NotificationCenter.default.post(name: .vpnServerDidChange, object: nil)
         try? KeychainHelper.shared.save(provision.peerId,  for: .activePeerId)
-        try? KeychainHelper.shared.save(server.nodeId,     for: .activeNodeId)
+        try? KeychainHelper.shared.save(provision.nodeId,  for: .activeNodeId)
+        try? KeychainHelper.shared.save(server.region,     for: .activeRegion)
         if !provision.assignedIpv4.isEmpty {
             try? KeychainHelper.shared.save(provision.assignedIpv4, for: .wgAssignedIP)
         }
@@ -294,7 +299,8 @@ final class WireGuardManager: ObservableObject {
                 // Restore which node this profile is provisioned for so server-change
                 // detection works after an app restart.
                 if let nodeId = KeychainHelper.shared.readOptional(for: .activeNodeId) {
-                    connectedServer = VPNServer.stub(nodeId: nodeId)
+                    let region = KeychainHelper.shared.readOptional(for: .activeRegion) ?? ""
+                    connectedServer = VPNServer.stub(nodeId: nodeId, region: region)
                 }
             } else {
                 manager = NETunnelProviderManager()
@@ -425,6 +431,15 @@ final class WireGuardManager: ObservableObject {
             status = .disconnected
             connectedSince = nil
         }
+
+        // Post notifications for VPN state changes
+        if status == .connected && previousStatus != .connected {
+            NotificationCenter.default.post(name: .vpnDidConnect, object: nil)
+        }
+        if status == .disconnected && previousStatus != .disconnected {
+            NotificationCenter.default.post(name: .vpnDidDisconnect, object: nil)
+        }
+        previousStatus = status
     }
 }
 
@@ -448,6 +463,8 @@ enum WGError: LocalizedError {
 
 extension Notification.Name {
     static let vpnServerDidChange = Notification.Name("vpnServerDidChange")
+    static let vpnDidConnect       = Notification.Name("vpnDidConnect")
+    static let vpnDidDisconnect    = Notification.Name("vpnDidDisconnect")
 }
 
 // MARK: - UIDevice shim for macOS Catalyst

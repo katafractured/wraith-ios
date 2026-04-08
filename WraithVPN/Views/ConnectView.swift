@@ -14,9 +14,12 @@ struct ConnectView: View {
     @AppStorage("simpleMode") private var simpleMode = true
 
     @State private var showServerPicker = false
-    @State private var isAnimatingRing  = false
     @State private var errorMessage: String? = nil
     @State private var showError = false
+
+    private var isAnimatingRing: Bool {
+        vpn.status == .connecting || vpn.status == .disconnecting || vpn.isProvisioning
+    }
 
     // MARK: - Body
 
@@ -60,6 +63,8 @@ struct ConnectView: View {
         .onChange(of: vpn.connectedServer?.nodeId) { _, _ in
             syncSelectedToConnected()
         }
+        .sensoryFeedback(.impact(weight: .medium), trigger: vpn.status == .connected)
+        .sensoryFeedback(.impact(weight: .light),  trigger: vpn.status == .disconnected)
     }
 
     // MARK: - Helpers
@@ -124,16 +129,8 @@ struct ConnectView: View {
     // MARK: - Connect button
 
     private var connectButton: some View {
-        ConnectButtonView(isAnimatingRing: $isAnimatingRing, onTap: handleConnectTap)
+        ConnectButtonView(isAnimatingRing: isAnimatingRing, onTap: handleConnectTap)
             .environmentObject(vpn)
-            .onChange(of: vpn.status) { _, newStatus in
-                isAnimatingRing = newStatus == .connecting || newStatus == .disconnecting || vpn.isProvisioning
-            }
-            .onChange(of: vpn.isProvisioning) { _, provisioning in
-                isAnimatingRing = provisioning || vpn.status == .connecting || vpn.status == .disconnecting
-            }
-            .sensoryFeedback(.impact(weight: .medium), trigger: vpn.status == .connected)
-            .sensoryFeedback(.impact(weight: .light),  trigger: vpn.status == .disconnected)
     }
 
     private func heroSection(layout: ConnectLayout) -> some View {
@@ -409,7 +406,7 @@ private struct ConnectLayout {
 private struct ConnectButtonView: View {
 
     @EnvironmentObject var vpn: WireGuardManager
-    @Binding var isAnimatingRing: Bool
+    let isAnimatingRing: Bool
     let onTap: () -> Void
 
     var body: some View {

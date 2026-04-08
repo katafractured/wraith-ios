@@ -89,16 +89,21 @@ final class WireGuardManager: ObservableObject {
     /// Provisions to nearest server and installs profile if no peer exists yet.
     /// Called automatically after purchase/token entry and on app launch.
     func autoProvisionIfNeeded() async {
-        // Wait for the manager to finish loading from NE preferences so that
-        // `isProvisioned` reflects reality before we check it. Without this,
-        // a race between init's Task and ContentView.task would see
-        // isProvisioned == false and provision a duplicate peer.
-        await managerLoadTask?.value
-        guard !isProvisioned, !isProvisioning,
+        // Claim the provisioning lock BEFORE awaiting the manager-load task.
+        // Without this, connectToServer() can slip in while we're suspended on
+        // `await managerLoadTask`, see isProvisioning==false, and both proceed
+        // concurrently — creating duplicate peers.
+        guard !isProvisioning,
               KeychainHelper.shared.readOptional(for: .subscriptionToken) != nil else { return }
-        isAutoProvisioning = true
         isProvisioning = true
-        defer { isAutoProvisioning = false; isProvisioning = false }
+        defer { isProvisioning = false; isAutoProvisioning = false }
+
+        // Wait for the manager to finish loading from NE preferences so that
+        // `isProvisioned` reflects reality before we check it.
+        await managerLoadTask?.value
+        guard !isProvisioned else { return }
+
+        isAutoProvisioning = true
         do {
             let server = try await APIClient.shared.fetchNearestServer()
             try await provisionAndInstall(server: server)

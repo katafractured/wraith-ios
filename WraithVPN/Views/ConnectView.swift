@@ -133,12 +133,7 @@ struct ConnectView: View {
                     )
                     .frame(width: 248, height: 248)
                     .rotationEffect(.degrees(isAnimatingRing ? 360 : 0))
-                    .animation(
-                        vpn.status == .connecting || vpn.status == .disconnecting || vpn.isProvisioning
-                            ? .linear(duration: 1.5).repeatForever(autoreverses: false)
-                            : .easeOut(duration: 0.5),
-                        value: isAnimatingRing
-                    )
+                    .animation(ringAnimation, value: isAnimatingRing)
 
                 Circle()
                     .fill(
@@ -415,6 +410,13 @@ struct ConnectView: View {
     }
 
     // MARK: - Computed helpers
+
+    private var ringAnimation: Animation {
+        if vpn.status == .connecting || vpn.status == .disconnecting || vpn.isProvisioning {
+            return .linear(duration: 1.5).repeatForever(autoreverses: false)
+        }
+        return .easeOut(duration: 0.5)
+    }
 
     private var buttonIconGradient: LinearGradient {
         if vpn.status == .connected {

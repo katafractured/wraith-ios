@@ -24,7 +24,18 @@ struct ContentView: View {
 
     var body: some View {
         Group {
-            if !hasSeenOnboarding {
+            if storeKit.isCheckingEntitlements {
+                // Checking keychain/StoreKit — hold here to prevent paywall flash
+                ZStack {
+                    Color.kfBackground.ignoresSafeArea()
+                    Image("AppIcon-Display")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 80, height: 80)
+                        .clipShape(RoundedRectangle(cornerRadius: 18))
+                }
+                .transition(.opacity)
+            } else if !hasSeenOnboarding {
                 OnboardingView {
                     withAnimation(.easeInOut(duration: 0.4)) {
                         hasSeenOnboarding = true
@@ -54,6 +65,7 @@ struct ContentView: View {
                     ))
             }
         }
+        .animation(.easeInOut(duration: 0.25), value: storeKit.isCheckingEntitlements)
         .animation(.easeInOut(duration: 0.4), value: hasSeenOnboarding)
         .animation(.easeInOut(duration: 0.35), value: storeKit.hasPurchased)
         .animation(.easeInOut(duration: 0.35), value: hasUnlockedFreeTier)

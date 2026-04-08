@@ -207,8 +207,12 @@ final class WireGuardManager: ObservableObject {
     func disconnect() {
         reprovisionAttempts = 0
         status = .disconnecting
-        manager?.connection.stopVPNTunnel()
-        Task { await applyOnDemand(false) }
+        // Disable OnDemand BEFORE stopping — if we stop first, iOS fires the
+        // OnDemand rule immediately and reconnects before applyOnDemand finishes.
+        Task {
+            await applyOnDemand(false)
+            manager?.connection.stopVPNTunnel()
+        }
     }
 
     /// Persists the tunnel mode. If connected, reinstalls the existing profile with the

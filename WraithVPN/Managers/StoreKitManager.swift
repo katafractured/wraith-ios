@@ -40,6 +40,7 @@ final class StoreKitManager: ObservableObject {
     @Published var purchaseError: String? = nil
     @Published var subscription: SubscriptionInfo? = nil
     @Published var hasPurchased: Bool = false
+    @Published var isCheckingEntitlements: Bool = true
     @Published var seatPurchaseError: String? = nil
     @Published var isPurchasingSeatPack: Bool = false
 
@@ -225,6 +226,9 @@ final class StoreKitManager: ObservableObject {
 
     /// Reads stored token from Keychain and populates `subscription`.
     func reloadFromKeychain() async {
+        defer {
+            Task { @MainActor in self.isCheckingEntitlements = false }
+        }
         guard let token   = KeychainHelper.shared.readOptional(for: .subscriptionToken),
               let plan     = KeychainHelper.shared.readOptional(for: .tokenPlan) else {
             // No stored token — check StoreKit entitlements anyway

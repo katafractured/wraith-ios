@@ -125,52 +125,7 @@ struct ConnectView: View {
 
     private var connectButton: some View {
         Button(action: handleConnectTap) {
-            ZStack {
-                Circle()
-                    .stroke(
-                        AngularGradient.kfConnectButtonRing(status: vpn.status),
-                        lineWidth: 5
-                    )
-                    .frame(width: 248, height: 248)
-                    .rotationEffect(.degrees(isAnimatingRing ? 360 : 0))
-                    .animation(ringAnimation, value: isAnimatingRing)
-
-                Circle()
-                    .fill(
-                        RadialGradient(
-                            colors: [
-                                ringCenterColor.opacity(0.25),
-                                ringCenterColor.opacity(0.05),
-                                Color.clear
-                            ],
-                            center: .center,
-                            startRadius: 0,
-                            endRadius: 112
-                        )
-                    )
-                    .frame(width: 214, height: 214)
-
-                Circle()
-                    .fill(Color.kfSurface)
-                    .frame(width: 178, height: 178)
-                    .overlay(
-                        Circle()
-                            .strokeBorder(Color.kfBorder, lineWidth: 1)
-                            .frame(width: 178, height: 178)
-                    )
-
-                VStack(spacing: KFSpacing.xs) {
-                    Image(systemName: buttonIcon)
-                        .font(.system(size: 42, weight: .medium))
-                        .foregroundStyle(buttonIconGradient)
-                        .animation(.easeInOut(duration: 0.3), value: vpn.status)
-
-                    Text(buttonLabel)
-                        .font(KFFont.caption(12, weight: .semibold))
-                        .kerning(1.4)
-                        .foregroundStyle(Color.kfTextMuted)
-                }
-            }
+            connectButtonFace
         }
         .buttonStyle(ScaleButtonStyle())
         .disabled(vpn.status == .connecting || vpn.status == .disconnecting || vpn.isProvisioning)
@@ -182,6 +137,52 @@ struct ConnectView: View {
         }
         .sensoryFeedback(.impact(weight: .medium), trigger: vpn.status == .connected)
         .sensoryFeedback(.impact(weight: .light),  trigger: vpn.status == .disconnected)
+    }
+
+    private var connectButtonFace: some View {
+        ZStack {
+            connectButtonRing
+            connectButtonGlow
+            connectButtonDisk
+            connectButtonLabel
+        }
+    }
+
+    private var connectButtonRing: some View {
+        Circle()
+            .stroke(AngularGradient.kfConnectButtonRing(status: vpn.status), lineWidth: 5)
+            .frame(width: 248, height: 248)
+            .rotationEffect(.degrees(isAnimatingRing ? 360 : 0))
+            .animation(ringAnimation, value: isAnimatingRing)
+    }
+
+    private var connectButtonGlow: some View {
+        Circle()
+            .fill(RadialGradient(
+                colors: [ringCenterColor.opacity(0.25), ringCenterColor.opacity(0.05), Color.clear],
+                center: .center, startRadius: 0, endRadius: 112
+            ))
+            .frame(width: 214, height: 214)
+    }
+
+    private var connectButtonDisk: some View {
+        Circle()
+            .fill(Color.kfSurface)
+            .frame(width: 178, height: 178)
+            .overlay(Circle().strokeBorder(Color.kfBorder, lineWidth: 1).frame(width: 178, height: 178))
+    }
+
+    private var connectButtonLabel: some View {
+        VStack(spacing: KFSpacing.xs) {
+            Image(systemName: buttonIcon)
+                .font(.system(size: 42, weight: .medium))
+                .foregroundStyle(buttonIconGradient)
+                .animation(.easeInOut(duration: 0.3), value: vpn.status)
+            Text(buttonLabel)
+                .font(KFFont.caption(12, weight: .semibold))
+                .kerning(1.4)
+                .foregroundStyle(Color.kfTextMuted)
+        }
     }
 
     private func heroSection(layout: ConnectLayout) -> some View {

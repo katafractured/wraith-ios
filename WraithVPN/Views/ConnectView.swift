@@ -167,11 +167,7 @@ struct ConnectView: View {
                 VStack(spacing: KFSpacing.xs) {
                     Image(systemName: buttonIcon)
                         .font(.system(size: 42, weight: .medium))
-                        .foregroundStyle(
-                            vpn.status == .connected
-                                ? LinearGradient(colors: [.kfConnected, Color(hex: "#86efac")], startPoint: .top, endPoint: .bottom)
-                                : LinearGradient(colors: [.kfTextSecondary, .kfTextMuted], startPoint: .top, endPoint: .bottom)
-                        )
+                        .foregroundStyle(buttonIconGradient)
                         .animation(.easeInOut(duration: 0.3), value: vpn.status)
 
                     Text(buttonLabel)
@@ -419,6 +415,15 @@ struct ConnectView: View {
     }
 
     // MARK: - Computed helpers
+
+    private var buttonIconGradient: LinearGradient {
+        if vpn.status == .connected {
+            return LinearGradient(colors: [.kfConnected, Color(hex: "#86efac")],
+                                  startPoint: .top, endPoint: .bottom)
+        }
+        return LinearGradient(colors: [.kfTextSecondary, .kfTextMuted],
+                              startPoint: .top, endPoint: .bottom)
+    }
 
     private var buttonIcon: String {
         if vpn.isProvisioning { return "ellipsis" }

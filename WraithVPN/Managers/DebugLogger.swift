@@ -53,7 +53,7 @@ final class DebugLogger: ObservableObject {
 
     private let maxEntries = 2000
 
-    static let timestampFormatter: DateFormatter = {
+    nonisolated(unsafe) static let timestampFormatter: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "HH:mm:ss.SSS"
         return f

@@ -61,9 +61,9 @@ struct DebugLogView: View {
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
                         }
-                        .onChange(of: logger.entries.count) { _ in
+                        .onChange(of: logger.entries.count) { _, _ in
                             if let last = filteredEntries.last {
-                                withAnimation {
+                                withAnimation(.default) {
                                     proxy.scrollTo(last.id, anchor: .bottom)
                                 }
                             }

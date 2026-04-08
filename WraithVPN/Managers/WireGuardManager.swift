@@ -503,6 +503,19 @@ final class WireGuardManager: ObservableObject {
     private func installProfile(configText: String, server: VPNServer) async throws {
         guard let mgr = manager else { return }
 
+        // If the tunnel extension is running, stop it before installing a new config.
+        // saveToPreferences() updates on-disk config but the running extension keeps
+        // the OLD config in memory — startTunnel() on an active tunnel is a no-op.
+        let currentStatus = mgr.connection.status
+        if currentStatus == .connected || currentStatus == .connecting || currentStatus == .reasserting {
+            mgr.connection.stopVPNTunnel()
+            // Wait up to 3s for the extension to stop
+            for _ in 0..<30 {
+                try? await Task.sleep(for: .milliseconds(100))
+                if mgr.connection.status == .disconnected { break }
+            }
+        }
+
         let proto = NETunnelProviderProtocol()
         proto.providerBundleIdentifier = tunnelBundleId
         proto.serverAddress = server.endpoints.primary

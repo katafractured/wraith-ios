@@ -60,8 +60,11 @@ struct TunnelHealthReport {
         }
     }
 
+    // Reprovision when the WG tunnel is dead AND Haven DNS (inside tunnel) is
+    // unreachable. Fallback DNS passing is irrelevant — if there's no handshake
+    // and no Haven DNS, the peer is likely revoked or the server unreachable.
     var needsReprovision: Bool {
-        !havenDNS.isPassed && !fallbackDNS.isPassed && !handshakeOK
+        !handshakeOK && !havenDNS.isPassed
     }
 }
 
@@ -88,9 +91,10 @@ final class DNSHealthCheck {
             havenResult = .skipped
         }
 
-        // Test 2: Cloudflare fallback
-        await dbg.dns("Test 2: resolving google.com via 1.1.1.1")
-        let fallbackResult = await resolveDNS(server: "1.1.1.1", hostname: "google.com")
+        // Test 2: Haven fallback DNS on fury (outside tunnel — excluded from AllowedIPs)
+        let furyHavenDNS = "85.239.240.208"
+        await dbg.dns("Test 2: resolving google.com via Haven fallback \(furyHavenDNS)")
+        let fallbackResult = await resolveDNS(server: furyHavenDNS, hostname: "google.com")
 
         // Test 3: WG handshake check via tunnel provider message
         await dbg.dns("Test 3: checking WG handshake status")
@@ -111,10 +115,10 @@ final class DNSHealthCheck {
             await dbg.dns("Haven DNS: FAILED (\(err?.localizedDescription ?? "timeout"))")
         }
         if case .passed(let ms) = report.fallbackDNS {
-            await dbg.dns("Cloudflare DNS: OK (\(ms)ms)")
+            await dbg.dns("Haven fallback DNS: OK (\(ms)ms)")
         }
         if case .failed(let err) = report.fallbackDNS {
-            await dbg.dns("Cloudflare DNS: FAILED (\(err?.localizedDescription ?? "timeout"))")
+            await dbg.dns("Haven fallback DNS: FAILED (\(err?.localizedDescription ?? "timeout"))")
         }
         await dbg.dns("WG handshake: \(handshakeOK ? "OK" : "FAILED")")
 

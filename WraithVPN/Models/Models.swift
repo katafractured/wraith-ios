@@ -67,7 +67,7 @@ enum RegionInfo {
         "eu-west":      ("Frankfurt",  "🇩🇪"),
         "eu-north":     ("Helsinki",   "🇫🇮"),
         "ap-southeast": ("Singapore",  "🇸🇬"),
-        "us-central":   ("Missouri",    "🇺🇸"),
+        "us-central":   ("Missouri",     "🇺🇸"),
         "us-east":      ("Virginia",   "🇺🇸"),
         "us-west":      ("Oregon",     "🇺🇸"),
     ]

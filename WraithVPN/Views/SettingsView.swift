@@ -74,7 +74,12 @@ struct SettingsView: View {
         .toolbarBackground(.visible, for: .navigationBar)
         .preferredColorScheme(.dark)
         .alert("Sign Out", isPresented: $showSignOutAlert) {
-            Button("Sign Out", role: .destructive) { storeKit.signOut() }
+            Button("Sign Out", role: .destructive) {
+                Task {
+                    await vpn.revokePeer()
+                    storeKit.signOut()
+                }
+            }
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("Your subscription token will be removed from this device. To sign in again, use the same method you originally purchased through — Restore Purchase for App Store, or enter your token if you purchased via another gateway.")
@@ -294,7 +299,23 @@ struct SettingsView: View {
                 }
             }
 
-            if let list = peerList {
+            // Haven free users have no token — device management requires a subscription.
+            if KeychainHelper.shared.readOptional(for: .subscriptionToken) == nil {
+                HStack(spacing: KFSpacing.sm) {
+                    Image(systemName: "iphone.slash")
+                        .font(.system(size: 15))
+                        .foregroundStyle(Color.kfTextMuted)
+                        .frame(width: 20)
+                    Text("Device management is available with a WraithVPN subscription.")
+                        .font(KFFont.body(14))
+                        .foregroundStyle(Color.kfTextSecondary)
+                }
+                NavigationLink("Upgrade to WraithVPN") {
+                    PaywallView().environmentObject(storeKit)
+                }
+                .font(KFFont.body(14))
+                .foregroundStyle(Color.kfAccentBlue)
+            } else if let list = peerList {
                 // Usage bar
                 HStack(spacing: KFSpacing.xs) {
                     Text("\(list.used) of \(list.limit) device slots used")
@@ -1046,7 +1067,7 @@ struct SettingsView: View {
 
     private func regenerateKeys() {
         Task {
-            vpn.disconnect()
+            await vpn.revokePeer()
             _ = try? vpn.generateKeypair()
         }
     }

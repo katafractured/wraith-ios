@@ -200,9 +200,9 @@ struct DebugLogView: View {
             connection: connection
         )
 
-        await DebugLogger.shared.app("Health report: \(report.diagnosis)")
+        DebugLogger.shared.app("Health report: \(report.diagnosis)")
         if report.needsReprovision {
-            await DebugLogger.shared.app("RECOMMENDATION: Re-provision peer (current peer likely revoked)")
+            DebugLogger.shared.app("RECOMMENDATION: Re-provision peer (current peer likely revoked)")
         }
     }
 }

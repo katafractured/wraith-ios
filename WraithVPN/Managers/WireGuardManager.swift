@@ -40,7 +40,7 @@ final class WireGuardManager: ObservableObject {
     /// still routes through WireGuard but iOS can fall back if the tunnel drops.
     @Published var tunnelMode: TunnelMode = TunnelMode(
         rawValue: UserDefaults.standard.string(forKey: "tunnelMode") ?? ""
-    ) ?? .full
+    ) ?? .standard
     /// Public exit IP of the connected server (set on provision, cleared on disconnect).
     @Published var exitIP: String? = nil
     /// Timestamp of when the tunnel last transitioned to .connected.
@@ -214,6 +214,7 @@ final class WireGuardManager: ObservableObject {
         }
         try? await installProfile(configText: configText, server: server)
         await applyOnDemand(autoConnectEnabled)
+        try? await manager?.loadFromPreferences()
         try? startTunnel()
     }
 

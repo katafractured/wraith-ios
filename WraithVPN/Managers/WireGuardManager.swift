@@ -50,8 +50,12 @@ final class WireGuardManager: ObservableObject {
 
     private var manager: NETunnelProviderManager?
     private var statusObserver: NSObjectProtocol?
+    private var foregroundObserver: NSObjectProtocol?
     private var previousStatus: VPNStatus = .disconnected
     private let tunnelBundleId = "com.katafract.wraith.tunnel"
+    /// True while any provision/switch is in-flight. Guards against concurrent
+    /// provisioning from autoProvisionIfNeeded + user-triggered connectToServer.
+    private var isProvisioning = false
     /// Tracks the manager-load task so `autoProvisionIfNeeded` can await it
     /// before inspecting `isProvisioned`, preventing a race condition that
     /// causes spurious re-provisioning on launch.
@@ -61,12 +65,23 @@ final class WireGuardManager: ObservableObject {
 
     init() {
         managerLoadTask = Task { await loadOrCreateManager() }
+        // Re-sync UI state whenever the app returns to the foreground.
+        // NE may have reconnected the tunnel while the app was backgrounded/suspended;
+        // this ensures connectedSince, status, and exitIP all reflect reality.
+#if canImport(UIKit)
+        foregroundObserver = NotificationCenter.default.addObserver(
+            forName: UIApplication.willEnterForegroundNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in self?.syncStatus() }
+        }
+#endif
     }
 
     deinit {
-        if let obs = statusObserver {
-            NotificationCenter.default.removeObserver(obs)
-        }
+        if let obs = statusObserver   { NotificationCenter.default.removeObserver(obs) }
+        if let obs = foregroundObserver { NotificationCenter.default.removeObserver(obs) }
     }
 
     // MARK: - Public interface
@@ -79,10 +94,11 @@ final class WireGuardManager: ObservableObject {
         // a race between init's Task and ContentView.task would see
         // isProvisioned == false and provision a duplicate peer.
         await managerLoadTask?.value
-        guard !isProvisioned,
+        guard !isProvisioned, !isProvisioning,
               KeychainHelper.shared.readOptional(for: .subscriptionToken) != nil else { return }
         isAutoProvisioning = true
-        defer { isAutoProvisioning = false }
+        isProvisioning = true
+        defer { isAutoProvisioning = false; isProvisioning = false }
         do {
             let server = try await APIClient.shared.fetchNearestServer()
             try await provisionAndInstall(server: server)
@@ -96,6 +112,10 @@ final class WireGuardManager: ObservableObject {
     /// - Different node + existing peer: atomic switch (no extra slot consumed).
     /// - No existing peer, or stale peer (404): fresh provision.
     func connectToServer(_ server: VPNServer) async throws {
+        // Prevent concurrent provision/switch operations.
+        guard !isProvisioning else { return }
+        isProvisioning = true
+        defer { isProvisioning = false }
         await stopAllActiveTunnels()
         status = .connecting
 
@@ -179,8 +199,15 @@ final class WireGuardManager: ObservableObject {
               let server = connectedServer else { return }
         status = .connecting
         mgr.connection.stopVPNTunnel()
-        try? await Task.sleep(for: .milliseconds(600))
+        // Poll until the tunnel actually disconnects (up to 2 s), then reinstall.
+        // Fixed sleeps are unreliable; NE teardown time varies with system load.
+        for _ in 0..<20 {
+            try? await Task.sleep(for: .milliseconds(100))
+            let s = mgr.connection.status
+            if s == .disconnected || s == .invalid { break }
+        }
         try? await installProfile(configText: configText, server: server)
+        await applyOnDemand(autoConnectEnabled)
         try? startTunnel()
     }
 

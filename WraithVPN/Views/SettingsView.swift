@@ -26,7 +26,7 @@ struct SettingsView: View {
     @State private var revokingPeerIds: Set<String> = []
     @State private var platformStatus: PlatformStatus? = nil
     @State private var statusCheckDone = false
-    @State private var statusCheckTask: Task<Void, Never>? = nil
+    @State private var havenPrefsLoaded = false
     @State private var showRecovery = false
     @State private var showIdentityLink = false
     @State private var identityLinkEmail = ""
@@ -60,13 +60,10 @@ struct SettingsView: View {
                 .padding(KFSpacing.md)
             }
         }
-        .onAppear {
-            guard !statusCheckDone, statusCheckTask == nil else { return }
-            statusCheckTask = Task {
-                platformStatus = try? await APIClient.shared.fetchPlatformStatus()
-                statusCheckDone = true
-                statusCheckTask = nil
-            }
+        .task {
+            guard !statusCheckDone else { return }
+            statusCheckDone = true
+            platformStatus = try? await APIClient.shared.fetchPlatformStatus()
         }
         .navigationTitle("Account & Settings")
         .navigationBarTitleDisplayMode(.large)
@@ -440,7 +437,7 @@ struct SettingsView: View {
     }
 
     private func loadPeerList() async {
-        guard storeKit.subscription != nil else { return }
+        guard KeychainHelper.shared.readOptional(for: .subscriptionToken) != nil else { return }
         isPeerListLoading = true
         peerListError = nil
         defer { isPeerListLoading = false }
@@ -620,6 +617,10 @@ struct SettingsView: View {
         .kfCard()
         .task {
             await haven.refreshStatus()
+            // Only load preferences once per SettingsView session — they're cached
+            // and reloaded on server change via vpnServerDidChange notification.
+            guard !havenPrefsLoaded else { return }
+            havenPrefsLoaded = true
             await haven.loadPreferences()
         }
     }

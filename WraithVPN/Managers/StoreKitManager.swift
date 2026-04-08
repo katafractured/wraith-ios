@@ -56,6 +56,18 @@ final class StoreKitManager: ObservableObject {
             await reloadFromKeychain()
             await fetchProducts()
         }
+        // When APIClient detects a 401, credentials are already cleared.
+        // Reset local subscription state so the UI routes to the paywall.
+        NotificationCenter.default.addObserver(
+            forName: .authTokenInvalidated,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.subscription = nil
+                self?.hasPurchased = false
+            }
+        }
     }
 
     deinit {

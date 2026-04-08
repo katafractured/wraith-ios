@@ -15,6 +15,8 @@ enum APIError: LocalizedError {
     case httpError(statusCode: Int, body: String)
     case decodingError(Error)
     case noToken
+    /// Server returned 401 — token is invalid or expired. Caller should sign out.
+    case unauthorized
 
     var errorDescription: String? {
         switch self {
@@ -23,8 +25,15 @@ enum APIError: LocalizedError {
         case .httpError(let c, let b):    return "HTTP \(c): \(b)"
         case .decodingError(let e):       return "Decode error: \(e.localizedDescription)"
         case .noToken:                    return "No subscription token found. Please subscribe first."
+        case .unauthorized:               return "Your subscription is no longer active. Please re-subscribe."
         }
     }
+}
+
+extension Notification.Name {
+    /// Posted when an authenticated request returns 401. Observers (e.g. StoreKitManager)
+    /// should clear stored credentials and redirect the user to the paywall.
+    static let authTokenInvalidated = Notification.Name("com.katafract.wraith.authTokenInvalidated")
 }
 
 // MARK: - Request descriptor
@@ -240,12 +249,45 @@ final class APIClient {
             urlRequest.timeoutInterval = t
         }
 
-        let (data, response) = try await session.data(for: urlRequest)
+        return try await execute(urlRequest, req: req)
+    }
+
+    /// Executes the request with up to 2 retries on transient failures (5xx, connection errors).
+    /// 4xx errors are never retried — they indicate a client-side problem.
+    private func execute<T: Decodable>(_ urlRequest: URLRequest, req: APIRequest, attempt: Int = 0) async throws -> T {
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await session.data(for: urlRequest)
+        } catch let urlError as URLError where attempt < 2 {
+            // Transient connection failure — back off and retry.
+            let delaySecs = UInt64(1_000_000_000) * UInt64(attempt + 1)
+            try? await Task.sleep(nanoseconds: delaySecs)
+            return try await execute(urlRequest, req: req, attempt: attempt + 1)
+        }
 
         guard let http = response as? HTTPURLResponse else { throw APIError.noData }
 
         guard (200..<300).contains(http.statusCode) else {
             let bodyStr = String(data: data, encoding: .utf8) ?? "<binary>"
+
+            // 401 on an authenticated request means the token is gone/expired.
+            // Clear local credentials and notify observers so the UI can redirect to paywall.
+            if http.statusCode == 401 && req.requiresAuth {
+                KeychainHelper.shared.delete(for: .subscriptionToken)
+                KeychainHelper.shared.delete(for: .tokenExpiresAt)
+                KeychainHelper.shared.delete(for: .tokenPlan)
+                NotificationCenter.default.post(name: .authTokenInvalidated, object: nil)
+                throw APIError.unauthorized
+            }
+
+            // 5xx — retry up to 2 times with backoff.
+            if http.statusCode >= 500 && attempt < 2 {
+                let delaySecs = UInt64(1_000_000_000) * UInt64(attempt + 1)
+                try? await Task.sleep(nanoseconds: delaySecs)
+                return try await execute(urlRequest, req: req, attempt: attempt + 1)
+            }
+
             throw APIError.httpError(statusCode: http.statusCode, body: bodyStr)
         }
 

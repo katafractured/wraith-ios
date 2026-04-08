@@ -20,6 +20,7 @@
 import Foundation
 import NetworkExtension
 import Combine
+import CryptoKit
 
 @MainActor
 final class HavenDNSManager: ObservableObject {
@@ -36,8 +37,19 @@ final class HavenDNSManager: ObservableObject {
 
     // MARK: - Private
 
-    private let dohURL = "https://dns.katafract.com/dns-query"
     private let profileDescription = "Haven DNS — Ad & tracker blocking by WraithVPN"
+
+    /// DoH URL for the current token.
+    /// Authenticated users get the STANDARD-tier endpoint (token-gated).
+    /// Unauthenticated / free users get the LOW-tier public endpoint.
+    private var dohURL: String {
+        if let token = KeychainHelper.shared.readOptional(for: .subscriptionToken) {
+            let hash = SHA256.hash(data: Data(token.utf8))
+                .map { String(format: "%02x", $0) }.joined()
+            return "https://dns.katafract.com/d/\(hash)/dns-query"
+        }
+        return "https://dns.katafract.com/dns-query"
+    }
 
     // MARK: - Init
 
@@ -166,11 +178,15 @@ final class HavenDNSManager: ObservableObject {
     }
 
     /// Enables Haven DNS profile if the user has any active entitlement.
+    /// Also reinstalls the profile when called after login/token change so the
+    /// DoH URL updates from the free endpoint to the token-gated endpoint.
     func ensureEnabledForSubscriber(hasPurchased: Bool = false) async {
         let hasToken = KeychainHelper.shared.readOptional(for: .subscriptionToken) != nil
         guard hasToken || hasPurchased else { return }
-        await refreshStatus()
-        if !isEnabled { await enable() }
+        // Always call enable() to update the profile URL in-place — safe per the
+        // single-profile contract (saveToPreferences() updates without a new prompt
+        // if the profile already exists).
+        await enable()
     }
 
     func updatePreferences(_ update: DnsPreferencesUpdate) async throws {

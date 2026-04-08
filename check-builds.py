@@ -4,7 +4,7 @@ import jwt, time, requests, sys
 
 KEY_ID     = "YOUR_ASC_KEY_ID"
 ISSUER_ID  = "YOUR_ISSUER_ID"
-KEY_PATH   = "/Users/christianflores/.appstoreconnect/private_keys/AuthKey_YOUR_ASC_KEY_ID.p8"
+KEY_PATH   = "/home/artemis/.appstoreconnect/AuthKey_YOUR_ASC_KEY_ID.p8"
 PRODUCT_ID = "044EC9AF-C09E-418D-A9DD-0D85E3F55EE1"
 WORKFLOWS  = {
     "9524E3E9-4C37-4492-B54A-FCC6FC287E5B": "Deploy",

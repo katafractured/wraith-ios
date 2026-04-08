@@ -155,7 +155,7 @@ final class HavenDNSManager: ObservableObject {
         UserDefaults.standard.set(true, forKey: key)
 
         var update = DnsPreferencesUpdate()
-        if prefs.protectionLevel == "NONE" {
+        if prefs.protectionLevel == "NONE" && prefs.isPro {
             update.protectionLevel = "LOW"
         }
         if prefs.isPro && !prefs.safeBrowsing {

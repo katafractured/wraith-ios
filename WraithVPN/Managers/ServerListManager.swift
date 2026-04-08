@@ -56,7 +56,12 @@ final class ServerListManager: ObservableObject {
             for server in rawServers {
                 group.addTask { [weak self] in
                     guard let self else { return (server.nodeId, nil) }
-                    let ms = await self.probe(host: server.endpoints.primary)
+                    // Try primary endpoint (may be IPv6). If it fails (e.g. IPv4-only
+                    // device or IPv6 extraction error), fall back to secondary (IPv4).
+                    var ms = await self.probe(host: server.endpoints.primary)
+                    if ms == nil, let secondary = server.endpoints.secondary {
+                        ms = await self.probe(host: secondary)
+                    }
                     return (server.nodeId, ms)
                 }
             }
@@ -89,12 +94,19 @@ final class ServerListManager: ObservableObject {
 
     /// TCP connect to host:probePort, returns round-trip in milliseconds or nil on failure.
     private func probe(host: String) async -> Double? {
-        // Strip any port suffix from the endpoint — we always probe on probePort (SSH).
-        // e.g. "vpn-eu1.katafract.com:51820" → "vpn-eu1.katafract.com"
+        // Extract hostname, stripping any port suffix.
+        // Handles three formats:
+        //   [ipv6address]:port  →  ipv6address   (bracket-quoted IPv6)
+        //   ipv4:port           →  ipv4
+        //   hostname            →  hostname       (no port)
         var hostname = host
-        if host.contains(":") {
-            let parts = host.split(separator: ":", maxSplits: 1)
-            hostname = String(parts[0])
+        if host.hasPrefix("[") {
+            // IPv6 with port: [address]:port — extract address between brackets
+            if let close = host.firstIndex(of: "]") {
+                hostname = String(host[host.index(after: host.startIndex)..<close])
+            }
+        } else if host.contains(":") {
+            hostname = String(host.split(separator: ":", maxSplits: 1)[0])
         }
 
         let endpoint = NWEndpoint.hostPort(

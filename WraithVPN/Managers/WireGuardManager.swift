@@ -143,6 +143,7 @@ final class WireGuardManager: ObservableObject {
         }
 
         await applyOnDemand(autoConnectEnabled)
+        try? await manager?.loadFromPreferences()
         try startTunnel()
     }
 

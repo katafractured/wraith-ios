@@ -100,11 +100,16 @@ final class HavenDNSManager: ObservableObject {
             try await manager.saveToPreferences()
             isEnabled = true
         } catch {
-            // "The configuration is unchanged" means the profile is already installed
-            // but not yet user-enabled (requires Settings > VPN & Device Management > DNS).
-            // Treat this as success — the profile is there, the user just needs to activate it.
-            let msg = error.localizedDescription.lowercased()
-            if msg.contains("unchanged") || msg.contains("no changes") {
+            // Certain NEDNSSettings errors mean the profile already exists in some form —
+            // not a user-visible problem, just refresh status.
+            //   error 2 = configurationDisabled  (profile installed, user hasn't enabled it yet)
+            //   error 3 = configurationStale     (profile exists but needs reload, e.g. after app update)
+            //   "unchanged" / "no changes"       (profile identical to what's saved)
+            let ns = error as NSError
+            let isBenign = (ns.domain == "NEDNSSettingsErrorDomain" && (ns.code == 2 || ns.code == 3))
+                        || ns.localizedDescription.lowercased().contains("unchanged")
+                        || ns.localizedDescription.lowercased().contains("no changes")
+            if isBenign {
                 await refreshStatus()
             } else {
                 self.error = "Could not enable Haven DNS: \(error.localizedDescription)"

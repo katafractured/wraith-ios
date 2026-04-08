@@ -39,7 +39,7 @@ struct DebugLogView: View {
                     .padding(.horizontal)
                     .padding(.vertical, 8)
                 }
-                .background(Color.kfCardBackground)
+                .background(Color.kfSurface)
 
                 // Log entries
                 if filteredEntries.isEmpty {
@@ -122,7 +122,7 @@ struct DebugLogView: View {
                 }
                 .padding(.horizontal)
                 .padding(.vertical, 10)
-                .background(Color.kfCardBackground)
+                .background(Color.kfSurface)
             }
         }
         .navigationTitle("Debug Log")

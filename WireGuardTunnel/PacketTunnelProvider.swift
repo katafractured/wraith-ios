@@ -197,6 +197,17 @@ private extension TunnelConfiguration {
             interface.mtu = mtu
         }
 
+        // AmneziaWG obfuscation parameters
+        if let v = attributes["jc"].flatMap(UInt16.init)  { interface.junkPacketCount = v }
+        if let v = attributes["jmin"].flatMap(UInt16.init) { interface.junkPacketMinSize = v }
+        if let v = attributes["jmax"].flatMap(UInt16.init) { interface.junkPacketMaxSize = v }
+        if let v = attributes["s1"].flatMap(UInt16.init)   { interface.initPacketJunkSize = v }
+        if let v = attributes["s2"].flatMap(UInt16.init)   { interface.responsePacketJunkSize = v }
+        if let v = attributes["h1"] { interface.initPacketMagicHeader = v }
+        if let v = attributes["h2"] { interface.responsePacketMagicHeader = v }
+        if let v = attributes["h3"] { interface.underloadPacketMagicHeader = v }
+        if let v = attributes["h4"] { interface.transportPacketMagicHeader = v }
+
         return interface
     }
 

@@ -7,10 +7,26 @@ import Network
 public struct InterfaceConfiguration {
     public var privateKey: PrivateKey
     public var addresses = [IPAddressRange]()
+    public var junkPacketCount: UInt16?
+    public var junkPacketMinSize: UInt16?
+    public var junkPacketMaxSize: UInt16?
+    public var initPacketJunkSize: UInt16?
+    public var responsePacketJunkSize: UInt16?
+    public var cookieReplyPacketJunkSize: UInt16?
+    public var transportPacketJunkSize: UInt16?
+    public var initPacketMagicHeader: String?
+    public var responsePacketMagicHeader: String?
+    public var underloadPacketMagicHeader: String?
+    public var transportPacketMagicHeader: String?
     public var listenPort: UInt16?
     public var mtu: UInt16?
     public var dns = [DNSServer]()
     public var dnsSearch = [String]()
+    public var specialJunk1: String?
+    public var specialJunk2: String?
+    public var specialJunk3: String?
+    public var specialJunk4: String?
+    public var specialJunk5: String?
 
     public init(privateKey: PrivateKey) {
         self.privateKey = privateKey
@@ -27,6 +43,22 @@ extension InterfaceConfiguration: Equatable {
             lhs.listenPort == rhs.listenPort &&
             lhs.mtu == rhs.mtu &&
             lhs.dns == rhs.dns &&
-            lhs.dnsSearch == rhs.dnsSearch
+            lhs.dnsSearch == rhs.dnsSearch &&
+            lhs.junkPacketCount == rhs.junkPacketCount &&
+            lhs.junkPacketMinSize == rhs.junkPacketMinSize &&
+            lhs.junkPacketMaxSize == rhs.junkPacketMaxSize &&
+            lhs.initPacketJunkSize == rhs.initPacketJunkSize &&
+            lhs.responsePacketJunkSize == rhs.responsePacketJunkSize &&
+            lhs.cookieReplyPacketJunkSize == rhs.cookieReplyPacketJunkSize &&
+            lhs.transportPacketJunkSize == rhs.transportPacketJunkSize &&
+            lhs.initPacketMagicHeader == rhs.initPacketMagicHeader &&
+            lhs.responsePacketMagicHeader == rhs.responsePacketMagicHeader &&
+            lhs.underloadPacketMagicHeader == rhs.underloadPacketMagicHeader &&
+            lhs.transportPacketMagicHeader == rhs.transportPacketMagicHeader &&
+            lhs.specialJunk1 == rhs.specialJunk1 &&
+            lhs.specialJunk2 == rhs.specialJunk2 &&
+            lhs.specialJunk3 == rhs.specialJunk3 &&
+            lhs.specialJunk4 == rhs.specialJunk4 &&
+            lhs.specialJunk5 == rhs.specialJunk5
     }
 }

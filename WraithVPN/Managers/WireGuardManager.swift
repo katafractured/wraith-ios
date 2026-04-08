@@ -292,47 +292,55 @@ final class WireGuardManager: ObservableObject {
         )
         healthReport = report
 
-        if report.needsReprovision {
-            guard reprovisionAttempts < maxReprovisionAttempts else {
-                DebugLogger.shared.wg("Reprovision limit reached (\(maxReprovisionAttempts)). Network may be blocking UDP 51820.")
-                status = .failed("VPN tunnel blocked. Try switching to cellular or a different network.")
-                return
-            }
-            // Claim the provisioning lock BEFORE the first await so a
-            // concurrent health-check task that also passed the sleep
-            // will see isProvisioning=true and bail. With @MainActor the
-            // check+set is atomic between suspension points.
-            guard !isProvisioning else {
-                DebugLogger.shared.wg("Health check: reprovision already in progress, skipping.")
-                return
-            }
-            isProvisioning = true
-            defer { isProvisioning = false }
-            reprovisionAttempts += 1
-            DebugLogger.shared.wg("Health check FAILED: tunnel dead. Auto-reprovisioning (attempt \(reprovisionAttempts)/\(maxReprovisionAttempts))...")
+        if !report.needsReprovision {
+            // Tunnel is healthy — reset the counter so a future failure
+            // gets the full two attempts rather than a depleted count.
+            // NOTE: this is the ONLY place we reset. .connected NE events
+            // do NOT reset because NE connected ≠ WG handshake succeeded.
+            reprovisionAttempts = 0
+            return
+        }
 
-            // Tear down the dead tunnel and re-provision
-            manager?.connection.stopVPNTunnel()
-            try? await Task.sleep(for: .milliseconds(500))
+        // Tunnel is dead — try to reprovision (max 2 attempts per connect session).
+        guard reprovisionAttempts < maxReprovisionAttempts else {
+            DebugLogger.shared.wg("Reprovision limit reached (\(maxReprovisionAttempts)). Network may be blocking UDP 51820.")
+            status = .failed("VPN tunnel blocked. Try switching to cellular or a different network.")
+            return
+        }
+        // Claim the provisioning lock BEFORE the first await so a
+        // concurrent health-check task that also passed the sleep
+        // will see isProvisioning=true and bail. With @MainActor the
+        // check+set is atomic between suspension points.
+        guard !isProvisioning else {
+            DebugLogger.shared.wg("Health check: reprovision already in progress, skipping.")
+            return
+        }
+        isProvisioning = true
+        defer { isProvisioning = false }
+        reprovisionAttempts += 1
+        DebugLogger.shared.wg("Health check FAILED: tunnel dead. Auto-reprovisioning (attempt \(reprovisionAttempts)/\(maxReprovisionAttempts))...")
 
-            // Clear stale peer info
-            KeychainHelper.shared.delete(for: .activePeerId)
-            KeychainHelper.shared.delete(for: .activeNodeId)
-            activePeerId = nil
-            connectedServer = nil
-            isProvisioned = false
+        // Tear down the dead tunnel and re-provision
+        manager?.connection.stopVPNTunnel()
+        try? await Task.sleep(for: .milliseconds(500))
 
-            do {
-                let nearest = try await APIClient.shared.fetchNearestServer()
-                try await provisionAndInstall(server: nearest)
-                await applyOnDemand(autoConnectEnabled)
-                try? await manager?.loadFromPreferences()
-                try startTunnel()
-                DebugLogger.shared.wg("Auto-reprovision complete. Tunnel restarted.")
-            } catch {
-                DebugLogger.shared.wg("Auto-reprovision FAILED: \(error.localizedDescription)")
-                status = .failed("Tunnel dead, re-provision failed: \(error.localizedDescription)")
-            }
+        // Clear stale peer info
+        KeychainHelper.shared.delete(for: .activePeerId)
+        KeychainHelper.shared.delete(for: .activeNodeId)
+        activePeerId = nil
+        connectedServer = nil
+        isProvisioned = false
+
+        do {
+            let nearest = try await APIClient.shared.fetchNearestServer()
+            try await provisionAndInstall(server: nearest)
+            await applyOnDemand(autoConnectEnabled)
+            try? await manager?.loadFromPreferences()
+            try startTunnel()
+            DebugLogger.shared.wg("Auto-reprovision complete. Tunnel restarted.")
+        } catch {
+            DebugLogger.shared.wg("Auto-reprovision FAILED: \(error.localizedDescription)")
+            status = .failed("Tunnel dead, re-provision failed: \(error.localizedDescription)")
         }
     }
 
@@ -648,7 +656,9 @@ final class WireGuardManager: ObservableObject {
         case .connected:
             if connectedSince == nil { connectedSince = connection.connectedDate ?? Date() }
             status = .connected
-            reprovisionAttempts = 0  // Successful connection — reset loop guard
+            // Do NOT reset reprovisionAttempts here — .connected just means the NE
+            // extension started, NOT that the WG handshake succeeded. The health check
+            // resets the counter when it confirms the tunnel is actually routing traffic.
         case .reasserting:
             status = .connecting
         case .disconnecting:

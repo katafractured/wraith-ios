@@ -15,15 +15,15 @@ import Combine
 // MARK: - Product IDs
 
 enum WraithProduct: String, CaseIterable {
-    case armorMonthly = "com.katafract.wraith.monthly"
-    case armorAnnual  = "com.katafract.wraith.annual"
-    case seatPack5    = "com.katafract.wraith.seats.5"
+    case enclaveMonthly = "com.katafract.wraith.monthly"
+    case enclaveAnnual  = "com.katafract.wraith.annual"
+    case seatPack5      = "com.katafract.wraith.seats.5"
 
     var displayName: String {
         switch self {
-        case .armorMonthly: return "WraithVPN — Monthly"
-        case .armorAnnual:  return "WraithVPN — Annual"
-        case .seatPack5:    return "5 Device Slots"
+        case .enclaveMonthly: return "Enclave — Monthly"
+        case .enclaveAnnual:  return "Enclave — Annual"
+        case .seatPack5:      return "5 Device Slots"
         }
     }
 }

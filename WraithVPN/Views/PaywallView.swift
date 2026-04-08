@@ -14,7 +14,7 @@ struct PaywallView: View {
     @Environment(\.dismiss) private var dismiss
     var onContinueFree: (() -> Void)? = nil
 
-    @State private var selectedProductId: String = WraithProduct.armorAnnual.rawValue
+    @State private var selectedProductId: String = WraithProduct.enclaveAnnual.rawValue
     @State private var showTokenEntry = false
 
     // MARK: - Body
@@ -74,7 +74,7 @@ struct PaywallView: View {
                 .font(KFFont.display(34))
                 .foregroundStyle(.white)
 
-            Text("Secure routing through WraithGates into the Enclave.")
+            Text("Route through the Enclave with Haven DNS protection.")
                 .font(KFFont.body(16))
                 .foregroundStyle(Color.kfTextSecondary)
                 .multilineTextAlignment(.center)
@@ -127,7 +127,7 @@ struct PaywallView: View {
                     ProductOptionView(
                         product: product,
                         isSelected: selectedProductId == product.id,
-                        isBestValue: product.id == WraithProduct.armorAnnual.rawValue
+                        isBestValue: product.id == WraithProduct.enclaveAnnual.rawValue
                     )
                     .onTapGesture { selectedProductId = product.id }
                 }
@@ -164,7 +164,7 @@ struct PaywallView: View {
                 Text("Start free")
                     .font(KFFont.heading(18))
                     .foregroundStyle(.white)
-                Text("Use Haven DNS at no cost today, then upgrade when you want full WraithGate routing, premium regions, and the complete Enclave experience.")
+                Text("Haven DNS protects your DNS queries from ads and trackers at no cost. Upgrade to WraithVPN when you want full Enclave routing through WraithGates.")
                     .font(KFFont.body(14))
                     .foregroundStyle(Color.kfTextSecondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -181,7 +181,7 @@ struct PaywallView: View {
                     Text("Continue With Haven DNS Free")
                         .font(KFFont.heading(16))
                         .foregroundStyle(.white)
-                    Text("Start free with Haven DNS protection. Upgrade later for full WraithGate routing and region selection.")
+                    Text("Haven DNS blocks ads and trackers at the DNS level. Upgrade to WraithVPN for full Enclave routing.")
                         .font(KFFont.caption(12))
                         .foregroundStyle(Color.kfTextSecondary)
                         .multilineTextAlignment(.center)
@@ -323,17 +323,17 @@ private struct ProductOptionView: View {
     }
 
     private var displayName: String {
-        product.id == WraithProduct.armorAnnual.rawValue
+        product.id == WraithProduct.enclaveAnnual.rawValue
             ? "WraithVPN — Annual"
             : "WraithVPN — Monthly"
     }
 
     private var periodLabel: String {
-        product.id == WraithProduct.armorAnnual.rawValue ? "per year" : "per month"
+        product.id == WraithProduct.enclaveAnnual.rawValue ? "per year" : "per month"
     }
 
     private var monthlyEquivalent: String? {
-        guard product.id == WraithProduct.armorAnnual.rawValue else { return nil }
+        guard product.id == WraithProduct.enclaveAnnual.rawValue else { return nil }
         let monthly = product.price / 12
         return monthly.formatted(product.priceFormatStyle)
     }

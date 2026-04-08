@@ -299,7 +299,7 @@ struct SubscriptionInfo: Equatable {
         case "haven":                            return "Haven DNS"
         case "veil", "vpn_armor":               return "WraithVPN"
         case "vpn_armor_annual", "veil_annual":  return "WraithVPN Annual"
-        case "enclave", "enclave_annual":        return "Enclave"
+        case "enclave", "enclave_annual":        return "WraithVPN"
         default:                                 return plan
         }
     }

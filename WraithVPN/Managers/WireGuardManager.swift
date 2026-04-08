@@ -325,7 +325,22 @@ final class WireGuardManager: ObservableObject {
         isProvisioning = true
         defer { isProvisioning = false }
         reprovisionAttempts += 1
-        DebugLogger.shared.wg("Health check FAILED: tunnel dead. Auto-reprovisioning (attempt \(reprovisionAttempts)/\(maxReprovisionAttempts))...")
+
+        // Attempt 1: soft reconnect — restart the tunnel without touching the backend.
+        // Handles roaming (WiFi ↔ cellular) where the peer is still valid but
+        // the UDP path changed and the WG handshake hasn't re-initiated yet.
+        if reprovisionAttempts == 1 {
+            DebugLogger.shared.wg("Health check FAILED: trying soft reconnect (attempt 1/\(maxReprovisionAttempts))...")
+            manager?.connection.stopVPNTunnel()
+            try? await Task.sleep(for: .milliseconds(1500))
+            try? startTunnel()
+            // The next .connected event triggers another health check.
+            // If it still fails, reprovisionAttempts will be 2 → full reprovision.
+            return
+        }
+
+        // Attempt 2+: full reprovision (peer revoked or server unreachable)
+        DebugLogger.shared.wg("Health check FAILED: soft reconnect insufficient. Full reprovision (attempt \(reprovisionAttempts)/\(maxReprovisionAttempts))...")
 
         // Tear down the dead tunnel and re-provision
         manager?.connection.stopVPNTunnel()

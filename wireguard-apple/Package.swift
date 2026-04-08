@@ -1,5 +1,9 @@
 // swift-tools-version:5.5
 import PackageDescription
+import Foundation
+
+let packageDir = URL(fileURLWithPath: #filePath).deletingLastPathComponent().path
+let libDir = "\(packageDir)/Sources/WireGuardKitGo/out"
 
 let package = Package(
     name: "WireGuardKit",
@@ -20,9 +24,23 @@ let package = Package(
             dependencies: [],
             publicHeadersPath: "."
         ),
-        .binaryTarget(
+        .target(
             name: "WireGuardKitGo",
-            path: "Frameworks/WireGuardKitGo.xcframework"
+            dependencies: [],
+            exclude: [
+                "goruntime-boottime-over-monotonic.diff",
+                "go.mod",
+                "go.sum",
+                "api-apple.go",
+                "Makefile",
+                "out",
+            ],
+            publicHeadersPath: ".",
+            linkerSettings: [
+                .unsafeFlags(["-L", libDir]),
+                .linkedLibrary("wg-go"),
+                .linkedLibrary("resolv")
+            ]
         )
     ]
 )

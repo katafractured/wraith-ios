@@ -124,11 +124,16 @@ struct ConnectView: View {
     // MARK: - Connect button
 
     private var connectButton: some View {
-        ConnectButtonView(
-            isAnimatingRing: $isAnimatingRing,
-            onTap: handleConnectTap
-        )
-        .environmentObject(vpn)
+        ConnectButtonView(isAnimatingRing: $isAnimatingRing, onTap: handleConnectTap)
+            .environmentObject(vpn)
+            .onChange(of: vpn.status) { _, newStatus in
+                isAnimatingRing = newStatus == .connecting || newStatus == .disconnecting || vpn.isProvisioning
+            }
+            .onChange(of: vpn.isProvisioning) { _, provisioning in
+                isAnimatingRing = provisioning || vpn.status == .connecting || vpn.status == .disconnecting
+            }
+            .sensoryFeedback(.impact(weight: .medium), trigger: vpn.status == .connected)
+            .sensoryFeedback(.impact(weight: .light),  trigger: vpn.status == .disconnected)
     }
 
     private func heroSection(layout: ConnectLayout) -> some View {
@@ -418,14 +423,6 @@ private struct ConnectButtonView: View {
         }
         .buttonStyle(ScaleButtonStyle())
         .disabled(isDisabled)
-        .onChange(of: vpn.status) { _, newStatus in
-            isAnimatingRing = newStatus == .connecting || newStatus == .disconnecting || vpn.isProvisioning
-        }
-        .onChange(of: vpn.isProvisioning) { _, provisioning in
-            isAnimatingRing = provisioning || vpn.status == .connecting || vpn.status == .disconnecting
-        }
-        .sensoryFeedback(.impact(weight: .medium), trigger: vpn.status == .connected)
-        .sensoryFeedback(.impact(weight: .light),  trigger: vpn.status == .disconnected)
     }
 
     private var isDisabled: Bool {

@@ -784,7 +784,6 @@
 				);
 
 				MARKETING_VERSION = 1.0;
-				MARKETING_VERSION = 1.0;
 
 				PRODUCT_BUNDLE_IDENTIFIER = com.katafract.wraith;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -814,7 +813,6 @@
 				);
 
 				MARKETING_VERSION = 1.0;
-				MARKETING_VERSION = 1.0;
 
 				PRODUCT_BUNDLE_IDENTIFIER = com.katafract.wraith;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -842,7 +840,7 @@
 				);
 
 				MARKETING_VERSION = 1.0;
-				MARKETING_VERSION = 1.0;
+				SUPPORTED_PLATFORMS = iphoneos;
 
 				PRODUCT_BUNDLE_IDENTIFIER = com.katafract.wraith.tunnel;
 				PRODUCT_NAME = WireGuardTunnel;
@@ -868,7 +866,7 @@
 				);
 
 				MARKETING_VERSION = 1.0;
-				MARKETING_VERSION = 1.0;
+				SUPPORTED_PLATFORMS = iphoneos;
 
 				PRODUCT_BUNDLE_IDENTIFIER = com.katafract.wraith.tunnel;
 				PRODUCT_NAME = WireGuardTunnel;
@@ -930,7 +928,6 @@
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 
 				MARKETING_VERSION = 1.0;
-				MARKETING_VERSION = 1.0;
 
 				PRODUCT_BUNDLE_IDENTIFIER = com.katafract.wraith;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -957,7 +954,6 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 
-				MARKETING_VERSION = 1.0;
 				MARKETING_VERSION = 1.0;
 
 				PRODUCT_BUNDLE_IDENTIFIER = com.katafract.wraith;

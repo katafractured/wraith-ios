@@ -62,6 +62,10 @@ final class WireGuardManager: ObservableObject {
     /// before inspecting `isProvisioned`, preventing a race condition that
     /// causes spurious re-provisioning on launch.
     private var managerLoadTask: Task<Void, Never>?
+    /// Guards against re-provision loops when the network blocks UDP 51820.
+    /// Resets to 0 on successful handshake or manual disconnect.
+    private var reprovisionAttempts = 0
+    private let maxReprovisionAttempts = 2
 
     // MARK: - Init / lifecycle
 
@@ -201,6 +205,7 @@ final class WireGuardManager: ObservableObject {
     /// Temporarily disables on-demand so iOS doesn't immediately reconnect,
     /// while leaving the user's autoConnectEnabled preference intact.
     func disconnect() {
+        reprovisionAttempts = 0
         status = .disconnecting
         manager?.connection.stopVPNTunnel()
         Task { await applyOnDemand(false) }
@@ -280,7 +285,14 @@ final class WireGuardManager: ObservableObject {
         healthReport = report
 
         if report.needsReprovision {
-            DebugLogger.shared.wg("Health check FAILED: tunnel dead. Auto-reprovisioning...")
+            guard reprovisionAttempts < maxReprovisionAttempts else {
+                DebugLogger.shared.wg("Reprovision limit reached (\(maxReprovisionAttempts)). Network may be blocking UDP 51820.")
+                status = .failed("VPN tunnel blocked. Try switching to cellular or a different network.")
+                return
+            }
+            reprovisionAttempts += 1
+            DebugLogger.shared.wg("Health check FAILED: tunnel dead. Auto-reprovisioning (attempt \(reprovisionAttempts)/\(maxReprovisionAttempts))...")
+
             // Tear down the dead tunnel and re-provision
             manager?.connection.stopVPNTunnel()
             try? await Task.sleep(for: .milliseconds(500))
@@ -605,6 +617,7 @@ final class WireGuardManager: ObservableObject {
         case .connected:
             if connectedSince == nil { connectedSince = connection.connectedDate ?? Date() }
             status = .connected
+            reprovisionAttempts = 0  // Successful connection — reset loop guard
         case .reasserting:
             status = .connecting
         case .disconnecting:

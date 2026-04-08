@@ -129,9 +129,16 @@ final class WireGuardManager: ObservableObject {
 
         if let peerId = existingPeerId, let nodeId = existingNodeId {
             if nodeId == server.nodeId {
-                // Same node — profile already installed, just reconnect.
-                // Renew last_seen so the peer isn't reaped as idle.
-                await APIClient.shared.renewPeer(peerId: peerId)
+                // Same node — renew the peer to confirm it still exists on the backend.
+                // If renew returns false (peer was revoked), treat as stale and re-provision.
+                let stillActive = await APIClient.shared.renewPeer(peerId: peerId)
+                if !stillActive {
+                    // Peer was deleted server-side (user removed it, TTL reap, etc.).
+                    // Clear keychain so provisionAndInstall runs clean.
+                    KeychainHelper.shared.delete(for: .activePeerId)
+                    KeychainHelper.shared.delete(for: .activeNodeId)
+                    try await switchFromAnyExistingOrProvision(server: server)
+                }
             } else {
                 // Different node — switch atomically. On 404 (stale keychain),
                 // look up any existing peer for this device's pubkey before

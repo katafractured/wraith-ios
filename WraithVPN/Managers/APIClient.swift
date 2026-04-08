@@ -133,13 +133,16 @@ final class APIClient {
     }
 
     /// Touches last_seen for an active peer so it isn't reaped as idle.
-    /// Called on every same-node reconnect. Fire-and-forget — failures are non-fatal.
-    func renewPeer(peerId: String) async {
+    /// Returns true if the peer is still active on the backend, false if it's gone (404/error).
+    /// A false return means the profile is stale and the caller should re-provision.
+    @discardableResult
+    func renewPeer(peerId: String) async -> Bool {
         struct RenewResponse: Decodable { let renewed: Bool }
-        let _: RenewResponse? = try? await request(
+        guard let resp: RenewResponse = try? await request(
             APIRequest(.PATCH, "/v1/peers/\(peerId)/renew", auth: true),
             baseOverride: provisionURL
-        )
+        ) else { return false }
+        return resp.renewed
     }
 
     /// Validates an existing subscription token and returns its info.

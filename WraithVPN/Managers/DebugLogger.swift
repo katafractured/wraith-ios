@@ -31,10 +31,17 @@ struct DebugLogEntry: Identifiable {
     let message: String
 
     var formatted: String {
-        let tf = DebugLogger.timestampFormatter
-        return "[\(tf.string(from: timestamp))] [\(category.rawValue)] \(message)"
+        "[\(debugTimestampFormatter.string(from: timestamp))] [\(category.rawValue)] \(message)"
     }
 }
+
+/// Timestamp formatter used by log entries and the log view.
+/// Defined outside the @MainActor class so it's accessible from nonisolated contexts.
+let debugTimestampFormatter: DateFormatter = {
+    let f = DateFormatter()
+    f.dateFormat = "HH:mm:ss.SSS"
+    return f
+}()
 
 // MARK: - Logger
 
@@ -53,11 +60,8 @@ final class DebugLogger: ObservableObject {
 
     private let maxEntries = 2000
 
-    static let timestampFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "HH:mm:ss.SSS"
-        return f
-    }()
+    /// Convenience alias so call sites can still use `DebugLogger.timestampFormatter`.
+    static var timestampFormatter: DateFormatter { debugTimestampFormatter }
 
     private init() {}
 

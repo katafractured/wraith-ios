@@ -134,7 +134,7 @@ struct ConnectView: View {
                     .frame(width: 248, height: 248)
                     .rotationEffect(.degrees(isAnimatingRing ? 360 : 0))
                     .animation(
-                        vpn.status == .connecting || vpn.status == .disconnecting
+                        vpn.status == .connecting || vpn.status == .disconnecting || vpn.isProvisioning
                             ? .linear(duration: 1.5).repeatForever(autoreverses: false)
                             : .easeOut(duration: 0.5),
                         value: isAnimatingRing
@@ -182,9 +182,12 @@ struct ConnectView: View {
             }
         }
         .buttonStyle(ScaleButtonStyle())
-        .disabled(vpn.status == .connecting || vpn.status == .disconnecting)
+        .disabled(vpn.status == .connecting || vpn.status == .disconnecting || vpn.isProvisioning)
         .onChange(of: vpn.status) { _, newStatus in
-            isAnimatingRing = (newStatus == .connecting || newStatus == .disconnecting)
+            isAnimatingRing = (newStatus == .connecting || newStatus == .disconnecting || vpn.isProvisioning)
+        }
+        .onChange(of: vpn.isProvisioning) { _, provisioning in
+            isAnimatingRing = provisioning || vpn.status == .connecting || vpn.status == .disconnecting
         }
         .sensoryFeedback(.impact(weight: .medium), trigger: vpn.status == .connected)
         .sensoryFeedback(.impact(weight: .light),  trigger: vpn.status == .disconnected)
@@ -372,11 +375,24 @@ struct ConnectView: View {
             do {
                 if vpn.status == .connected {
                     vpn.disconnect()
-                } else if simpleMode {
+                    return
+                }
+
+                // Haven free tier has no token — VPN requires a subscription.
+                if KeychainHelper.shared.readOptional(for: .subscriptionToken) == nil {
+                    errorMessage = "WraithVPN requires an active subscription. Upgrade in Settings to get started."
+                    showError = true
+                    return
+                }
+
+                if simpleMode {
                     // Simple mode: always use GeoIP nearest, ignore latency-probe selection.
                     if vpn.isProvisioned {
                         try await vpn.connect()
                     } else {
+                        // fetchNearestServer can take up to 15s — set connecting state
+                        // immediately so the button responds and shows a spinner.
+                        vpn.setConnectingState()
                         let nearest = try await APIClient.shared.fetchNearestServer()
                         try await vpn.connectToServer(nearest)
                     }
@@ -387,8 +403,10 @@ struct ConnectView: View {
                 } else if vpn.isProvisioned {
                     try await vpn.connect()
                 } else if let server = servers.selectedServer {
+                    vpn.setConnectingState()
                     try await vpn.connectToServer(server)
                 } else {
+                    vpn.setConnectingState()
                     let nearest = try await APIClient.shared.fetchNearestServer()
                     try await vpn.connectToServer(nearest)
                 }
@@ -403,11 +421,12 @@ struct ConnectView: View {
     // MARK: - Computed helpers
 
     private var buttonIcon: String {
+        if vpn.isProvisioning { return "ellipsis" }
         switch vpn.status {
-        case .connected:    return "power"
-        case .connecting:   return "ellipsis"
+        case .connected:     return "power"
+        case .connecting:    return "ellipsis"
         case .disconnecting: return "ellipsis"
-        default:            return "power"
+        default:             return "power"
         }
     }
 
@@ -420,11 +439,12 @@ struct ConnectView: View {
     }
 
     private var buttonLabel: String {
+        if vpn.isProvisioning { return "PREPARING" }
         switch vpn.status {
-        case .connected: return "DISCONNECT"
-        case .connecting: return "CONNECTING"
+        case .connected:     return "DISCONNECT"
+        case .connecting:    return "CONNECTING"
         case .disconnecting: return "DISCONNECTING"
-        default: return "CONNECT"
+        default:             return "CONNECT"
         }
     }
 

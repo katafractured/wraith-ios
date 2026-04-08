@@ -53,9 +53,9 @@ final class WireGuardManager: ObservableObject {
     private var foregroundObserver: NSObjectProtocol?
     private var previousStatus: VPNStatus = .disconnected
     private let tunnelBundleId = "com.katafract.wraith.tunnel"
-    /// True while any provision/switch is in-flight. Guards against concurrent
-    /// provisioning from autoProvisionIfNeeded + user-triggered connectToServer.
-    private var isProvisioning = false
+    /// True while any provision/switch is in-flight. Published so the UI can
+    /// disable the connect button and show a loading state during provisioning.
+    @Published private(set) var isProvisioning = false
     /// Tracks the manager-load task so `autoProvisionIfNeeded` can await it
     /// before inspecting `isProvisioned`, preventing a race condition that
     /// causes spurious re-provisioning on launch.
@@ -201,6 +201,13 @@ final class WireGuardManager: ObservableObject {
             try? await manager?.loadFromPreferences()
             try startTunnel()
         }
+    }
+
+    /// Sets status to .connecting immediately — call this before async API fetches
+    /// that precede connectToServer() so the UI responds without delay.
+    func setConnectingState() {
+        guard status != .connecting && status != .connected else { return }
+        status = .connecting
     }
 
     /// Disconnects the active tunnel.

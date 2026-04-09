@@ -24,5 +24,7 @@
 	<string>Copyright © 2026 Katafract LLC. All rights reserved.</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.utilities</string>
+	<key>LSUIElement</key>
+	<true/>
 </dict>
 </plist>

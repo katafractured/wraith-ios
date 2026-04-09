@@ -1,8 +1,8 @@
 #!/bin/bash
-# Build AmneziaWG Go static library for iOS (device + simulator).
+# Build AmneziaWG Go static library for iOS (device + simulator) and macOS.
 # Run on Mac with Xcode + Go (1.21+) installed.
 # Output: wireguard-apple/Sources/WireGuardKitGo/out/libwg-go.a  (device, used by Xcode Cloud)
-#         wireguard-apple/Frameworks/WireGuardKitGo.xcframework/  (both slices, for reference)
+#         wireguard-apple/Frameworks/WireGuardKitGo.xcframework/  (ios-arm64, ios-arm64-simulator, macos-arm64_x86_64)
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -35,12 +35,27 @@ make build
 cp out/libwg-go.a out/libwg-go-arm64-sim.a
 echo "   simulator arm64: $(wc -c < out/libwg-go-arm64-sim.a) bytes"
 
+echo "==> Building for macOS (arm64 + x86_64)"
+rm -rf .tmp
+PLATFORM_NAME=macosx \
+ARCHS="arm64 x86_64" \
+DEPLOYMENT_TARGET_CLANG_FLAG_NAME=mmacosx-version-min \
+DEPLOYMENT_TARGET_CLANG_ENV_NAME=MACOSX_DEPLOYMENT_TARGET \
+MACOSX_DEPLOYMENT_TARGET=14.0 \
+make build
+
+cp out/libwg-go.a out/libwg-go-macos-fat.a
+echo "   macOS fat: $(wc -c < out/libwg-go-macos-fat.a) bytes"
+
 echo "==> Restoring device binary as out/libwg-go.a (used by Xcode Cloud SPM)"
 cp out/libwg-go-arm64-device.a out/libwg-go.a
 
 echo "==> Updating xcframework slices"
 cp out/libwg-go-arm64-device.a "$XCF_DIR/ios-arm64/libwg-go.a"
 ls "$XCF_DIR/ios-arm64-simulator/" && cp out/libwg-go-arm64-sim.a "$XCF_DIR/ios-arm64-simulator/libwg-go.a" || true
+mkdir -p "$XCF_DIR/macos-arm64_x86_64/Headers"
+cp out/libwg-go-macos-fat.a "$XCF_DIR/macos-arm64_x86_64/libwg-go.a"
+cp "$XCF_DIR/ios-arm64/Headers/wireguard.h" "$XCF_DIR/macos-arm64_x86_64/Headers/"
 
 echo "==> Done. Stage and commit:"
 echo "    git add wireguard-apple/Sources/WireGuardKitGo/out/libwg-go.a"

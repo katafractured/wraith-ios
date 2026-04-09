@@ -4,6 +4,7 @@ import Foundation
 
 let packageDir = URL(fileURLWithPath: #filePath).deletingLastPathComponent().path
 let libDir = "\(packageDir)/Sources/WireGuardKitGo/out"
+let libDirMacOS = "\(packageDir)/Sources/WireGuardKitGo/out-macos"
 
 let package = Package(
     name: "WireGuardKit",
@@ -34,10 +35,12 @@ let package = Package(
                 "api-apple.go",
                 "Makefile",
                 "out",
+                "out-macos",
             ],
             publicHeadersPath: ".",
             linkerSettings: [
-                .unsafeFlags(["-L", libDir]),
+                .unsafeFlags(["-L", libDir], .when(platforms: [.iOS])),
+                .unsafeFlags(["-L", libDirMacOS], .when(platforms: [.macOS])),
                 .linkedLibrary("wg-go"),
                 .linkedLibrary("resolv")
             ]

@@ -126,7 +126,7 @@
 
 		BBMACPROXY001 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = AA000001 /* Project object */;
+			containerPortal = AAPROJ001 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = BBMACTUN001;
 			remoteInfo = WraithVPNMacTunnel;
@@ -254,6 +254,7 @@
 				AAGRP001 /* WraithVPN */,
 				AAGRP005 /* WireGuardTunnel */,
 				BBMACGRP001 /* WraithVPNMac */,
+				BBMACTUNGRP01 /* WraithVPNMacTunnel */,
 				AAGRP006 /* WraithVPNTests */,
 				AAGRP009 /* Frameworks */,
 				AAGRP010 /* Products */,
@@ -1176,6 +1177,7 @@
 
 		BBMACTUNWG001 /* WireGuardKit */ = {
 			isa = XCSwiftPackageProductDependency;
+			package = BC8F55772F80E2F4009FC332 /* XCLocalSwiftPackageReference "wireguard-apple" */;
 			productName = WireGuardKit;
 		};
 /* End XCSwiftPackageProductDependency section */

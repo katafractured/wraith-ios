@@ -1067,7 +1067,7 @@
 				DEVELOPMENT_TEAM = 2SGGP65W6C;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				INFOPLIST_FILE = WraithVPNMacTunnel/Info.plist;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.katafract.wraith.tunnel";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
@@ -1088,7 +1088,7 @@
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 2SGGP65W6C;
 				INFOPLIST_FILE = WraithVPNMacTunnel/Info.plist;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.katafract.wraith.tunnel";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;

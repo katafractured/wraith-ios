@@ -108,6 +108,7 @@ struct TokenActivationSheet: View {
             let info = try await APIClient.shared.validateToken(token)
             try KeychainHelper.shared.save(token,     for: .subscriptionToken)
             try KeychainHelper.shared.save(info.plan, for: .tokenPlan)
+            try KeychainHelper.shared.save(info.isAdmin ? "1" : "0", for: .tokenIsAdmin)
             if let exp = info.expiresAt {
                 try KeychainHelper.shared.save(exp, for: .tokenExpiresAt)
             }

@@ -54,7 +54,7 @@ struct SettingsView: View {
                     }
                     subscriptionCard
                     supportCard
-                    if isFounderToken {
+                    if isAdminToken {
                         debugCard
                     }
                     dangerCard
@@ -969,11 +969,10 @@ struct SettingsView: View {
         .presentationDetents([.medium])
     }
 
-    // MARK: - Debug card (founder only)
+    // MARK: - Debug card (admin token only)
 
-    private var isFounderToken: Bool {
-        guard let plan = KeychainHelper.shared.readOptional(for: .tokenPlan) else { return false }
-        return ["founder", "total", "total_annual"].contains(plan)
+    private var isAdminToken: Bool {
+        KeychainHelper.shared.readOptional(for: .tokenIsAdmin) == "1"
     }
 
     @ObservedObject private var debugLogger = DebugLogger.shared

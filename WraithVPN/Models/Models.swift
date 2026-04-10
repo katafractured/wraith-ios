@@ -174,12 +174,14 @@ struct PeerListResponse: Decodable {
 struct TokenInfoResponse: Decodable {
     let plan: String
     let isFounder: Bool
+    let isAdmin: Bool
     let expiresAt: String?  // nil for founders (never expire)
     let maxPeers: Int
 
     enum CodingKeys: String, CodingKey {
         case plan
         case isFounder = "is_founder"
+        case isAdmin   = "is_admin"
         case expiresAt = "expires_at"
         case maxPeers  = "max_peers"
     }
@@ -188,6 +190,7 @@ struct TokenInfoResponse: Decodable {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         plan      = try c.decode(String.self, forKey: .plan)
         isFounder = try c.decode(Bool.self,   forKey: .isFounder)
+        isAdmin   = (try? c.decode(Bool.self, forKey: .isAdmin)) ?? false
         maxPeers  = try c.decode(Int.self,    forKey: .maxPeers)
         if let ts = try? c.decode(Int.self, forKey: .expiresAt) {
             expiresAt = ISO8601DateFormatter().string(from: Date(timeIntervalSince1970: TimeInterval(ts)))

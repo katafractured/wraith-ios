@@ -300,6 +300,7 @@ struct TokenRecoverySheet: View {
             } else {
                 let info = try await APIClient.shared.validateToken(token)
                 resp = TokenResponse(token: token, expiresAt: info.expiresAt ?? "", plan: info.plan)
+                try? KeychainHelper.shared.save(info.isAdmin ? "1" : "0", for: .tokenIsAdmin)
             }
             try? KeychainHelper.shared.save(resp.token,     for: .subscriptionToken)
             try? KeychainHelper.shared.save(resp.expiresAt, for: .tokenExpiresAt)

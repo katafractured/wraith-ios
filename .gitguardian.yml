@@ -1,0 +1,13 @@
+version: 2
+ignore-paths:
+  # Upstream WireGuard Apple library — key handling source code, not credentials
+  - wireguard-apple/
+
+ignore-matches:
+  # WireGuard key format strings in test files — intentionally all-zero/invalid placeholders
+  - name: "WireGuard test key placeholders"
+    match: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+  - name: "WireGuard test key placeholders"
+    match: "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB="
+  - name: "WireGuard test key placeholders"
+    match: "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC="

@@ -12,12 +12,14 @@ struct ConnectView: View {
     @EnvironmentObject var servers:  ServerListManager
     @EnvironmentObject var storeKit: StoreKitManager
 
-    @AppStorage("simpleMode") private var simpleMode = true
+    @AppStorage("simpleMode")          private var simpleMode          = true
+    @AppStorage("multiHopMode")        private var multiHopMode        = false
+    @AppStorage("hopModeExplicitlySet") private var hopModeExplicitlySet = false
 
-    @State private var showServerPicker  = false
+    @State private var showServerPicker   = false
     @State private var showMultiHopPicker = false
     @State private var errorMessage: String? = nil
-    @State private var showError         = false
+    @State private var showError          = false
     @State private var upgradeReason: UpgradeReason? = nil
 
     private var isAnimatingRing: Bool {
@@ -38,8 +40,7 @@ struct ConnectView: View {
                     header
                     heroSection(layout: layout)
                     connectionSummary
-                    serverButton
-                    multiHopButton
+                    hopModeSection
                     Spacer(minLength: 0)
                 }
                 .padding(.horizontal, KFSpacing.lg)
@@ -69,17 +70,33 @@ struct ConnectView: View {
         .task {
             await servers.refresh()
             syncSelectedToConnected()
+            if vpn.isMultiHop {
+                multiHopMode = true
+            } else {
+                applyDefaultHopMode()
+            }
         }
-        // When the connected node changes (switch, provision, restore), keep the
-        // picker's selectedServer in sync so the UI never shows the wrong location.
         .onChange(of: vpn.connectedServer?.nodeId) { _, _ in
             syncSelectedToConnected()
+        }
+        .onChange(of: vpn.isMultiHop) { _, newValue in
+            if newValue { multiHopMode = true }
+        }
+        .onChange(of: storeKit.hasMultiHop) { _, _ in
+            applyDefaultHopMode()
         }
         .sensoryFeedback(.impact(weight: .medium), trigger: vpn.status == .connected)
         .sensoryFeedback(.impact(weight: .light),  trigger: vpn.status == .disconnected)
     }
 
     // MARK: - Helpers
+
+    /// Defaults to multi-hop mode the first time an Enclave+ user opens the app.
+    /// Respects any explicit toggle the user has made since.
+    private func applyDefaultHopMode() {
+        guard storeKit.hasMultiHop, !hopModeExplicitlySet else { return }
+        multiHopMode = true
+    }
 
     /// Sets `servers.selectedServer` to the full server object whose nodeId matches
     /// `vpn.connectedServer`. Falls back to leaving the selection unchanged if the
@@ -89,6 +106,89 @@ struct ConnectView: View {
         if let match = servers.servers.first(where: { $0.server.nodeId == nodeId }) {
             servers.selectedServer = match.server
         }
+    }
+
+    // MARK: - Hop mode section
+
+    private var hopModeSection: some View {
+        VStack(spacing: KFSpacing.sm) {
+            if !storeKit.isHavenOnly {
+                Picker("Hop Mode", selection: $multiHopMode) {
+                    Text("Single Hop").tag(false)
+                    Text("Multi-Hop").tag(true)
+                }
+                .pickerStyle(.segmented)
+                .onChange(of: multiHopMode) { _, newValue in
+                    if newValue && !storeKit.hasMultiHop {
+                        upgradeReason = .multiHopRequiresPlus
+                        multiHopMode = false
+                        return
+                    }
+                    hopModeExplicitlySet = true
+                    // Disconnect cleanly before switching modes
+                    if vpn.status == .connected {
+                        vpn.disconnect()
+                    }
+                }
+            }
+
+            if multiHopMode {
+                multiHopCard
+            } else {
+                serverButton
+            }
+        }
+    }
+
+    // MARK: - Multi-hop card
+
+    private var multiHopCard: some View {
+        Button {
+            showMultiHopPicker = true
+        } label: {
+            HStack(spacing: KFSpacing.md) {
+                Image(systemName: "arrow.triangle.2.circlepath.circle.fill")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(Color(hex: "#f59e0b"))
+                    .frame(width: 40, height: 40)
+                    .background(Color(hex: "#f59e0b").opacity(0.12))
+                    .clipShape(Circle())
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("MULTI-HOP ROUTE")
+                        .font(KFFont.caption(10, weight: .bold))
+                        .kerning(1.3)
+                        .foregroundStyle(Color(hex: "#f59e0b").opacity(0.7))
+                    if vpn.isMultiHop, let entry = vpn.multiHopEntryServer, let exit = vpn.multiHopExitServer {
+                        HStack(spacing: 4) {
+                            Text(entry.cityName)
+                            Image(systemName: "arrow.right")
+                                .font(.system(size: 11))
+                            Text(exit.cityName)
+                        }
+                        .font(KFFont.heading(15))
+                        .foregroundStyle(.white)
+                    } else {
+                        Text("Select Entry & Exit Nodes")
+                            .font(KFFont.heading(17))
+                            .foregroundStyle(.white)
+                    }
+                    Text("Double-encrypt through two nodes")
+                        .font(KFFont.caption(12))
+                        .foregroundStyle(Color.kfTextMuted)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(Color.kfTextMuted)
+            }
+            .padding(KFSpacing.md)
+            .kfCard()
+        }
+        .buttonStyle(.plain)
+        .disabled(storeKit.isHavenOnly)
     }
 
     // MARK: - Sub-views
@@ -346,70 +446,6 @@ struct ConnectView: View {
         .opacity(storeKit.isHavenOnly ? 0.4 : 1)
     }
 
-    // MARK: - Multi-hop button
-
-    @ViewBuilder
-    private var multiHopButton: some View {
-        // Show a locked teaser for Enclave users; hidden for Haven
-        if !storeKit.isHavenOnly {
-            Button {
-                if storeKit.hasMultiHop {
-                    showMultiHopPicker = true
-                } else {
-                    upgradeReason = .multiHopRequiresPlus
-                }
-            } label: {
-                HStack(spacing: KFSpacing.md) {
-                    Image(systemName: storeKit.hasMultiHop ? "arrow.triangle.2.circlepath.circle.fill" : "lock.fill")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(storeKit.hasMultiHop ? Color(hex: "#f59e0b") : Color.kfTextMuted)
-                        .frame(width: 40, height: 40)
-                        .background(
-                            storeKit.hasMultiHop
-                                ? Color(hex: "#f59e0b").opacity(0.12)
-                                : Color.kfTextMuted.opacity(0.08)
-                        )
-                        .clipShape(Circle())
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("ENCLAVE+")
-                            .font(KFFont.caption(10, weight: .bold))
-                            .kerning(1.3)
-                            .foregroundStyle(storeKit.hasMultiHop ? Color(hex: "#f59e0b").opacity(0.7) : Color.kfTextMuted)
-                        if vpn.isMultiHop, let entry = vpn.multiHopEntryServer, let exit = vpn.multiHopExitServer {
-                            HStack(spacing: 4) {
-                                Text(entry.cityName)
-                                Image(systemName: "arrow.right")
-                                    .font(.system(size: 11))
-                                Text(exit.cityName)
-                            }
-                            .font(KFFont.heading(15))
-                            .foregroundStyle(.white)
-                        } else {
-                            Text(storeKit.hasMultiHop ? "Multi-Hop Routing" : "Multi-Hop Routing")
-                                .font(KFFont.heading(17))
-                                .foregroundStyle(storeKit.hasMultiHop ? .white : Color.kfTextSecondary)
-                        }
-                        Text(storeKit.hasMultiHop
-                             ? "Double-encrypt through two nodes"
-                             : "Upgrade to Enclave+ to unlock")
-                            .font(KFFont.caption(12))
-                            .foregroundStyle(Color.kfTextMuted)
-                    }
-
-                    Spacer()
-
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(Color.kfTextMuted)
-                }
-                .padding(KFSpacing.md)
-                .kfCard()
-            }
-            .buttonStyle(.plain)
-        }
-    }
-
     // MARK: - Actions
 
     private func handleConnectTap() {
@@ -432,7 +468,13 @@ struct ConnectView: View {
                     return
                 }
 
-                if simpleMode {
+                // Multi-hop mode: open picker if no route provisioned yet
+                if multiHopMode && !vpn.isMultiHop {
+                    showMultiHopPicker = true
+                    return
+                }
+
+                if simpleMode && !multiHopMode {
                     // Simple mode: always use GeoIP nearest, ignore latency-probe selection.
                     if vpn.isProvisioned {
                         try await vpn.connect()

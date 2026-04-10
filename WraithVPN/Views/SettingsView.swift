@@ -28,6 +28,7 @@ struct SettingsView: View {
     @State private var statusCheckDone = false
     @State private var havenPrefsLoaded = false
     @State private var showRecovery = false
+    @State private var isAdminTokenState: Bool = KeychainHelper.shared.readOptional(for: .tokenIsAdmin) == "1"
     @State private var showIdentityLink = false
     @State private var identityLinkEmail = ""
     @State private var isLinkingIdentity = false
@@ -54,7 +55,7 @@ struct SettingsView: View {
                     }
                     subscriptionCard
                     supportCard
-                    if isAdminToken {
+                    if isAdminTokenState {
                         debugCard
                     }
                     dangerCard
@@ -67,6 +68,13 @@ struct SettingsView: View {
             guard !statusCheckDone else { return }
             statusCheckDone = true
             platformStatus = try? await APIClient.shared.fetchPlatformStatus()
+            // Silently refresh is_admin flag from API in case it changed since activation
+            if let token = try? KeychainHelper.shared.read(for: .subscriptionToken),
+               let info = try? await APIClient.shared.validateToken(token) {
+                let adminVal = info.isAdmin ? "1" : "0"
+                try? KeychainHelper.shared.save(adminVal, for: .tokenIsAdmin)
+                isAdminTokenState = info.isAdmin
+            }
         }
         .navigationTitle("Account & Settings")
         .navigationBarTitleDisplayMode(.large)

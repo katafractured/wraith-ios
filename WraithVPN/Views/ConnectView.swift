@@ -85,6 +85,18 @@ struct ConnectView: View {
         .onChange(of: storeKit.hasMultiHop) { _, _ in
             applyDefaultHopMode()
         }
+        .onChange(of: multiHopMode) { _, newValue in
+            if newValue && !storeKit.hasMultiHop {
+                upgradeReason = .multiHopRequiresPlus
+                multiHopMode = false
+                return
+            }
+            hopModeExplicitlySet = true
+            // Disconnect cleanly before switching modes
+            if vpn.status == .connected {
+                vpn.disconnect()
+            }
+        }
         .sensoryFeedback(.impact(weight: .medium), trigger: vpn.status == .connected)
         .sensoryFeedback(.impact(weight: .light),  trigger: vpn.status == .disconnected)
     }
@@ -118,18 +130,6 @@ struct ConnectView: View {
                     Text("Multi-Hop").tag(true)
                 }
                 .pickerStyle(.segmented)
-                .onChange(of: multiHopMode) { _, newValue in
-                    if newValue && !storeKit.hasMultiHop {
-                        upgradeReason = .multiHopRequiresPlus
-                        multiHopMode = false
-                        return
-                    }
-                    hopModeExplicitlySet = true
-                    // Disconnect cleanly before switching modes
-                    if vpn.status == .connected {
-                        vpn.disconnect()
-                    }
-                }
             }
 
             if multiHopMode {

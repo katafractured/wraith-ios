@@ -231,15 +231,12 @@ final class StoreKitManager: ObservableObject {
     }
 
     /// Reads stored token from Keychain and populates `subscription`.
-    /// Always checks StoreKit current entitlements:
-    ///   - When no Keychain token: auto-recovers IAP subscribers after reinstall
-    ///   - When Keychain token exists: silently refreshes if subscription renewed/upgraded
+    /// - When a cached token exists: populates state immediately (no network), then
+    ///   refreshes StoreKit entitlements in the background so the UI is never blocked.
+    /// - When no cached token: waits for the StoreKit check before releasing the
+    ///   splash screen — this is the IAP auto-recovery path after reinstall.
     func reloadFromKeychain() async {
-        defer {
-            Task { @MainActor in self.isCheckingEntitlements = false }
-        }
-
-        // Load cached state from Keychain first (instant, no network)
+        // Load cached state from Keychain (instant, no network)
         if let token = KeychainHelper.shared.readOptional(for: .subscriptionToken),
            let plan  = KeychainHelper.shared.readOptional(for: .tokenPlan) {
             let expiresAt: Date?
@@ -253,12 +250,20 @@ final class StoreKitManager: ObservableObject {
             isHavenOnly  = subscription?.isHavenOnly  ?? false
             hasVPN       = subscription?.hasVPN       ?? false
             hasMultiHop  = subscription?.hasMultiHop  ?? false
-        }
 
-        // Always check StoreKit entitlements:
-        //   - No token: auto-recover IAP purchase after reinstall (primary recovery path)
-        //   - Has token: silently refresh if subscription renewed / plan changed
-        await checkCurrentEntitlements()
+            // Release the splash screen immediately — we have a valid cached token.
+            // Silently check StoreKit in the background for renewals/upgrades.
+            isCheckingEntitlements = false
+            Task.detached(priority: .background) { [weak self] in
+                await self?.checkCurrentEntitlements()
+            }
+        } else {
+            // No cached token — must wait for StoreKit check (IAP reinstall recovery).
+            defer {
+                Task { @MainActor in self.isCheckingEntitlements = false }
+            }
+            await checkCurrentEntitlements()
+        }
     }
 
     /// Walk current entitlements and process any unfinished transactions.

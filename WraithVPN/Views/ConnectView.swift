@@ -16,8 +16,9 @@ struct ConnectView: View {
     @AppStorage("multiHopMode")        private var multiHopMode        = false
     @AppStorage("hopModeExplicitlySet") private var hopModeExplicitlySet = false
 
-    @State private var showServerPicker   = false
-    @State private var showMultiHopPicker = false
+    @State private var showServerPicker        = false
+    @State private var showMultiHopPicker      = false
+    @State private var multiHopCardEnabled     = false
     @State private var errorMessage: String? = nil
     @State private var showError          = false
     @State private var upgradeReason: UpgradeReason? = nil
@@ -134,6 +135,15 @@ struct ConnectView: View {
 
             if multiHopMode {
                 multiHopCard
+                    .disabled(!multiHopCardEnabled)
+                    .onAppear {
+                        // Delay enabling the tap target so the Picker's touch event
+                        // doesn't bleed into the newly-inserted card button.
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                            multiHopCardEnabled = true
+                        }
+                    }
+                    .onDisappear { multiHopCardEnabled = false }
             } else {
                 serverButton
             }

@@ -96,13 +96,6 @@ struct ConnectView: View {
             if vpn.status == .connected {
                 vpn.disconnect()
             }
-            // Show picker when switching to multi-hop without an active route.
-            // Delay slightly so the Picker's touch event doesn't bleed into the sheet.
-            if newValue && !vpn.isMultiHop {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                    showMultiHopPicker = true
-                }
-            }
         }
         .sensoryFeedback(.impact(weight: .medium), trigger: vpn.status == .connected)
         .sensoryFeedback(.impact(weight: .light),  trigger: vpn.status == .disconnected)

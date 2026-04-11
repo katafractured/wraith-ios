@@ -18,7 +18,6 @@ struct ConnectView: View {
 
     @State private var showServerPicker        = false
     @State private var showMultiHopPicker      = false
-    @State private var multiHopCardEnabled     = false
     @State private var errorMessage: String? = nil
     @State private var showError          = false
     @State private var upgradeReason: UpgradeReason? = nil
@@ -97,6 +96,13 @@ struct ConnectView: View {
             if vpn.status == .connected {
                 vpn.disconnect()
             }
+            // Show picker when switching to multi-hop without an active route.
+            // Delay slightly so the Picker's touch event doesn't bleed into the sheet.
+            if newValue && !vpn.isMultiHop {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                    showMultiHopPicker = true
+                }
+            }
         }
         .sensoryFeedback(.impact(weight: .medium), trigger: vpn.status == .connected)
         .sensoryFeedback(.impact(weight: .light),  trigger: vpn.status == .disconnected)
@@ -125,7 +131,8 @@ struct ConnectView: View {
 
     private var hopModeSection: some View {
         VStack(spacing: KFSpacing.sm) {
-            if !storeKit.isHavenOnly {
+            // Only Enclave+ users see the toggle — others are single-hop only.
+            if storeKit.hasMultiHop {
                 Picker("Hop Mode", selection: $multiHopMode) {
                     Text("Single Hop").tag(false)
                     Text("Multi-Hop").tag(true)
@@ -133,73 +140,12 @@ struct ConnectView: View {
                 .pickerStyle(.segmented)
             }
 
-            if multiHopMode {
-                multiHopCard
-                    .disabled(!multiHopCardEnabled)
-                    .onAppear {
-                        // Delay enabling the tap target so the Picker's touch event
-                        // doesn't bleed into the newly-inserted card button.
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                            multiHopCardEnabled = true
-                        }
-                    }
-                    .onDisappear { multiHopCardEnabled = false }
-            } else {
+            if !multiHopMode {
                 serverButton
             }
         }
     }
 
-    // MARK: - Multi-hop card
-
-    private var multiHopCard: some View {
-        Button {
-            showMultiHopPicker = true
-        } label: {
-            HStack(spacing: KFSpacing.md) {
-                Image(systemName: "arrow.triangle.2.circlepath.circle.fill")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(Color(hex: "#f59e0b"))
-                    .frame(width: 40, height: 40)
-                    .background(Color(hex: "#f59e0b").opacity(0.12))
-                    .clipShape(Circle())
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("MULTI-HOP ROUTE")
-                        .font(KFFont.caption(10, weight: .bold))
-                        .kerning(1.3)
-                        .foregroundStyle(Color(hex: "#f59e0b").opacity(0.7))
-                    if vpn.isMultiHop, let entry = vpn.multiHopEntryServer, let exit = vpn.multiHopExitServer {
-                        HStack(spacing: 4) {
-                            Text(entry.cityName)
-                            Image(systemName: "arrow.right")
-                                .font(.system(size: 11))
-                            Text(exit.cityName)
-                        }
-                        .font(KFFont.heading(15))
-                        .foregroundStyle(.white)
-                    } else {
-                        Text("Select Entry & Exit Nodes")
-                            .font(KFFont.heading(17))
-                            .foregroundStyle(.white)
-                    }
-                    Text("Double-encrypt through two nodes")
-                        .font(KFFont.caption(12))
-                        .foregroundStyle(Color.kfTextMuted)
-                }
-
-                Spacer()
-
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(Color.kfTextMuted)
-            }
-            .padding(KFSpacing.md)
-            .kfCard()
-        }
-        .buttonStyle(.plain)
-        .disabled(storeKit.isHavenOnly)
-    }
 
     // MARK: - Sub-views
 

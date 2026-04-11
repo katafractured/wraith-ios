@@ -145,8 +145,15 @@ final class APIClient {
     @discardableResult
     func renewPeer(peerId: String) async -> Bool {
         struct RenewResponse: Decodable { let renewed: Bool }
+        // Use auth: false + manual Authorization header so a 401 response
+        // (stale/gone peer) does NOT trigger the global token-wipe in execute().
+        // A peer returning 401 says nothing about the subscription token's validity.
+        var extraHeaders: [String: String] = [:]
+        if let token = KeychainHelper.shared.readOptional(for: .subscriptionToken) {
+            extraHeaders["Authorization"] = "Bearer \(token)"
+        }
         guard let resp: RenewResponse = try? await request(
-            APIRequest(.PATCH, "/v1/peers/\(peerId)/renew", auth: true),
+            APIRequest(.PATCH, "/v1/peers/\(peerId)/renew", auth: false, extraHeaders: extraHeaders),
             baseOverride: provisionURL
         ) else { return false }
         return resp.renewed

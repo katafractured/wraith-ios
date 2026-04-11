@@ -66,6 +66,9 @@ final class WireGuardManager: ObservableObject {
     /// before inspecting `isProvisioned`, preventing a race condition that
     /// causes spurious re-provisioning on launch.
     private var managerLoadTask: Task<Void, Never>?
+    /// Tracks the launch-time stale-peer verification task so `autoProvisionIfNeeded`
+    /// can await its completion before inspecting `isProvisioned`.
+    private var stalePeerCheckTask: Task<Void, Never>?
     /// Guards against re-provision loops when the network blocks UDP 51820.
     /// Resets to 0 on successful handshake or manual disconnect.
     private var reprovisionAttempts = 0
@@ -115,6 +118,7 @@ final class WireGuardManager: ObservableObject {
         // Wait for the manager to finish loading from NE preferences so that
         // `isProvisioned` reflects reality before we check it.
         await managerLoadTask?.value
+        await stalePeerCheckTask?.value
         guard !isProvisioned else { return }
 
         isAutoProvisioning = true
@@ -615,7 +619,7 @@ final class WireGuardManager: ObservableObject {
                 // on-demand will start a tunnel that cannot handshake.
                 if let peerId = activePeerId,
                    KeychainHelper.shared.readOptional(for: .subscriptionToken) != nil {
-                    Task {
+                    stalePeerCheckTask = Task {
                         let stillActive = await APIClient.shared.renewPeer(peerId: peerId)
                         if !stillActive {
                             DebugLogger.shared.peer("Stale peer detected on launch: \(peerId). Clearing profile.")

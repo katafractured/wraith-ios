@@ -231,29 +231,34 @@ final class StoreKitManager: ObservableObject {
     }
 
     /// Reads stored token from Keychain and populates `subscription`.
+    /// Always checks StoreKit current entitlements:
+    ///   - When no Keychain token: auto-recovers IAP subscribers after reinstall
+    ///   - When Keychain token exists: silently refreshes if subscription renewed/upgraded
     func reloadFromKeychain() async {
         defer {
             Task { @MainActor in self.isCheckingEntitlements = false }
         }
-        guard let token   = KeychainHelper.shared.readOptional(for: .subscriptionToken),
-              let plan     = KeychainHelper.shared.readOptional(for: .tokenPlan) else {
-            // No stored token — check StoreKit entitlements anyway
-            await checkCurrentEntitlements()
-            return
+
+        // Load cached state from Keychain first (instant, no network)
+        if let token = KeychainHelper.shared.readOptional(for: .subscriptionToken),
+           let plan  = KeychainHelper.shared.readOptional(for: .tokenPlan) {
+            let expiresAt: Date?
+            if let expStr = KeychainHelper.shared.readOptional(for: .tokenExpiresAt) {
+                expiresAt = ISO8601DateFormatter().date(from: expStr)
+            } else {
+                expiresAt = nil
+            }
+            subscription = SubscriptionInfo(plan: plan, expiresAt: expiresAt, token: token)
+            hasPurchased = !(subscription?.isExpired ?? true)
+            isHavenOnly  = subscription?.isHavenOnly  ?? false
+            hasVPN       = subscription?.hasVPN       ?? false
+            hasMultiHop  = subscription?.hasMultiHop  ?? false
         }
 
-        let expiresAt: Date?
-        if let expStr = KeychainHelper.shared.readOptional(for: .tokenExpiresAt) {
-            expiresAt = ISO8601DateFormatter().date(from: expStr)
-        } else {
-            expiresAt = nil
-        }
-
-        subscription = SubscriptionInfo(plan: plan, expiresAt: expiresAt, token: token)
-        hasPurchased = !(subscription?.isExpired ?? true)
-        isHavenOnly  = subscription?.isHavenOnly  ?? false
-        hasVPN       = subscription?.hasVPN       ?? false
-        hasMultiHop  = subscription?.hasMultiHop  ?? false
+        // Always check StoreKit entitlements:
+        //   - No token: auto-recover IAP purchase after reinstall (primary recovery path)
+        //   - Has token: silently refresh if subscription renewed / plan changed
+        await checkCurrentEntitlements()
     }
 
     /// Walk current entitlements and process any unfinished transactions.

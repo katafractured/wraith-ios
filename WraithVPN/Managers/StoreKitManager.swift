@@ -44,6 +44,8 @@ final class StoreKitManager: ObservableObject {
     @Published var hasDNSSettings: Bool = false
     @Published var hasVPN:         Bool = false
     @Published var hasMultiHop:    Bool = false
+    @Published var isFounder:      Bool = false
+    @Published var isAdmin:        Bool = false
     @Published var isCheckingEntitlements: Bool = true
     @Published var seatPurchaseError: String? = nil
     @Published var isPurchasingSeatPack: Bool = false
@@ -72,6 +74,8 @@ final class StoreKitManager: ObservableObject {
                 self?.subscription = nil
                 self?.hasPurchased   = false
                 self?.hasDNSSettings = false
+                self?.isFounder      = false
+                self?.isAdmin        = false
             }
         }
     }
@@ -189,6 +193,8 @@ final class StoreKitManager: ObservableObject {
         KeychainHelper.shared.delete(for: .subscriptionToken)
         KeychainHelper.shared.delete(for: .tokenExpiresAt)
         KeychainHelper.shared.delete(for: .tokenPlan)
+        KeychainHelper.shared.delete(for: .tokenIsAdmin)
+        KeychainHelper.shared.delete(for: .tokenIsFounder)
         UserDefaults.standard.removeObject(forKey: "hasUnlockedFreeTier")
         subscription = nil
         hasPurchased   = false
@@ -196,6 +202,8 @@ final class StoreKitManager: ObservableObject {
         hasDNSSettings = false
         hasVPN         = false
         hasMultiHop    = false
+        isFounder      = false
+        isAdmin        = false
     }
 
     // MARK: - Private helpers
@@ -229,9 +237,11 @@ final class StoreKitManager: ObservableObject {
 
     private func persistToken(_ resp: TokenResponse) throws {
         guard !resp.token.isEmpty else { return }  // server returned empty on renewal — keep existing Keychain token
-        try KeychainHelper.shared.save(resp.token,     for: .subscriptionToken)
-        try KeychainHelper.shared.save(resp.expiresAt, for: .tokenExpiresAt)
-        try KeychainHelper.shared.save(resp.plan,      for: .tokenPlan)
+        try KeychainHelper.shared.save(resp.token,                         for: .subscriptionToken)
+        try KeychainHelper.shared.save(resp.expiresAt,                     for: .tokenExpiresAt)
+        try KeychainHelper.shared.save(resp.plan,                          for: .tokenPlan)
+        try KeychainHelper.shared.save(resp.isAdmin   ? "1" : "0",        for: .tokenIsAdmin)
+        try KeychainHelper.shared.save(resp.isFounder ? "1" : "0",        for: .tokenIsFounder)
     }
 
     /// Reads stored token from Keychain and populates `subscription`.
@@ -255,6 +265,8 @@ final class StoreKitManager: ObservableObject {
             hasDNSSettings = subscription?.hasDNSSettings ?? false
             hasVPN         = subscription?.hasVPN         ?? false
             hasMultiHop    = subscription?.hasMultiHop    ?? false
+            isFounder      = KeychainHelper.shared.readOptional(for: .tokenIsFounder) == "1"
+            isAdmin        = KeychainHelper.shared.readOptional(for: .tokenIsAdmin)   == "1"
 
             // Release the splash screen immediately — we have a valid cached token.
             // Silently check StoreKit in the background for renewals/upgrades.

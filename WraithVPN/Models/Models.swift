@@ -264,23 +264,31 @@ struct TokenResponse: Decodable {
     let token: String
     let expiresAt: String  // stored as ISO8601 string in Keychain
     let plan: String
+    let isFounder: Bool
+    let isAdmin: Bool
 
     enum CodingKeys: String, CodingKey {
         case token
         case expiresAt = "expires_at"
         case plan
+        case isFounder = "is_founder"
+        case isAdmin   = "is_admin"
     }
 
-    init(token: String, expiresAt: String, plan: String) {
+    init(token: String, expiresAt: String, plan: String, isFounder: Bool = false, isAdmin: Bool = false) {
         self.token = token
         self.expiresAt = expiresAt
         self.plan = plan
+        self.isFounder = isFounder
+        self.isAdmin = isAdmin
     }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        token = try c.decode(String.self, forKey: .token)
-        plan  = try c.decode(String.self, forKey: .plan)
+        token     = try c.decode(String.self, forKey: .token)
+        plan      = try c.decode(String.self, forKey: .plan)
+        isFounder = (try? c.decode(Bool.self, forKey: .isFounder)) ?? false
+        isAdmin   = (try? c.decode(Bool.self, forKey: .isAdmin))   ?? false
         // Backend returns expires_at as either a Unix timestamp (Int) or ISO8601 string
         if let ts = try? c.decode(Int.self, forKey: .expiresAt) {
             expiresAt = ISO8601DateFormatter().string(from: Date(timeIntervalSince1970: TimeInterval(ts)))

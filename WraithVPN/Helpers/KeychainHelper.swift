@@ -71,18 +71,31 @@ final class KeychainHelper {
         try? read(for: key)
     }
 
+    // MARK: - Sync policy
+
+    /// Auth/identity keys sync via iCloud Keychain so founders can enter a code once
+    /// and have it available on all their Apple devices.
+    /// WireGuard keys and per-device VPN state are always device-local.
+    private static let syncedKeys: Set<Key> = [
+        .subscriptionToken, .tokenPlan, .tokenExpiresAt, .tokenIsAdmin, .tokenIsFounder,
+    ]
+
+    private func isSynced(_ key: Key) -> Bool { Self.syncedKeys.contains(key) }
+
     // MARK: - Raw data
 
     func save(_ data: Data, for key: Key) throws {
-        // Always store as device-local (never iCloud-synced).
-        // iCloud sync was removed in v139 due to stale-item auth loops.
+        let synced = isSynced(key)
+        let accessible: CFString = synced
+            ? kSecAttrAccessibleAfterFirstUnlock          // iCloud-synced items can't use ThisDeviceOnly
+            : kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+
         let query: [String: Any] = [
             kSecClass as String:              kSecClassGenericPassword,
             kSecAttrAccount as String:        key.rawValue,
-            kSecAttrAccessible as String:     kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly,
-            kSecAttrSynchronizable as String: false,
+            kSecAttrAccessible as String:     accessible,
+            kSecAttrSynchronizable as String: synced,
         ]
-
         let attributes: [String: Any] = [kSecValueData as String: data]
         let updateStatus = SecItemUpdate(query as CFDictionary, attributes as CFDictionary)
 
@@ -97,43 +110,42 @@ final class KeychainHelper {
             throw KeychainError.unexpectedStatus(updateStatus)
         }
 
-        // Remove any stale iCloud-synced copy left from the old sync feature.
-        let staleQuery: [String: Any] = [
+        // Delete the opposite-sync-policy copy (handles policy migrations).
+        let oppositeQuery: [String: Any] = [
             kSecClass as String:              kSecClassGenericPassword,
             kSecAttrAccount as String:        key.rawValue,
-            kSecAttrSynchronizable as String: true,
+            kSecAttrSynchronizable as String: !synced,
         ]
-        SecItemDelete(staleQuery as CFDictionary)
+        SecItemDelete(oppositeQuery as CFDictionary)
     }
 
     func readData(for key: Key) throws -> Data {
-        // 1. Prefer device-local item (authoritative — written by current session).
-        let localQuery: [String: Any] = [
+        let synced = isSynced(key)
+        let primaryQuery: [String: Any] = [
             kSecClass as String:              kSecClassGenericPassword,
             kSecAttrAccount as String:        key.rawValue,
             kSecReturnData as String:         true,
             kSecMatchLimit as String:         kSecMatchLimitOne,
-            kSecAttrSynchronizable as String: false,
+            kSecAttrSynchronizable as String: synced,
         ]
         var result: AnyObject?
-        if SecItemCopyMatching(localQuery as CFDictionary, &result) == errSecSuccess,
+        if SecItemCopyMatching(primaryQuery as CFDictionary, &result) == errSecSuccess,
            let data = result as? Data {
             return data
         }
 
-        // 2. Fall back to iCloud-synced item (migration path: users who had iCloud sync
-        //    enabled before v139). Re-save as device-local so next read uses path 1.
-        let iCloudQuery: [String: Any] = [
+        // Fall back to opposite policy (handles devices with old items from before policy migration).
+        let fallbackQuery: [String: Any] = [
             kSecClass as String:              kSecClassGenericPassword,
             kSecAttrAccount as String:        key.rawValue,
             kSecReturnData as String:         true,
             kSecMatchLimit as String:         kSecMatchLimitOne,
-            kSecAttrSynchronizable as String: true,
+            kSecAttrSynchronizable as String: !synced,
         ]
         result = nil
-        if SecItemCopyMatching(iCloudQuery as CFDictionary, &result) == errSecSuccess,
+        if SecItemCopyMatching(fallbackQuery as CFDictionary, &result) == errSecSuccess,
            let data = result as? Data {
-            try? save(data, for: key)   // migrate to device-local (also deletes iCloud copy)
+            try? save(data, for: key)   // re-save under correct policy (also removes old copy)
             return data
         }
 
@@ -143,20 +155,15 @@ final class KeychainHelper {
     // MARK: - Delete
 
     func delete(for key: Key) {
-        // Delete device-local item
-        let localQuery: [String: Any] = [
-            kSecClass as String:              kSecClassGenericPassword,
-            kSecAttrAccount as String:        key.rawValue,
-            kSecAttrSynchronizable as String: false,
-        ]
-        SecItemDelete(localQuery as CFDictionary)
-        // Also delete any iCloud-synced copy (cleanup)
-        let iCloudQuery: [String: Any] = [
-            kSecClass as String:              kSecClassGenericPassword,
-            kSecAttrAccount as String:        key.rawValue,
-            kSecAttrSynchronizable as String: true,
-        ]
-        SecItemDelete(iCloudQuery as CFDictionary)
+        // Delete both synced and local copies to ensure clean state.
+        for synced in [true, false] {
+            let query: [String: Any] = [
+                kSecClass as String:              kSecClassGenericPassword,
+                kSecAttrAccount as String:        key.rawValue,
+                kSecAttrSynchronizable as String: synced,
+            ]
+            SecItemDelete(query as CFDictionary)
+        }
     }
 
     func deleteAll() {

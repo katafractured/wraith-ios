@@ -105,15 +105,10 @@ struct TokenActivationSheet: View {
         defer { isValidating = false }
 
         do {
-            let info = try await APIClient.shared.validateToken(token)
-            try KeychainHelper.shared.save(token,     for: .subscriptionToken)
-            try KeychainHelper.shared.save(info.plan, for: .tokenPlan)
-            try KeychainHelper.shared.save(info.isAdmin ? "1" : "0", for: .tokenIsAdmin)
-            if let exp = info.expiresAt {
-                try KeychainHelper.shared.save(exp, for: .tokenExpiresAt)
-            }
+            // redeemAccessCode validates, saves all fields (incl. iCloud sync for founders),
+            // and calls reloadFromKeychain internally.
+            try await storeKit.redeemAccessCode(token)
             statusMessage = nil
-            await storeKit.reloadFromKeychain()
             dismiss()
         } catch {
             statusMessage = nil

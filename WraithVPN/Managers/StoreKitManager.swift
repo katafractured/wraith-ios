@@ -187,6 +187,28 @@ final class StoreKitManager: ObservableObject {
         )
     }
 
+    // MARK: - Founder access code redemption
+
+    /// Validates an access code against the backend and saves it as the active token.
+    /// Founder tokens (`kf_...`) sync via iCloud Keychain to all the user's devices.
+    func redeemAccessCode(_ code: String) async throws {
+        let trimmed = code.trimmingCharacters(in: .whitespaces)
+        let info    = try await APIClient.shared.validateToken(trimmed)
+        guard info.plan != "haven_free" else {
+            throw APIError.httpError(statusCode: 403, body: "Code does not grant a paid plan.")
+        }
+        // Founders get no expiry; others use a 1-year default since we don't know the real expiry here.
+        let expiresAt = info.isFounder
+            ? ISO8601DateFormatter().string(from: Date(timeIntervalSinceNow: 36500 * 86400))
+            : (info.expiresAt ?? ISO8601DateFormatter().string(from: Date(timeIntervalSinceNow: 365 * 86400)))
+        try KeychainHelper.shared.save(trimmed,                       for: .subscriptionToken)
+        try KeychainHelper.shared.save(info.plan,                     for: .tokenPlan)
+        try KeychainHelper.shared.save(expiresAt,                     for: .tokenExpiresAt)
+        try KeychainHelper.shared.save(info.isAdmin   ? "1" : "0",   for: .tokenIsAdmin)
+        try KeychainHelper.shared.save(info.isFounder ? "1" : "0",   for: .tokenIsFounder)
+        await reloadFromKeychain()
+    }
+
     // MARK: - Sign-out / revoke
 
     func signOut() {

@@ -50,8 +50,10 @@ final class KeychainHelper {
         case multiHopGroupId    = "com.katafract.wraith.multiHopGroupId"
         case multiHopEntryPeerId = "com.katafract.wraith.multiHopEntryPeerId"
         case multiHopExitPeerId  = "com.katafract.wraith.multiHopExitPeerId"
-        case multiHopEntryNodeId = "com.katafract.wraith.multiHopEntryNodeId"
-        case multiHopExitNodeId  = "com.katafract.wraith.multiHopExitNodeId"
+        case multiHopEntryNodeId   = "com.katafract.wraith.multiHopEntryNodeId"
+        case multiHopExitNodeId    = "com.katafract.wraith.multiHopExitNodeId"
+        case multiHopEntryRegion   = "com.katafract.wraith.multiHopEntryRegion"
+        case multiHopExitRegion    = "com.katafract.wraith.multiHopExitRegion"
     }
 
     // MARK: - String convenience

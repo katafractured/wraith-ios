@@ -229,9 +229,12 @@ final class WireGuardManager: ObservableObject {
         try? KeychainHelper.shared.save(provision.exitPeerId,   for: .multiHopExitPeerId)
         try? KeychainHelper.shared.save(provision.entryNodeId,  for: .multiHopEntryNodeId)
         try? KeychainHelper.shared.save(provision.exitNodeId,   for: .multiHopExitNodeId)
+        try? KeychainHelper.shared.save(entry.region,           for: .multiHopEntryRegion)
+        try? KeychainHelper.shared.save(exit.region,            for: .multiHopExitRegion)
         if let ip = provision.assignedIpv4.isEmpty ? nil : Optional(provision.assignedIpv4) {
             try? KeychainHelper.shared.save(ip, for: .wgAssignedIP)
         }
+        if let ip = exitIP { try? KeychainHelper.shared.save(ip, for: .wgExitIP) }
         NotificationCenter.default.post(name: .vpnServerDidChange, object: nil)
         DebugLogger.shared.peer("Multi-hop provisioned: entry=\(entry.cityName) exit=\(exit.cityName) ip=\(provision.assignedIpv4)")
 
@@ -268,6 +271,8 @@ final class WireGuardManager: ObservableObject {
         KeychainHelper.shared.delete(for: .multiHopExitPeerId)
         KeychainHelper.shared.delete(for: .multiHopEntryNodeId)
         KeychainHelper.shared.delete(for: .multiHopExitNodeId)
+        KeychainHelper.shared.delete(for: .multiHopEntryRegion)
+        KeychainHelper.shared.delete(for: .multiHopExitRegion)
         activePeerId        = nil
         assignedIP          = nil
         exitIP              = nil
@@ -614,9 +619,19 @@ final class WireGuardManager: ObservableObject {
                 activePeerId  = KeychainHelper.shared.readOptional(for: .activePeerId)
                 assignedIP    = KeychainHelper.shared.readOptional(for: .wgAssignedIP)
                 exitIP        = KeychainHelper.shared.readOptional(for: .wgExitIP)
-                // Restore which node this profile is provisioned for so server-change
-                // detection works after an app restart.
-                if let nodeId = KeychainHelper.shared.readOptional(for: .activeNodeId) {
+                // Restore multi-hop state so the route pill and IP display are correct
+                // after an app restart while the NE tunnel is still running.
+                if let entryNodeId = KeychainHelper.shared.readOptional(for: .multiHopEntryNodeId),
+                   let exitNodeId  = KeychainHelper.shared.readOptional(for: .multiHopExitNodeId) {
+                    isMultiHop = true
+                    let entryRegion = KeychainHelper.shared.readOptional(for: .multiHopEntryRegion) ?? ""
+                    let exitRegion  = KeychainHelper.shared.readOptional(for: .multiHopExitRegion)  ?? ""
+                    multiHopEntryServer = VPNServer.stub(nodeId: entryNodeId, region: entryRegion)
+                    multiHopExitServer  = VPNServer.stub(nodeId: exitNodeId,  region: exitRegion)
+                    connectedServer     = multiHopExitServer
+                } else if let nodeId = KeychainHelper.shared.readOptional(for: .activeNodeId) {
+                    // Restore which node this profile is provisioned for so server-change
+                    // detection works after an app restart.
                     let region = KeychainHelper.shared.readOptional(for: .activeRegion) ?? ""
                     connectedServer = VPNServer.stub(nodeId: nodeId, region: region)
                 }

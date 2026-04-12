@@ -39,10 +39,11 @@ final class StoreKitManager: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var purchaseError: String? = nil
     @Published var subscription: SubscriptionInfo? = nil
-    @Published var hasPurchased:  Bool = false
-    @Published var isHavenOnly:   Bool = false
-    @Published var hasVPN:        Bool = false
-    @Published var hasMultiHop:   Bool = false
+    @Published var hasPurchased:   Bool = false
+    @Published var isHavenOnly:    Bool = false
+    @Published var hasDNSSettings: Bool = false
+    @Published var hasVPN:         Bool = false
+    @Published var hasMultiHop:    Bool = false
     @Published var isCheckingEntitlements: Bool = true
     @Published var seatPurchaseError: String? = nil
     @Published var isPurchasingSeatPack: Bool = false
@@ -69,7 +70,8 @@ final class StoreKitManager: ObservableObject {
         ) { [weak self] _ in
             Task { @MainActor [weak self] in
                 self?.subscription = nil
-                self?.hasPurchased = false
+                self?.hasPurchased   = false
+                self?.hasDNSSettings = false
             }
         }
     }
@@ -189,10 +191,11 @@ final class StoreKitManager: ObservableObject {
         KeychainHelper.shared.delete(for: .tokenPlan)
         UserDefaults.standard.removeObject(forKey: "hasUnlockedFreeTier")
         subscription = nil
-        hasPurchased = false
-        isHavenOnly  = false
-        hasVPN       = false
-        hasMultiHop  = false
+        hasPurchased   = false
+        isHavenOnly    = false
+        hasDNSSettings = false
+        hasVPN         = false
+        hasMultiHop    = false
     }
 
     // MARK: - Private helpers
@@ -225,6 +228,7 @@ final class StoreKitManager: ObservableObject {
     }
 
     private func persistToken(_ resp: TokenResponse) throws {
+        guard !resp.token.isEmpty else { return }  // server returned empty on renewal — keep existing Keychain token
         try KeychainHelper.shared.save(resp.token,     for: .subscriptionToken)
         try KeychainHelper.shared.save(resp.expiresAt, for: .tokenExpiresAt)
         try KeychainHelper.shared.save(resp.plan,      for: .tokenPlan)
@@ -246,10 +250,11 @@ final class StoreKitManager: ObservableObject {
                 expiresAt = nil
             }
             subscription = SubscriptionInfo(plan: plan, expiresAt: expiresAt, token: token)
-            hasPurchased = !(subscription?.isExpired ?? true)
-            isHavenOnly  = subscription?.isHavenOnly  ?? false
-            hasVPN       = subscription?.hasVPN       ?? false
-            hasMultiHop  = subscription?.hasMultiHop  ?? false
+            hasPurchased   = !(subscription?.isExpired ?? true)
+            isHavenOnly    = subscription?.isHavenOnly    ?? false
+            hasDNSSettings = subscription?.hasDNSSettings ?? false
+            hasVPN         = subscription?.hasVPN         ?? false
+            hasMultiHop    = subscription?.hasMultiHop    ?? false
 
             // Release the splash screen immediately — we have a valid cached token.
             // Silently check StoreKit in the background for renewals/upgrades.

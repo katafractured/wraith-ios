@@ -466,7 +466,11 @@ struct ConnectView: View {
 
     private var statusCaption: String {
         if storeKit.isHavenOnly {
-            return "Haven DNS is active. Upgrade to Enclave to enable the VPN tunnel."
+            if storeKit.hasDNSSettings {
+                return "Haven DNS is active. Upgrade to Enclave to enable the VPN tunnel."
+            } else {
+                return "Haven DNS is protecting your device. Upgrade to Haven Pro or Enclave for advanced features."
+            }
         }
         if vpn.isAutoProvisioning {
             return "Setting up your secure route…"

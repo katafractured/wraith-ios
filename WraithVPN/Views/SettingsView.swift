@@ -635,21 +635,39 @@ struct SettingsView: View {
 
             Divider().background(Color.kfBorder)
 
-            NavigationLink {
-                HavenDNSSettingsView()
-                    .environmentObject(haven)
-                    .environmentObject(storeKit)
-            } label: {
-                SettingsRow(icon: "slider.horizontal.3", label: "Configure Filters") {
-                    HStack(spacing: 4) {
-                        if let prefs = haven.preferences {
-                            Text(prefs.protectionLevel == "NONE" ? "Off" : prefs.protectionLevel.capitalized)
-                                .font(KFFont.caption(12))
-                                .foregroundStyle(prefs.protectionLevel == "NONE" ? Color.kfError : Color.kfTextMuted)
+            if storeKit.hasDNSSettings {
+                NavigationLink {
+                    HavenDNSSettingsView()
+                        .environmentObject(haven)
+                        .environmentObject(storeKit)
+                } label: {
+                    SettingsRow(icon: "slider.horizontal.3", label: "Configure Filters") {
+                        HStack(spacing: 4) {
+                            if let prefs = haven.preferences {
+                                Text(prefs.protectionLevel == "NONE" ? "Off" : prefs.protectionLevel.capitalized)
+                                    .font(KFFont.caption(12))
+                                    .foregroundStyle(prefs.protectionLevel == "NONE" ? Color.kfError : Color.kfTextMuted)
+                            }
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 13))
+                                .foregroundStyle(Color.kfTextMuted)
                         }
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 13))
-                            .foregroundStyle(Color.kfTextMuted)
+                    }
+                }
+            } else {
+                NavigationLink {
+                    PaywallView()
+                        .environmentObject(storeKit)
+                } label: {
+                    SettingsRow(icon: "slider.horizontal.3", label: "Configure Filters") {
+                        HStack(spacing: 4) {
+                            Image(systemName: "lock.fill")
+                                .font(.system(size: 11))
+                                .foregroundStyle(Color.kfAccentBlue)
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 13))
+                                .foregroundStyle(Color.kfTextMuted)
+                        }
                     }
                 }
             }

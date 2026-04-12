@@ -353,9 +353,14 @@ struct SubscriptionInfo: Equatable {
 
     // MARK: - Tier capabilities
 
-    /// DNS protection only — no VPN tunnel.
+    /// DNS protection only — no VPN tunnel. Covers both free Haven and paid Haven tiers.
     var isHavenOnly: Bool {
-        plan == "haven" || plan == "haven_annual"
+        plan == "haven" || plan == "haven_annual" || plan == "haven_free"
+    }
+
+    /// Has access to DNS filter settings (protection levels, advanced filters). Requires a paid plan.
+    var hasDNSSettings: Bool {
+        plan != "haven_free"
     }
 
     /// Can provision a single VPN tunnel (Enclave and above).

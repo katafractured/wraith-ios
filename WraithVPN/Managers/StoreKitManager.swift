@@ -251,7 +251,7 @@ final class StoreKitManager: ObservableObject {
                 jwsTransaction:        jwsRepresentation
             )
             try persistToken(tokenResp)
-            await reloadFromKeychain()
+            applyKeychainState()  // update published state without re-triggering entitlement check
         } catch {
             purchaseError = "Could not activate subscription: \(error.localizedDescription)"
         }
@@ -259,11 +259,36 @@ final class StoreKitManager: ObservableObject {
 
     private func persistToken(_ resp: TokenResponse) throws {
         guard !resp.token.isEmpty else { return }  // server returned empty on renewal — keep existing Keychain token
+        // Don't overwrite a founder kf_ token with a non-founder IAP token.
+        if KeychainHelper.shared.readOptional(for: .tokenIsFounder) == "1" && !resp.isFounder {
+            return
+        }
         try KeychainHelper.shared.save(resp.token,                         for: .subscriptionToken)
         try KeychainHelper.shared.save(resp.expiresAt,                     for: .tokenExpiresAt)
         try KeychainHelper.shared.save(resp.plan,                          for: .tokenPlan)
         try KeychainHelper.shared.save(resp.isAdmin   ? "1" : "0",        for: .tokenIsAdmin)
         try KeychainHelper.shared.save(resp.isFounder ? "1" : "0",        for: .tokenIsFounder)
+    }
+
+    /// Updates published subscription state from keychain without spawning a background entitlement check.
+    /// Use this inside entitlement processing paths (handleTransaction) to avoid re-entrant loops.
+    private func applyKeychainState() {
+        guard let token = KeychainHelper.shared.readOptional(for: .subscriptionToken),
+              let plan  = KeychainHelper.shared.readOptional(for: .tokenPlan) else { return }
+        let expiresAt: Date?
+        if let expStr = KeychainHelper.shared.readOptional(for: .tokenExpiresAt) {
+            expiresAt = ISO8601DateFormatter().date(from: expStr)
+        } else {
+            expiresAt = nil
+        }
+        subscription   = SubscriptionInfo(plan: plan, expiresAt: expiresAt, token: token)
+        hasPurchased   = !(subscription?.isExpired ?? true)
+        isHavenOnly    = subscription?.isHavenOnly    ?? false
+        hasDNSSettings = subscription?.hasDNSSettings ?? false
+        hasVPN         = subscription?.hasVPN         ?? false
+        hasMultiHop    = subscription?.hasMultiHop    ?? false
+        isFounder      = KeychainHelper.shared.readOptional(for: .tokenIsFounder) == "1"
+        isAdmin        = KeychainHelper.shared.readOptional(for: .tokenIsAdmin)   == "1"
     }
 
     /// Reads stored token from Keychain and populates `subscription`.

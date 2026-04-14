@@ -55,10 +55,18 @@ struct MacMainView: View {
                 Circle()
                     .fill(statusGlowColor.opacity(0.07))
                     .frame(width: 72, height: 72)
-                Image(systemName: statusIcon)
-                    .font(.system(size: 36, weight: .semibold))
-                    .foregroundStyle(statusGlowColor)
-                    .contentTransition(.symbolEffect(.replace))
+                Group {
+                    if #available(macOS 14.0, *) {
+                        Image(systemName: statusIcon)
+                            .font(.system(size: 36, weight: .semibold))
+                            .foregroundStyle(statusGlowColor)
+                            .contentTransition(.symbolEffect(.replace))
+                    } else {
+                        Image(systemName: statusIcon)
+                            .font(.system(size: 36, weight: .semibold))
+                            .foregroundStyle(statusGlowColor)
+                    }
+                }
             }
             .animation(.easeInOut(duration: 0.35), value: vpn.status)
 

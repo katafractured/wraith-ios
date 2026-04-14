@@ -71,6 +71,7 @@
 		BBMAC065 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100014 /* DesignSystem.swift */; };
 		BBMAC066 /* MainMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBMAC020 /* MainMenuView.swift */; };
 		BBMAC067 /* MacAccountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBMAC021 /* MacAccountView.swift */; };
+		BBMAC100 /* MacMainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBMAC025 /* MacMainView.swift */; };
 		BBMAC068 /* NetworkExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA100030 /* NetworkExtension.framework */; };
 		BBMAC069 /* DebugLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100024 /* DebugLogger.swift */; };
 		BBMAC070 /* DNSHealthCheck.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100025 /* DNSHealthCheck.swift */; };
@@ -224,6 +225,7 @@
 		BBMAC016B /* VPNConfigManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VPNConfigManager.swift; sourceTree = "<group>"; };
 		BBMAC020 /* MainMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainMenuView.swift; sourceTree = "<group>"; };
 		BBMAC021 /* MacAccountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacAccountView.swift; sourceTree = "<group>"; };
+		BBMAC025 /* MacMainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacMainView.swift; sourceTree = "<group>"; };
 		BBMACPROD001 /* WraithVPNMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WraithVPNMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BC9FECE02F80E5140020F723 /* WireGuard.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = WireGuard.xcodeproj; sourceTree = "<group>"; };
 		BCC37CBF2F84CC2E00ABBF3E /* TestPlan.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = TestPlan.xctestplan; sourceTree = "<group>"; };
@@ -413,6 +415,7 @@
 				BBMAC010 /* WraithVPNMacApp.swift */,
 				BBMAC020 /* MainMenuView.swift */,
 				BBMAC021 /* MacAccountView.swift */,
+				BBMAC025 /* MacMainView.swift */,
 				BBMAC011 /* MenuBarView.swift */,
 				BBMAC012 /* MenuBarLabel.swift */,
 				BBMAC013 /* TokenEntryView.swift */,
@@ -739,6 +742,7 @@
 				BBMAC065 /* DesignSystem.swift in Sources */,
 				BBMAC066 /* MainMenuView.swift in Sources */,
 				BBMAC067 /* MacAccountView.swift in Sources */,
+				BBMAC100 /* MacMainView.swift in Sources */,
 				BBMAC069 /* DebugLogger.swift in Sources */,
 				BBMAC070 /* DNSHealthCheck.swift in Sources */,
 				BBMAC071 /* TelemetryManager.swift in Sources */,

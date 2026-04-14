@@ -217,7 +217,7 @@ struct MenuBarView: View {
             do {
                 let provision = try await APIClient.shared.provisionPeer(
                     pubkey: "",
-                    region: nil,
+                    regionId: nil,
                     label:  "Mac — \(Host.current().localizedName ?? "Desktop")"
                 )
                 try VPNConfigManager.shared.store(response: provision)

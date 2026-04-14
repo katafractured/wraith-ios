@@ -253,6 +253,24 @@ struct RegionsResponse: Decodable {
     let regions: [RegionSummary]
 }
 
+// MARK: - Latency reporting (POST /v1/latency/report — Phase E2.2)
+
+struct LatencySample: Encodable {
+    let regionId: String
+    let medianMs: Int
+    let netClass: String
+
+    enum CodingKeys: String, CodingKey {
+        case regionId = "region_id"
+        case medianMs = "median_ms"
+        case netClass = "net_class"
+    }
+}
+
+struct LatencyReportRequest: Encodable {
+    let samples: [LatencySample]
+}
+
 // MARK: - Layer 2 preferred-node hint (embedded in TokenInfoResponse)
 
 struct PreferredNodeHint: Decodable, Equatable {

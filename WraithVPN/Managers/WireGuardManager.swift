@@ -14,6 +14,7 @@
 
 import Foundation
 import NetworkExtension
+import Network
 import Combine
 import CryptoKit
 
@@ -89,6 +90,21 @@ final class WireGuardManager: ObservableObject {
     /// the most-recent stable connect runs the full suite.
     private var healthCheckTask: Task<Void, Never>?
 
+    // MARK: - Phase E2.2 latency reporting + periodic Layer 2
+
+    /// Tracks the client's current network class (wifi / cellular / wired /
+    /// unknown) via NWPathMonitor. Sent with every latency report.
+    private var currentNetClass: String = "unknown"
+    private var networkMonitor: NWPathMonitor?
+    /// Debounce — never fire a latency report more often than every 5 min even
+    /// if multiple triggers stack (network change + foreground in quick succession).
+    private let latencyReportMinInterval: TimeInterval = 300
+    private var lastLatencyReportAt: Date?
+    private var latencyReportTask: Task<Void, Never>?
+    /// Periodic (30 min) background loop — fires latency reporting and Layer 2
+    /// probes while foregrounded. Cancelled on deinit.
+    private var periodicTask: Task<Void, Never>?
+
     // MARK: - Init / lifecycle
 
     init() {
@@ -105,6 +121,7 @@ final class WireGuardManager: ObservableObject {
             Task { @MainActor [weak self] in
                 self?.syncStatus()
                 await self?.checkLayer2RebalanceOnForeground()
+                self?.scheduleLatencyReport(reason: "foreground")
             }
         }
         backgroundObserver = NotificationCenter.default.addObserver(
@@ -117,12 +134,17 @@ final class WireGuardManager: ObservableObject {
             }
         }
 #endif
+        startNetworkMonitor()
+        startPeriodicLoop()
     }
 
     deinit {
         if let obs = statusObserver   { NotificationCenter.default.removeObserver(obs) }
         if let obs = foregroundObserver { NotificationCenter.default.removeObserver(obs) }
         if let obs = backgroundObserver { NotificationCenter.default.removeObserver(obs) }
+        networkMonitor?.cancel()
+        latencyReportTask?.cancel()
+        periodicTask?.cancel()
     }
 
     // MARK: - Public interface
@@ -298,17 +320,21 @@ final class WireGuardManager: ObservableObject {
     /// background is a strong proxy (phone was down / screen off), and riding
     /// the existing foreground observer avoids adding a background task.
     private func checkLayer2RebalanceOnForeground() async {
-        // Only worth checking when we're actually connected single-hop.
-        guard isProvisioned, !isProvisioning, !isMultiHop else { return }
-        guard case .connected = status else { return }
-
         // Meaningful idle gap: either we were backgrounded for long enough, or
         // we have no background timestamp yet (first foreground after launch).
         if let bg = lastBackgroundedAt {
             guard Date().timeIntervalSince(bg) >= layer2MinBackgroundSeconds else { return }
         }
+        await performLayer2Probe()
+    }
 
-        // Per-probe rate limit.
+    /// Core Layer 2 probe — guarded by connection state and the per-probe
+    /// rate limit. Called from the foreground observer (after an idle gap
+    /// check) and from the periodic 30 min loop.
+    private func performLayer2Probe() async {
+        guard isProvisioned, !isProvisioning, !isMultiHop else { return }
+        guard case .connected = status else { return }
+
         if let last = lastLayer2ProbeAt,
            Date().timeIntervalSince(last) < layer2MinProbeInterval {
             return
@@ -326,6 +352,86 @@ final class WireGuardManager: ObservableObject {
         guard let hint = info.preferredNode else { return }
         DebugLogger.shared.peer("Layer2 probe: hint received → \(hint.nodeId) (\(hint.reason))")
         await applyPreferredNodeIfIdle(hint)
+    }
+
+    // MARK: - Phase E2.2 latency reporting
+
+    /// Starts observing the client's current network interface class so every
+    /// latency report tags the right bucket (wifi / cellular / wired). Also
+    /// fires a debounced report on every path transition.
+    private func startNetworkMonitor() {
+        let monitor = NWPathMonitor()
+        networkMonitor = monitor
+        monitor.pathUpdateHandler = { [weak self] path in
+            let newClass: String
+            if path.usesInterfaceType(.wifi) {
+                newClass = "wifi"
+            } else if path.usesInterfaceType(.cellular) {
+                newClass = "cellular"
+            } else if path.usesInterfaceType(.wiredEthernet) {
+                newClass = "wired"
+            } else {
+                newClass = "unknown"
+            }
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                let changed = self.currentNetClass != newClass
+                self.currentNetClass = newClass
+                if changed {
+                    self.scheduleLatencyReport(reason: "net-change")
+                }
+            }
+        }
+        monitor.start(queue: DispatchQueue.global(qos: .utility))
+    }
+
+    /// Periodic 30 min loop — fires both a latency report and a Layer 2 probe.
+    /// Lives for the lifetime of this manager; individual triggers self-gate
+    /// on token presence, connection state, and rate limits.
+    private func startPeriodicLoop() {
+        periodicTask?.cancel()
+        periodicTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 30 * 60 * 1_000_000_000)
+                guard let self else { return }
+                await self.runLatencyReport()
+                await self.performLayer2Probe()
+            }
+        }
+    }
+
+    /// Debounced wrapper around `runLatencyReport` — collapses rapid triggers
+    /// (network change + foreground in quick succession) into a single probe.
+    private func scheduleLatencyReport(reason: String) {
+        latencyReportTask?.cancel()
+        latencyReportTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 500_000_000)  // 0.5 s debounce
+            guard let self, !Task.isCancelled else { return }
+            DebugLogger.shared.api("LatencyProbe trigger: \(reason)")
+            await self.runLatencyReport()
+        }
+    }
+
+    /// Fetches the server list, probes one representative node per region via
+    /// TCP port 22 (median of 3 samples), and POSTs results to
+    /// `/v1/latency/report`. Silent failure; selector does not yet consume
+    /// this data — E2.2 is the data-collection phase.
+    private func runLatencyReport() async {
+        guard KeychainHelper.shared.readOptional(for: .subscriptionToken) != nil else { return }
+        if let last = lastLatencyReportAt,
+           Date().timeIntervalSince(last) < latencyReportMinInterval {
+            return
+        }
+        lastLatencyReportAt = Date()
+
+        guard let servers = try? await APIClient.shared.fetchServers(), !servers.isEmpty else { return }
+        let regionToMs = await LatencyProbe.probeRegions(from: servers)
+        guard !regionToMs.isEmpty else { return }
+        let netClass = currentNetClass
+        let samples = regionToMs.map {
+            LatencySample(regionId: $0.key, medianMs: $0.value, netClass: netClass)
+        }
+        await APIClient.shared.reportLatency(samples)
     }
 
     /// Layer 2 silent rebalance. Consumes a `PreferredNodeHint` returned by

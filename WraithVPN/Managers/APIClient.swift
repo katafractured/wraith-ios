@@ -257,6 +257,27 @@ final class APIClient {
         return try await request(APIRequest(.POST, "/v1/token/identity/link", body: body, auth: true))
     }
 
+    /// Reports client-measured RTT samples per region (Phase E2.2 data plane).
+    /// Silent — never throws, never triggers the global token-wipe. The server
+    /// returns 204; the selector does not yet read this data (E2.3 is the
+    /// cascade scorer that will consume it).
+    func reportLatency(_ samples: [LatencySample]) async {
+        guard !samples.isEmpty else { return }
+        guard let token = KeychainHelper.shared.readOptional(for: .subscriptionToken) else { return }
+        var urlRequest = URLRequest(url: baseURL.appendingPathComponent("/v1/latency/report"))
+        urlRequest.httpMethod = "POST"
+        urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        urlRequest.setValue("WraithVPN/1.0 (iOS)", forHTTPHeaderField: "User-Agent")
+        urlRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        urlRequest.timeoutInterval = 10
+        do {
+            urlRequest.httpBody = try encoder.encode(LatencyReportRequest(samples: samples))
+        } catch {
+            return
+        }
+        _ = try? await session.data(for: urlRequest)
+    }
+
     // MARK: - Private core
 
     private func request<T: Decodable>(_ req: APIRequest, baseOverride: URL? = nil) async throws -> T {

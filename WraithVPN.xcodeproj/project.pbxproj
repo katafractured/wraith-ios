@@ -12,6 +12,8 @@
 		AA000028 /* WraithAppShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100029 /* WraithAppShortcuts.swift */; };
 		AA000029 /* TelemetryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100039 /* TelemetryManager.swift */; };
 		BBMAC071 /* TelemetryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100039 /* TelemetryManager.swift */; };
+		AA000036 /* LatencyProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100040 /* LatencyProbe.swift */; };
+		BBMAC099 /* LatencyProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100040 /* LatencyProbe.swift */; };
 		AA000001 /* WraithVPNApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100001 /* WraithVPNApp.swift */; };
 		AA000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100002 /* ContentView.swift */; };
 		AA000003 /* ConnectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100003 /* ConnectView.swift */; };
@@ -198,6 +200,7 @@
 		AA100028 /* DisconnectVPNIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisconnectVPNIntent.swift; sourceTree = "<group>"; };
 		AA100029 /* WraithAppShortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WraithAppShortcuts.swift; sourceTree = "<group>"; };
 		AA100039 /* TelemetryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetryManager.swift; sourceTree = "<group>"; };
+		AA100040 /* LatencyProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LatencyProbe.swift; sourceTree = "<group>"; };
 		AA100030 /* NetworkExtension.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = NetworkExtension.framework; path = System/Library/Frameworks/NetworkExtension.framework; sourceTree = SDKROOT; };
 		AA100031 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		AA100032 /* CryptoKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CryptoKit.framework; path = System/Library/Frameworks/CryptoKit.framework; sourceTree = SDKROOT; };
@@ -336,6 +339,7 @@
 				AA100024 /* DebugLogger.swift */,
 				AA100025 /* DNSHealthCheck.swift */,
 				AA100039 /* TelemetryManager.swift */,
+				AA100040 /* LatencyProbe.swift */,
 			);
 			path = Managers;
 			sourceTree = "<group>";
@@ -689,6 +693,7 @@
 				AA000027 /* DisconnectVPNIntent.swift in Sources */,
 				AA000028 /* WraithAppShortcuts.swift in Sources */,
 				AA000029 /* TelemetryManager.swift in Sources */,
+				AA000036 /* LatencyProbe.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -737,6 +742,7 @@
 				BBMAC069 /* DebugLogger.swift in Sources */,
 				BBMAC070 /* DNSHealthCheck.swift in Sources */,
 				BBMAC071 /* TelemetryManager.swift in Sources */,
+				BBMAC099 /* LatencyProbe.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

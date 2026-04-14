@@ -312,7 +312,9 @@ struct ConnectView: View {
                 Text(value)
                     .font(KFFont.body(14))
                     .foregroundStyle(.white)
-                    .lineLimit(1)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
             Spacer(minLength: 0)

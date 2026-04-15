@@ -802,6 +802,7 @@
 /* Begin PBXTargetDependency section */
 		AADEP001 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
+			platformFilter = ios;
 			target = AATGT002 /* WireGuardTunnel */;
 			targetProxy = AADEPPROXY001 /* PBXContainerItemProxy */;
 		};

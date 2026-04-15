@@ -322,8 +322,8 @@ struct MultiHopPickerSheet: View {
             let bestPing1 = grouped[r1]?.compactMap(\.milliseconds).min() ?? Double.infinity
             let bestPing2 = grouped[r2]?.compactMap(\.milliseconds).min() ?? Double.infinity
             if abs(bestPing1 - bestPing2) < 5 {
-                let load1 = grouped[r1]?.map(\.server.loadScore).min() ?? Int.max
-                let load2 = grouped[r2]?.map(\.server.loadScore).min() ?? Int.max
+                let load1 = grouped[r1]?.map { Double($0.server.loadScore) }.min() ?? Double.infinity
+                let load2 = grouped[r2]?.map { Double($0.server.loadScore) }.min() ?? Double.infinity
                 return load1 < load2
             }
             return bestPing1 < bestPing2
@@ -355,7 +355,7 @@ struct MultiHopPickerSheet: View {
         let bestPing = regionServers.compactMap(\.milliseconds).min()
 
         return VStack(spacing: 0) {
-            DisclosureGroup(regionLabel(region, bestPing: bestPing)) {
+            DisclosureGroup {
                 LazyVStack(spacing: KFSpacing.xs) {
                     ForEach(regionServers) { item in
                         let isOpposite = item.server.nodeId == opposite?.nodeId
@@ -405,6 +405,8 @@ struct MultiHopPickerSheet: View {
                     }
                 }
                 .padding(.vertical, KFSpacing.xs)
+            } label: {
+                regionLabel(region, bestPing: bestPing)
             }
             .tint(.white)
         }

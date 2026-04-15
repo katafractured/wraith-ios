@@ -229,7 +229,7 @@ struct PeerListResponse: Decodable {
 
 // MARK: - Region listing (GET /v1/regions)
 
-struct RegionSummary: Decodable, Identifiable {
+struct RegionSummary: Decodable, Identifiable, Hashable {
     let id: String           // e.g. "us-east", "eu-west"
     let label: String        // human-readable — "US East", "Tokyo"
     let continent: String    // "NA", "EU", "AS", "SA", "OC", "AF"

@@ -12,4 +12,5 @@ if [[ -z "${CI_BUILD_NUMBER:-}" ]]; then
 fi
 
 echo "ci_pre_xcodebuild: setting build number to $CI_BUILD_NUMBER"
+cd "$(dirname "$0")/.."
 xcrun agvtool new-version -all "$CI_BUILD_NUMBER"

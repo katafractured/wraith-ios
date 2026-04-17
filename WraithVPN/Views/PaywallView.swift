@@ -1,9 +1,8 @@
 // PaywallView.swift
 // WraithVPN
 //
-// Subscription paywall shown when the user has no active token.
-// Presents both products (monthly / annual), highlights the annual as "Best Value",
-// and shows the feature list.
+// Subscription paywall — 3-tier ladder (Haven Pro / Enclave / Enclave+)
+// with monthly/annual toggle per tier and real App Store prices.
 
 import SwiftUI
 import StoreKit
@@ -14,8 +13,31 @@ struct PaywallView: View {
     @Environment(\.dismiss) private var dismiss
     var onContinueFree: (() -> Void)? = nil
 
+    // Default: Enclave annual (best value, matches prior behaviour)
     @State private var selectedProductId: String = WraithProduct.enclaveAnnual.rawValue
+    @State private var selectedTier: WraithTier  = .enclave
+    @State private var showAnnual: Bool          = true
     @State private var showTokenEntry = false
+
+    // MARK: - Derived
+
+    /// The currently-selected WraithProduct enum value.
+    private var selectedProduct: WraithProduct {
+        switch (selectedTier, showAnnual) {
+        case (.havenPro,    true):  return .havenProAnnual
+        case (.havenPro,    false): return .havenProMonthly
+        case (.enclave,     true):  return .enclaveAnnual
+        case (.enclave,     false): return .enclaveMonthly
+        case (.enclavePlus, true):  return .enclavePlusAnnual
+        case (.enclavePlus, false): return .enclavePlusMonthly
+        default:                    return .enclaveAnnual
+        }
+    }
+
+    /// App Store Product for the current selection.
+    private var activeStoreProduct: Product? {
+        storeKit.products.first { $0.id == selectedProduct.rawValue }
+    }
 
     // MARK: - Body
 
@@ -34,8 +56,9 @@ struct PaywallView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: compact ? KFSpacing.lg : KFSpacing.xl) {
                         header
-                        featureList
-                        productPicker
+                        tierSelector
+                        billingToggle
+                        featureCard
                         ctaButton
                         freeTierButton
                         legalFooter
@@ -50,6 +73,12 @@ struct PaywallView: View {
         .toolbarBackground(Color.kfBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .preferredColorScheme(.dark)
+        .onChange(of: selectedTier) { _, _ in
+            selectedProductId = selectedProduct.rawValue
+        }
+        .onChange(of: showAnnual) { _, _ in
+            selectedProductId = selectedProduct.rawValue
+        }
         .alert("Purchase Error", isPresented: .init(
             get: { storeKit.purchaseError != nil },
             set: { if !$0 { storeKit.purchaseError = nil } }
@@ -60,96 +89,180 @@ struct PaywallView: View {
         }
     }
 
-    // MARK: - Sub-views
+    // MARK: - Header
 
     private var header: some View {
         VStack(spacing: KFSpacing.sm) {
             Image("OnboardingPaywallHero")
                 .resizable()
                 .scaledToFit()
-                .frame(maxWidth: 320, maxHeight: 240)
+                .frame(maxWidth: 280, maxHeight: 200)
                 .shadow(color: Color.kfAccentPurple.opacity(0.2), radius: 28, y: 14)
 
-            Text("WraithVPN")
-                .font(KFFont.display(34))
+            Text("Choose your Enclave")
+                .font(KFFont.display(30))
                 .foregroundStyle(.white)
 
-            Text("Haven DNS protects you everywhere, always. Add WraithVPN to protect your traffic too.")
-                .font(KFFont.body(16))
+            Text("Haven DNS protects you everywhere — always on, no VPN required.\nAdd WraithVPN for full traffic privacy.")
+                .font(KFFont.body(15))
                 .foregroundStyle(Color.kfTextSecondary)
                 .multilineTextAlignment(.center)
+        }
+    }
 
-            HStack(spacing: KFSpacing.sm) {
-                valueChip("Haven DNS")
-                valueChip("Enclave VPN")
-                valueChip("Kill Switch")
+    // MARK: - Tier selector (3 cards)
+
+    private var tierSelector: some View {
+        HStack(spacing: KFSpacing.sm) {
+            ForEach([WraithTier.havenPro, .enclave, .enclavePlus], id: \.rawValue) { tier in
+                TierTabView(
+                    tier: tier,
+                    isSelected: selectedTier == tier
+                )
+                .onTapGesture { selectedTier = tier }
             }
-            .padding(.top, 4)
         }
     }
 
-    private func valueChip(_ label: String) -> some View {
-        Text(label)
-            .font(KFFont.caption(11, weight: .semibold))
-            .foregroundStyle(Color.kfTextSecondary)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(Color.kfSurface.opacity(0.92))
+    // MARK: - Annual / Monthly toggle
+
+    private var billingToggle: some View {
+        HStack(spacing: 0) {
+            togglePill(label: "Monthly", isActive: !showAnnual) {
+                withAnimation(.easeInOut(duration: 0.2)) { showAnnual = false }
+            }
+            togglePill(label: "Annual", isActive: showAnnual, badge: savingsBadge) {
+                withAnimation(.easeInOut(duration: 0.2)) { showAnnual = true }
+            }
+        }
+        .background(Color.kfSurface)
+        .clipShape(Capsule())
+        .overlay(Capsule().stroke(Color.kfBorder, lineWidth: 1))
+    }
+
+    private func togglePill(label: String, isActive: Bool, badge: String? = nil, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Text(label)
+                    .font(KFFont.caption(13, weight: .semibold))
+                    .foregroundStyle(isActive ? .white : Color.kfTextMuted)
+                if let badge {
+                    Text(badge)
+                        .font(KFFont.caption(10, weight: .bold))
+                        .foregroundStyle(.black)
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 2)
+                        .background(Color.kfConnected)
+                        .clipShape(Capsule())
+                }
+            }
+            .padding(.horizontal, KFSpacing.md)
+            .padding(.vertical, 10)
+            .background(isActive ? LinearGradient.kfAccent : LinearGradient(colors: [Color.clear], startPoint: .top, endPoint: .bottom))
             .clipShape(Capsule())
-            .overlay(
-                Capsule()
-                    .stroke(Color.kfBorder, lineWidth: 1)
-            )
-    }
-
-    private var featureList: some View {
-        VStack(alignment: .leading, spacing: KFSpacing.sm) {
-            FeatureRow(icon: "shield.lefthalf.filled",
-                       text: "Haven DNS — blocks ads, trackers, and malware 24/7, even when VPN is off")
-            FeatureRow(icon: "bolt.fill",
-                       text: "WireGuard VPN through global WraithGate exit nodes (EU, US, Singapore)")
-            FeatureRow(icon: "lock.fill",
-                       text: "ChaCha20 encryption — all traffic routed through the Enclave")
-            FeatureRow(icon: "network.badge.shield.half.filled",
-                       text: "Enhanced DNS protection (HIGH / FAMILY) unlocked when VPN is on")
-            FeatureRow(icon: "xmark.shield.fill",
-                       text: "Kill switch — connection blocked if VPN drops unexpectedly")
-            FeatureRow(icon: "iphone.and.arrow.forward",
-                       text: "Up to 5 simultaneous devices")
         }
-        .padding(KFSpacing.md)
-        .kfCard()
+        .animation(.easeInOut(duration: 0.2), value: isActive)
     }
 
-    private var productPicker: some View {
-        VStack(spacing: KFSpacing.sm) {
+    /// Compute approximate annual savings vs monthly × 12.
+    private var savingsBadge: String? {
+        let monthlyId = showAnnual
+            ? selectedProduct.monthlyVariant?.rawValue
+            : selectedProduct.rawValue
+        let annualId = showAnnual
+            ? selectedProduct.rawValue
+            : selectedProduct.annualVariant?.rawValue
+
+        guard let mId = monthlyId,
+              let aId = annualId,
+              let monthly = storeKit.products.first(where: { $0.id == mId }),
+              let annual  = storeKit.products.first(where: { $0.id == aId }) else {
+            return "Save ~33%"
+        }
+        let monthlyAnnualised = monthly.price * 12
+        guard monthlyAnnualised > 0 else { return nil }
+        let savingDecimal = (monthlyAnnualised - annual.price) / monthlyAnnualised * 100
+        guard savingDecimal > 0 else { return nil }
+        let savingInt = Int((savingDecimal as NSDecimalNumber).intValue)
+        return "Save \(savingInt)%"
+    }
+
+    // MARK: - Feature card
+
+    private var featureCard: some View {
+        VStack(alignment: .leading, spacing: KFSpacing.sm) {
             if storeKit.isLoading && storeKit.products.isEmpty {
                 ProgressView()
                     .tint(Color.kfAccentBlue)
-                    .frame(height: 120)
+                    .frame(maxWidth: .infinity, minHeight: 80)
             } else {
-                ForEach(storeKit.products, id: \.id) { product in
-                    ProductOptionView(
-                        product: product,
-                        isSelected: selectedProductId == product.id,
-                        isBestValue: product.id == WraithProduct.enclaveAnnual.rawValue
-                    )
-                    .onTapGesture { selectedProductId = product.id }
+                // Price line
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    if let product = activeStoreProduct {
+                        Text(product.displayPrice)
+                            .font(KFFont.display(28))
+                            .foregroundStyle(.white)
+                        Text(showAnnual ? "/ year" : "/ month")
+                            .font(KFFont.body(14))
+                            .foregroundStyle(Color.kfTextMuted)
+                        if showAnnual, let monthly = monthlyEquivalent {
+                            Text("(\(monthly)/mo)")
+                                .font(KFFont.caption(12))
+                                .foregroundStyle(Color.kfTextMuted)
+                        }
+                    } else {
+                        Text("Loading…")
+                            .font(KFFont.body(15))
+                            .foregroundStyle(Color.kfTextMuted)
+                    }
+                    Spacer()
+                }
+
+                Divider().background(Color.kfBorder)
+
+                // Feature list
+                ForEach(selectedTier.features, id: \.self) { feature in
+                    FeatureRow(icon: featureIcon(feature), text: feature,
+                               accentHex: selectedTier.accentColorHex)
                 }
             }
         }
+        .padding(KFSpacing.md)
+        .kfCard()
+        .animation(.easeInOut(duration: 0.2), value: selectedTier)
     }
+
+    private var monthlyEquivalent: String? {
+        guard let product = activeStoreProduct else { return nil }
+        let monthly = product.price / 12
+        return monthly.formatted(product.priceFormatStyle)
+    }
+
+    private func featureIcon(_ feature: String) -> String {
+        if feature.contains("DNS") || feature.contains("tracker") || feature.contains("ad") { return "shield.lefthalf.filled" }
+        if feature.contains("VPN") || feature.contains("WireGuard") { return "bolt.fill" }
+        if feature.contains("multi-hop") || feature.contains("Multi-hop") || feature.contains("2 nodes") { return "arrow.triangle.branch" }
+        if feature.contains("Kill switch") { return "xmark.shield.fill" }
+        if feature.contains("device") || feature.contains("5 device") { return "iphone.and.arrow.forward" }
+        if feature.contains("exit node") || feature.contains("global") { return "network.badge.shield.half.filled" }
+        if feature.contains("Maximum") || feature.contains("privacy") { return "lock.fill" }
+        if feature.contains("Entry") || feature.contains("separation") { return "arrow.left.arrow.right" }
+        if feature.contains("Everything") { return "checkmark.seal.fill" }
+        return "checkmark.circle"
+    }
+
+    // MARK: - CTA button
 
     private var ctaButton: some View {
         Button {
-            guard let product = storeKit.products.first(where: { $0.id == selectedProductId }) else { return }
+            guard let product = activeStoreProduct else { return }
             Task { await storeKit.purchase(product) }
         } label: {
             Group {
                 if storeKit.isLoading {
                     ProgressView().tint(.white)
                 } else {
-                    Text("Subscribe Now")
+                    Text("Subscribe to \(selectedTier.displayName)")
                         .font(KFFont.heading(18))
                         .foregroundStyle(.white)
                 }
@@ -159,9 +272,11 @@ struct PaywallView: View {
             .background(LinearGradient.kfAccent)
             .clipShape(Capsule())
         }
-        .disabled(storeKit.isLoading)
+        .disabled(storeKit.isLoading || activeStoreProduct == nil)
         .shadow(color: Color.kfAccentPurple.opacity(0.25), radius: 24, y: 14)
     }
+
+    // MARK: - Free Haven button
 
     private var freeTierButton: some View {
         VStack(spacing: KFSpacing.sm) {
@@ -169,7 +284,7 @@ struct PaywallView: View {
                 Text("Start free with Haven DNS")
                     .font(KFFont.heading(18))
                     .foregroundStyle(.white)
-                Text("Haven DNS is free forever — blocks ads and basic trackers at the DNS level, on every network, always on. Upgrade to WraithVPN when you want the full Enclave VPN and stronger protection tiers.")
+                Text("Haven DNS is free forever — blocks ads and basic trackers at the DNS level, on every network, always on. Upgrade to Haven Pro or WraithVPN when you want stronger protection or the full Enclave VPN.")
                     .font(KFFont.body(14))
                     .foregroundStyle(Color.kfTextSecondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -178,10 +293,8 @@ struct PaywallView: View {
 
             Button {
                 onContinueFree?()
-                if onContinueFree == nil {
-                    dismiss()
-                }
-                } label: {
+                if onContinueFree == nil { dismiss() }
+            } label: {
                 VStack(spacing: 8) {
                     Text("Continue With Haven DNS Free")
                         .font(KFFont.heading(16))
@@ -214,6 +327,8 @@ struct PaywallView: View {
         .kfCard()
     }
 
+    // MARK: - Legal footer
+
     private var legalFooter: some View {
         VStack(spacing: KFSpacing.xs) {
             HStack(spacing: KFSpacing.lg) {
@@ -243,104 +358,54 @@ struct PaywallView: View {
     }
 }
 
+// MARK: - Tier tab
+
+private struct TierTabView: View {
+    let tier: WraithTier
+    let isSelected: Bool
+
+    private var accent: Color { Color(hex: tier.accentColorHex) }
+
+    var body: some View {
+        VStack(spacing: 4) {
+            Text(tier.displayName)
+                .font(KFFont.caption(12, weight: .semibold))
+                .foregroundStyle(isSelected ? accent : Color.kfTextMuted)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: KFRadius.md, style: .continuous)
+                .fill(isSelected ? accent.opacity(0.12) : Color.kfSurface)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: KFRadius.md, style: .continuous)
+                .strokeBorder(isSelected ? accent : Color.kfBorder, lineWidth: isSelected ? 1.5 : 1)
+        )
+        .animation(.easeInOut(duration: 0.18), value: isSelected)
+    }
+}
+
 // MARK: - Feature row
 
 private struct FeatureRow: View {
     let icon: String
     let text: String
+    let accentHex: String
 
     var body: some View {
         HStack(spacing: KFSpacing.sm) {
             Image(systemName: icon)
                 .font(.system(size: 14))
-                .foregroundStyle(Color.kfAccentBlue)
+                .foregroundStyle(Color(hex: accentHex))
                 .frame(width: 20)
             Text(text)
                 .font(KFFont.body(14))
                 .foregroundStyle(Color.kfTextSecondary)
             Spacer()
         }
-    }
-}
-
-// MARK: - Product option
-
-private struct ProductOptionView: View {
-    let product: Product
-    let isSelected: Bool
-    let isBestValue: Bool
-
-    var body: some View {
-        HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(spacing: KFSpacing.xs) {
-                    Text(displayName)
-                        .font(KFFont.heading(15))
-                        .foregroundStyle(.white)
-                    if isBestValue {
-                        Text("BEST VALUE")
-                            .font(KFFont.caption(10, weight: .bold))
-                            .kerning(1)
-                            .foregroundStyle(.black)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(Color.kfConnected)
-                            .clipShape(Capsule())
-                    }
-                }
-                if isBestValue, let monthlyEquivalent {
-                    Text("Just \(monthlyEquivalent)/mo — save ~33%")
-                        .font(KFFont.caption(12))
-                        .foregroundStyle(Color.kfTextMuted)
-                }
-            }
-            Spacer()
-
-            VStack(alignment: .trailing, spacing: 2) {
-                Text(product.displayPrice)
-                    .font(KFFont.heading(16))
-                    .foregroundStyle(.white)
-                Text(periodLabel)
-                    .font(KFFont.caption(11))
-                    .foregroundStyle(Color.kfTextMuted)
-
-                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 18))
-                    .foregroundStyle(isSelected ? Color.kfAccentBlue : Color.kfTextMuted)
-                    .padding(.top, 8)
-            }
-        }
-        .padding(KFSpacing.md)
-        .background(
-            RoundedRectangle(cornerRadius: KFRadius.md, style: .continuous)
-                .fill(isSelected ? Color.kfAccentBlue.opacity(0.12) : Color.kfSurface)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: KFRadius.md, style: .continuous)
-                .strokeBorder(
-                    isSelected
-                        ? LinearGradient.kfAccent
-                        : LinearGradient(colors: [Color.kfBorder], startPoint: .top, endPoint: .bottom),
-                    lineWidth: isSelected ? 2 : 1
-                )
-        )
-        .animation(.easeInOut(duration: 0.2), value: isSelected)
-    }
-
-    private var displayName: String {
-        product.id == WraithProduct.enclaveAnnual.rawValue
-            ? "WraithVPN — Annual"
-            : "WraithVPN — Monthly"
-    }
-
-    private var periodLabel: String {
-        product.id == WraithProduct.enclaveAnnual.rawValue ? "per year" : "per month"
-    }
-
-    private var monthlyEquivalent: String? {
-        guard product.id == WraithProduct.enclaveAnnual.rawValue else { return nil }
-        let monthly = product.price / 12
-        return monthly.formatted(product.priceFormatStyle)
     }
 }
 

@@ -49,7 +49,7 @@
 		AA000033 /* Network.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA100033 /* Network.framework */; };
 		AA000034 /* NetworkExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA100030 /* NetworkExtension.framework */; };
 		AA000035 /* WireGuardKit in Frameworks */ = {isa = PBXBuildFile; productRef = BCWGPROD001 /* WireGuardKit */; };
-		AACOPYREF001 /* WireGuardTunnel.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AAPROD002 /* WireGuardTunnel.appex */; platformFilter = ios; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		AACOPYREF001 /* WireGuardTunnel.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AAPROD002 /* WireGuardTunnel.appex */; platformFilters = (iphoneos, ); settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		AATST200 /* ModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AATST100 /* ModelTests.swift */; };
 		AATST201 /* KeychainHelperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AATST101 /* KeychainHelperTests.swift */; };
 		AATST202 /* APIClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AATST102 /* APIClientTests.swift */; };
@@ -818,7 +818,7 @@
 /* Begin PBXTargetDependency section */
 		AADEP001 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			platformFilter = ios;
+			platformFilters = (iphoneos, );
 			target = AATGT002 /* WireGuardTunnel */;
 			targetProxy = AADEPPROXY001 /* PBXContainerItemProxy */;
 		};

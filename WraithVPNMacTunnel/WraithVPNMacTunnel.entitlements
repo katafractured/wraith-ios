@@ -8,5 +8,14 @@
 	<array>
 		<string>packet-tunnel-provider</string>
 	</array>
+	<key>keychain-access-groups</key>
+	<array>
+		<string>$(AppIdentifierPrefix)com.katafract.wraith</string>
+		<string>$(AppIdentifierPrefix)com.katafract.wraith.tunnel</string>
+	</array>
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.com.katafract.wraith</string>
+	</array>
 </dict>
 </plist>

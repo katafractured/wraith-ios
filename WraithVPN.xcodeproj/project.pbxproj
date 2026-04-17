@@ -29,6 +29,8 @@
 		AA000013 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100013 /* KeychainHelper.swift */; };
 		AA000014 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100014 /* DesignSystem.swift */; };
 		AA000015 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA100015 /* Assets.xcassets */; };
+		AAPRIV001 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = AAPRIV100 /* PrivacyInfo.xcprivacy */; };
+		AATUNPRIV001 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = AATUNPRIV100 /* PrivacyInfo.xcprivacy */; };
 		AA000016 /* HavenDNSManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100018 /* HavenDNSManager.swift */; };
 		AA000019 /* TokenActivationSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100019 /* TokenActivationSheet.swift */; };
 		AA00001A /* HavenDNSSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10001A /* HavenDNSSettingsView.swift */; };
@@ -184,6 +186,8 @@
 		AA100015 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		AA100016 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AA100017 /* WraithVPN.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WraithVPN.entitlements; sourceTree = "<group>"; };
+		AAPRIV100 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		AATUNPRIV100 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		AA100018 /* HavenDNSManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HavenDNSManager.swift; sourceTree = "<group>"; };
 		AA100019 /* TokenActivationSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenActivationSheet.swift; sourceTree = "<group>"; };
 		AA10001A /* HavenDNSSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HavenDNSSettingsView.swift; sourceTree = "<group>"; };
@@ -300,6 +304,7 @@
 				AA100015 /* Assets.xcassets */,
 				AA100016 /* Info.plist */,
 				AA100017 /* WraithVPN.entitlements */,
+				AAPRIV100 /* PrivacyInfo.xcprivacy */,
 			);
 			path = WraithVPN;
 			sourceTree = "<group>";
@@ -376,6 +381,7 @@
 				AA100022 /* TunnelConfiguration+WgQuickConfig.swift */,
 				AA100023 /* String+ArrayConversion.swift */,
 				AA100021 /* WireGuardTunnel.entitlements */,
+				AATUNPRIV100 /* PrivacyInfo.xcprivacy */,
 			);
 			path = WireGuardTunnel;
 			sourceTree = "<group>";
@@ -487,6 +493,7 @@
 			buildPhases = (
 				AABP002 /* Frameworks */,
 				AASP002 /* Sources */,
+				AATUNRES001 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -656,6 +663,15 @@
 			buildActionMask = 2147483647;
 			files = (
 				AA000015 /* Assets.xcassets in Resources */,
+				AAPRIV001 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AATUNRES001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AATUNPRIV001 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

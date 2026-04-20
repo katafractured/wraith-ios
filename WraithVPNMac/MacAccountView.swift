@@ -320,16 +320,6 @@ struct MacAccountView: View {
             sectionHeader("Account")
 
             macActionRow(
-                icon: "key.fill",
-                title: "Enter / Change Token",
-                subtitle: "Link a Stripe or portal purchase"
-            ) {
-                showTokenEntry = true
-            }
-
-            Divider().background(Color.kfBorder)
-
-            macActionRow(
                 icon: "arrow.clockwise",
                 title: "Restore App Store Purchase",
                 subtitle: "Sync your iOS subscription to this Mac"

@@ -55,7 +55,6 @@
 		AATST204 /* ServerListManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AATST104 /* ServerListManagerTests.swift */; };
 		AATST205 /* HavenDNSManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AATST105 /* HavenDNSManagerTests.swift */; };
 		BBMAC050 /* WraithVPNMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBMAC010 /* WraithVPNMacApp.swift */; };
-		BBMAC053 /* TokenEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBMAC013 /* TokenEntryView.swift */; };
 		BBMAC054 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100009 /* APIClient.swift */; };
 		BBMAC055 /* StoreKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100011 /* StoreKitManager.swift */; };
 		BBMAC056 /* HavenDNSManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100018 /* HavenDNSManager.swift */; };
@@ -219,7 +218,6 @@
 		AATST105 /* HavenDNSManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HavenDNSManagerTests.swift; sourceTree = "<group>"; };
 		AATST_PROD /* WraithVPNTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WraithVPNTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		BBMAC010 /* WraithVPNMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WraithVPNMacApp.swift; sourceTree = "<group>"; };
-		BBMAC013 /* TokenEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenEntryView.swift; sourceTree = "<group>"; };
 		BBMAC014 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		BBMAC015 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		BBMAC016 /* WraithVPNMac.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WraithVPNMac.entitlements; sourceTree = "<group>"; };
@@ -428,7 +426,6 @@
 				BBMACNEW004 /* MacDnsStatsView.swift */,
 				BBMACNEW005 /* MacAchievementsView.swift */,
 				BBMACNEW006 /* MacUpgradeSheet.swift */,
-				BBMAC013 /* TokenEntryView.swift */,
 				BBMAC014 /* Info.plist */,
 				BBMAC015 /* PrivacyInfo.xcprivacy */,
 				BBMAC016 /* WraithVPNMac.entitlements */,
@@ -745,7 +742,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				BBMAC050 /* WraithVPNMacApp.swift in Sources */,
-				BBMAC053 /* TokenEntryView.swift in Sources */,
 				BBMAC054 /* APIClient.swift in Sources */,
 				BBMAC055 /* StoreKitManager.swift in Sources */,
 				BBMAC056 /* HavenDNSManager.swift in Sources */,

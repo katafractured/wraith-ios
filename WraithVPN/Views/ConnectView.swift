@@ -22,7 +22,7 @@ struct ConnectView: View {
     @State private var showError          = false
     @State private var upgradeReason: UpgradeReason? = nil
     @State private var showHopSwitchConfirm    = false
-    @State private var pendingHopMode: Bool?   = nil     // desired mode pending disconnect confirmation
+    @State private var pendingHopMode: Bool?   = nil
     @State private var suppressNextHopModeChange = false
 
     private var isAnimatingRing: Bool {
@@ -38,6 +38,15 @@ struct ConnectView: View {
             ZStack {
                 backgroundGradient
                     .ignoresSafeArea()
+
+                // Gold hairline border when connected — the signal IS the border
+                if vpn.status == .connected && !storeKit.isHavenOnly {
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .stroke(Color.kataGold.opacity(0.55), lineWidth: 0.5)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, proxy.safeAreaInsets.top + 8)
+                        .transition(.opacity.animation(.easeInOut(duration: 0.6)))
+                }
 
                 VStack(spacing: layout.sectionSpacing) {
                     header
@@ -91,7 +100,6 @@ struct ConnectView: View {
             suppressNextHopModeChange = true
             multiHopMode = pending
             hopModeExplicitlySet = true
-            // Auto-open the appropriate picker to complete the mode switch
             if pending {
                 showMultiHopPicker = true
             } else {
@@ -114,10 +122,8 @@ struct ConnectView: View {
             }
             hopModeExplicitlySet = true
             if vpn.status == .connected || vpn.status == .connecting {
-                // Snap back immediately — slider must always reflect actual connection state
                 suppressNextHopModeChange = true
                 multiHopMode = oldValue
-                // Store desired mode; will apply after confirmed disconnect
                 pendingHopMode = newValue
                 showHopSwitchConfirm = true
             }
@@ -128,7 +134,6 @@ struct ConnectView: View {
         ) {
             Button("Disconnect & Switch", role: .destructive) {
                 vpn.disconnect()
-                // pendingHopMode is set; onChange(of: vpn.status) will apply it after disconnect
             }
             Button("Cancel", role: .cancel) {
                 pendingHopMode = nil
@@ -143,16 +148,11 @@ struct ConnectView: View {
 
     // MARK: - Helpers
 
-    /// Defaults to multi-hop mode the first time a Sovereign user opens the app.
-    /// Respects any explicit toggle the user has made since.
     private func applyDefaultHopMode() {
         guard storeKit.hasMultiHop, !hopModeExplicitlySet else { return }
         multiHopMode = true
     }
 
-    /// Sets `servers.selectedServer` to the full server object whose nodeId matches
-    /// `vpn.connectedServer`. Falls back to leaving the selection unchanged if the
-    /// connected node isn't in the server list yet (e.g. list hasn't loaded).
     private func syncSelectedToConnected() {
         guard let nodeId = vpn.connectedServer?.nodeId else { return }
         if let match = servers.servers.first(where: { $0.server.nodeId == nodeId }) {
@@ -164,9 +164,6 @@ struct ConnectView: View {
 
     private var hopModeSection: some View {
         VStack(spacing: KFSpacing.sm) {
-            // Only show hop-mode toggle to users with an active VPN subscription.
-            // hasVPN = false when subscription is nil (no token) or Haven-only,
-            // preventing the multi-hop upgrade gate from firing spuriously.
             if storeKit.hasVPN {
                 Picker("Hop Mode", selection: $multiHopMode) {
                     Text("Single Hop").tag(false)
@@ -180,7 +177,6 @@ struct ConnectView: View {
             } else if vpn.isMultiHop,
                       let entry = vpn.multiHopEntryServer,
                       let exit  = vpn.multiHopExitServer {
-                // Multihop active — show current route with a Change Route button
                 Button { showMultiHopPicker = true } label: {
                     HStack(spacing: KFSpacing.md) {
                         Image(systemName: "arrow.triangle.2.circlepath")
@@ -224,17 +220,15 @@ struct ConnectView: View {
         }
     }
 
-
     // MARK: - Sub-views
 
     private var backgroundGradient: some View {
         ZStack {
             Color.kfBackground
-            // Subtle radial glow at top-center
             RadialGradient(
                 colors: [
                     vpn.status == .connected
-                        ? Color.kfConnected.opacity(0.12)
+                        ? Color.kataGold.opacity(0.06)
                         : Color.kfAccentPurple.opacity(0.08),
                     Color.clear
                 ],
@@ -309,47 +303,52 @@ struct ConnectView: View {
         .padding(.top, layout.heroTopPadding)
     }
 
-    // MARK: - Status section
+    // MARK: - Status section (post-connect: no green, typography is the signal)
 
     private var statusSection: some View {
         VStack(spacing: KFSpacing.xs) {
-            Text(storeKit.isHavenOnly ? "DNS Protected" : vpn.status.label)
-                .font(KFFont.heading(24))
-                .foregroundStyle(storeKit.isHavenOnly ? Color(hex: "#38bdf8") : vpn.status.swiftUIColor)
-                .animation(.easeInOut(duration: 0.3), value: vpn.status)
-                .contentTransition(.numericText())
-
             if vpn.status == .connected && !storeKit.isHavenOnly {
-                VStack(spacing: 4) {
+                // Gold-typography sealed state — no green, no "Connected"
+                Text("Inside the Enclave.")
+                    .font(.kataDisplay(22, weight: .regular))
+                    .foregroundStyle(Color.kataChampagne)
+                    .animation(.easeInOut(duration: 0.4), value: vpn.status)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+
+                if let since = vpn.connectedSince {
+                    Text(since, style: .timer)
+                        .font(.kataMono(12))
+                        .foregroundStyle(Color.kataGold.opacity(0.7))
+                        .monospacedDigit()
+                }
+                if let ip = vpn.exitIP ?? vpn.assignedIP {
                     HStack(spacing: KFSpacing.xs) {
                         Image(systemName: "globe")
-                            .font(.system(size: 12))
-                        Text(vpn.exitIP ?? vpn.assignedIP ?? "—")
-                            .font(KFFont.mono(13))
+                            .font(.system(size: 11))
+                        Text(ip)
+                            .font(.kataMono(12))
                     }
-                    .foregroundStyle(Color.kfTextMuted)
-                    if let since = vpn.connectedSince {
-                        Text(since, style: .timer)
-                            .font(KFFont.mono(12))
-                            .foregroundStyle(Color.kfTextMuted.opacity(0.7))
-                            .monospacedDigit()
-                    }
+                    .foregroundStyle(Color.kataChampagne.opacity(0.5))
                 }
-                .transition(.opacity.combined(with: .move(edge: .bottom)))
             } else {
+                Text(storeKit.isHavenOnly ? "DNS Protected" : vpn.status.label)
+                    .font(KFFont.heading(24))
+                    .foregroundStyle(storeKit.isHavenOnly ? Color(hex: "#38bdf8") : Color.kfTextPrimary)
+                    .animation(.easeInOut(duration: 0.3), value: vpn.status)
+                    .contentTransition(.numericText())
+
                 Text(statusCaption)
                     .font(KFFont.body(14))
                     .foregroundStyle(Color.kfTextSecondary)
                     .multilineTextAlignment(.center)
             }
         }
-        .animation(.easeInOut(duration: 0.4), value: vpn.assignedIP)
+        .animation(.easeInOut(duration: 0.4), value: vpn.status == .connected)
     }
 
     private var connectionSummary: some View {
         VStack(spacing: KFSpacing.sm) {
             if vpn.isMultiHop, let entry = vpn.multiHopEntryServer, let exit = vpn.multiHopExitServer {
-                // Multihop: full-width route pill showing both hops, then mode pill
                 HStack(spacing: KFSpacing.sm) {
                     Image(systemName: "arrow.triangle.2.circlepath")
                         .font(.system(size: 13, weight: .semibold))
@@ -544,33 +543,25 @@ struct ConnectView: View {
                     return
                 }
 
-                // No token at all — route to paywall.
                 if KeychainHelper.shared.readOptional(for: .subscriptionToken) == nil {
                     upgradeReason = .vpnRequiresEnclave
                     return
                 }
 
-                // Haven plan — VPN is locked, show tier upgrade sheet.
                 if storeKit.isHavenOnly {
                     upgradeReason = .vpnRequiresEnclave
                     return
                 }
 
-                // Multi-hop mode: open picker if no route provisioned yet
                 if multiHopMode {
                     showMultiHopPicker = true
                     return
                 }
 
                 if simpleMode && !multiHopMode {
-                    // Simple mode: always use GeoIP nearest, ignore latency-probe selection.
-                    // Don't call connect() if still in multi-hop state — connectToServer
-                    // will revoke the old multi-hop peers and provision a clean single-hop peer.
                     if vpn.isProvisioned && !vpn.isMultiHop {
                         try await vpn.connect()
                     } else {
-                        // fetchNearestServer can take up to 15s — set connecting state
-                        // immediately so the button responds and shows a spinner.
                         vpn.setConnectingState()
                         let nearest = try await APIClient.shared.fetchNearestServer()
                         try await vpn.connectToServer(nearest)
@@ -653,7 +644,7 @@ private struct ConnectLayout {
     var heroSpacing: CGFloat { compact ? 22 : 28 }
 }
 
-// MARK: - Connect button view
+// MARK: - Connect button view (concentric hairline rings + sapphire core)
 
 private struct ConnectButtonView: View {
 
@@ -661,74 +652,105 @@ private struct ConnectButtonView: View {
     let isAnimatingRing: Bool
     let onTap: () -> Void
 
+    // Canvas diameter: 260pt. Ring diameters: 180 / 216 / 252 (inner→outer).
+    private let innerD:  CGFloat = 180
+    private let middleD: CGFloat = 216
+    private let outerD:  CGFloat = 252
+    private let coreD:   CGFloat = 140
+
+    @State private var innerPulse: CGFloat = 1.0
+
     var body: some View {
-        Button(action: onTap) {
+        Button(action: {
+            Task { @MainActor in
+                if vpn.status == .connected || vpn.status == .connecting || vpn.isProvisioning {
+                    KataHaptic.destructive.fire()
+                } else {
+                    KataHaptic.unlocked.fire()
+                }
+                onTap()
+            }
+        }) {
             ZStack {
-                ring
-                glow
-                disk
-                label
+                // Outer ring — solid gold line when connected, hairline otherwise
+                Circle()
+                    .stroke(
+                        vpn.status == .connected
+                            ? Color.kataGold
+                            : Color.kataGold.opacity(0.6),
+                        lineWidth: vpn.status == .connected ? 1.0 : 0.5
+                    )
+                    .frame(width: outerD, height: outerD)
+                    .opacity(vpn.status == .connected ? 1.0 : 0.8)
+                    .animation(.easeInOut(duration: 0.6), value: vpn.status == .connected)
+
+                // Middle ring
+                Circle()
+                    .stroke(Color.kataGold.opacity(0.8), lineWidth: 0.5)
+                    .frame(width: middleD, height: middleD)
+                    .opacity(vpn.status == .connected ? 0.3 : 0.8)
+                    .animation(.easeInOut(duration: 0.6), value: vpn.status == .connected)
+
+                // Inner ring — pulses during connecting
+                Circle()
+                    .stroke(Color.kataGold.opacity(1.0), lineWidth: 0.5)
+                    .frame(width: innerD, height: innerD)
+                    .scaleEffect(isAnimatingRing ? innerPulse : 1.0)
+                    .opacity(vpn.status == .connected ? 0.3 : 1.0)
+                    .animation(.easeInOut(duration: 0.6), value: vpn.status == .connected)
+
+                // Sapphire core
+                Circle()
+                    .fill(Color.kataSapphire)
+                    .frame(width: coreD, height: coreD)
+
+                // Subtle glow behind core
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [Color.kataSapphire.opacity(0.3), Color.clear],
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: 80
+                        )
+                    )
+                    .frame(width: innerD, height: innerD)
+
+                // Label inside core
+                coreLabel
             }
         }
         .buttonStyle(ScaleButtonStyle())
-        .disabled(isDisabled)
+        .disabled(vpn.status == .disconnecting)
+        .onAppear { startPulseIfNeeded() }
+        .onChange(of: isAnimatingRing) { _, animating in
+            if animating { startPulseIfNeeded() }
+        }
     }
 
-    private var isDisabled: Bool {
-        vpn.status == .disconnecting
-    }
-
-    private var ring: some View {
-        Circle()
-            .stroke(AngularGradient.kfConnectButtonRing(status: vpn.status), lineWidth: 5)
-            .frame(width: 248, height: 248)
-            .rotationEffect(.degrees(isAnimatingRing ? 360 : 0))
-            .animation(ringAnimation, value: isAnimatingRing)
-    }
-
-    private var glow: some View {
-        Circle()
-            .fill(RadialGradient(
-                colors: [ringCenterColor.opacity(0.25), ringCenterColor.opacity(0.05), Color.clear],
-                center: .center, startRadius: 0, endRadius: 112
-            ))
-            .frame(width: 214, height: 214)
-    }
-
-    private var disk: some View {
-        Circle()
-            .fill(Color.kfSurface)
-            .frame(width: 178, height: 178)
-            .overlay(Circle().strokeBorder(Color.kfBorder, lineWidth: 1).frame(width: 178, height: 178))
-    }
-
-    private var label: some View {
+    private var coreLabel: some View {
         VStack(spacing: KFSpacing.xs) {
             Image(systemName: buttonIcon)
-                .font(.system(size: 42, weight: .medium))
-                .foregroundStyle(buttonIconGradient)
+                .font(.system(size: 38, weight: .medium))
+                .foregroundStyle(Color.kataIce)
                 .animation(.easeInOut(duration: 0.3), value: vpn.status)
             Text(buttonLabel)
-                .font(KFFont.caption(12, weight: .semibold))
+                .font(.kataMono(11, weight: .semibold))
                 .kerning(1.4)
-                .foregroundStyle(Color.kfTextMuted)
+                .foregroundStyle(Color.kataChampagne.opacity(0.8))
         }
     }
 
-    private var ringAnimation: Animation {
-        if vpn.status == .connecting || vpn.status == .disconnecting || vpn.isProvisioning {
-            return .linear(duration: 1.5).repeatForever(autoreverses: false)
+    private func startPulseIfNeeded() {
+        guard isAnimatingRing else { innerPulse = 1.0; return }
+        withAnimation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true)) {
+            innerPulse = 0.95
         }
-        return .easeOut(duration: 0.5)
-    }
-
-    private var buttonIconGradient: LinearGradient {
-        if vpn.status == .connected {
-            return LinearGradient(colors: [.kfConnected, Color(hex: "#86efac")],
-                                  startPoint: .top, endPoint: .bottom)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+            withAnimation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true)) {
+                innerPulse = 1.05
+            }
         }
-        return LinearGradient(colors: [.kfTextSecondary, .kfTextMuted],
-                              startPoint: .top, endPoint: .bottom)
     }
 
     private var buttonIcon: String {
@@ -738,14 +760,6 @@ private struct ConnectButtonView: View {
         case .connecting:    return "ellipsis"
         case .disconnecting: return "ellipsis"
         default:             return "power"
-        }
-    }
-
-    private var ringCenterColor: Color {
-        switch vpn.status {
-        case .connected:                  return .kfConnected
-        case .connecting, .disconnecting: return .kfConnecting
-        default:                          return .kfAccentPurple
         }
     }
 

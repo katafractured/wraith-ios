@@ -1,10 +1,8 @@
 // RegionPickerView.swift
 // WraithVPN
 //
-// Phase F — region-first server picker. User picks a region; server picks the
-// best node inside that region (sticky HARD rule: never crosses to another
-// region server-side). Node-level control is still available via ServerPickerView
-// for power users / diagnostics.
+// Phase F — region-first server picker. Sealed-ledger visual treatment.
+// No emoji flags — ISO code tile chips. Midnight background, serif names, mono pings.
 
 import SwiftUI
 
@@ -24,9 +22,9 @@ struct RegionPickerView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.kfBackground.ignoresSafeArea()
+                Color.kataMidnight.ignoresSafeArea()
 
-                VStack(spacing: KFSpacing.md) {
+                VStack(spacing: 0) {
                     if isLoading && regions.isEmpty {
                         loadingState
                     } else if let msg = errorMessage, regions.isEmpty {
@@ -37,22 +35,22 @@ struct RegionPickerView: View {
                         regionList
                     }
                 }
-                .padding(.top, KFSpacing.sm)
             }
             .navigationTitle("Choose Region")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") { dismiss() }
-                        .foregroundStyle(Color.kfAccentBlue)
+                        .font(.kataBody(15, weight: .regular))
+                        .foregroundStyle(Color.kataChampagne)
                 }
                 ToolbarItem(placement: .navigationBarLeading) {
                     if isLoading {
-                        ProgressView().tint(Color.kfAccentBlue)
+                        ProgressView().tint(Color.kataChampagne)
                     }
                 }
             }
-            .toolbarBackground(Color.kfBackground, for: .navigationBar)
+            .toolbarBackground(Color.kataMidnight, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .preferredColorScheme(.dark)
             .navigationDestination(item: $drillDownRegion) { region in
@@ -65,66 +63,83 @@ struct RegionPickerView: View {
     // MARK: - States
 
     private var loadingState: some View {
-        VStack(spacing: KFSpacing.md) {
-            ProgressView().tint(Color.kfAccentBlue)
+        VStack(spacing: 16) {
+            ProgressView().tint(Color.kataChampagne)
             Text("Loading regions…")
-                .font(KFFont.caption(13))
-                .foregroundStyle(Color.kfTextMuted)
+                .font(.kataMono(12))
+                .foregroundStyle(Color.kataChampagne.opacity(0.5))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var emptyState: some View {
-        VStack(spacing: KFSpacing.md) {
-            Image(systemName: "globe")
-                .font(.system(size: 36))
-                .foregroundStyle(Color.kfTextMuted)
+        VStack(spacing: 16) {
+            isoChip("?", size: 36)
             Text("No regions available")
-                .font(KFFont.body(15))
-                .foregroundStyle(Color.kfTextMuted)
+                .font(.kataDisplay(18, weight: .regular))
+                .foregroundStyle(Color.kataChampagne.opacity(0.6))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private func errorState(_ msg: String) -> some View {
-        VStack(spacing: KFSpacing.md) {
+        VStack(spacing: 16) {
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 32))
-                .foregroundStyle(Color.orange)
+                .font(.system(size: 28))
+                .foregroundStyle(Color.kataGold)
             Text(msg)
-                .font(KFFont.body(14))
-                .foregroundStyle(Color.kfTextMuted)
+                .font(.kataBody(14))
+                .foregroundStyle(Color.kataChampagne.opacity(0.6))
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, KFSpacing.lg)
+                .padding(.horizontal, 32)
             Button {
                 Task { await loadRegions() }
             } label: {
-                Text("Retry").font(KFFont.body(14).weight(.semibold))
+                Text("Retry")
+                    .font(.kataMono(13, weight: .bold))
+                    .foregroundStyle(Color.kataChampagne)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 4)
+                            .stroke(Color.kataGold.opacity(0.5), lineWidth: 0.5)
+                    )
             }
-            .buttonStyle(.bordered)
-            .tint(Color.kfAccentBlue)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
+    // MARK: - Region list (sealed ledger)
+
     private var regionList: some View {
         ScrollView {
-            LazyVStack(spacing: KFSpacing.sm) {
+            VStack(spacing: 0) {
                 if shouldShowMeasuringIndicator {
                     Text("Measuring latency…")
-                        .font(KFFont.caption(12))
-                        .foregroundStyle(Color.kfTextMuted)
-                        .padding(.top, KFSpacing.sm)
+                        .font(.kataMono(11))
+                        .foregroundStyle(Color.kataChampagne.opacity(0.4))
+                        .padding(.vertical, 12)
+                        .frame(maxWidth: .infinity)
                 }
-                // Auto row at top
+                // Auto row
                 autoRow
-                ForEach(sortedRegions) { region in
+                ledgerDivider
+
+                ForEach(Array(sortedRegions.enumerated()), id: \.element.id) { idx, region in
                     regionRow(region)
+                    if idx < sortedRegions.count - 1 {
+                        ledgerDivider
+                    }
                 }
             }
-            .padding(.horizontal, KFSpacing.md)
-            .padding(.bottom, KFSpacing.lg)
         }
+    }
+
+    private var ledgerDivider: some View {
+        Rectangle()
+            .fill(Color.kataGold.opacity(0.3))
+            .frame(height: 0.5)
+            .padding(.horizontal, 16)
     }
 
     // MARK: - Auto row
@@ -132,40 +147,33 @@ struct RegionPickerView: View {
     private var autoRow: some View {
         let isAuto = vpn.connectedServer == nil || vpn.connectedServer?.region == nil
 
-        return HStack(spacing: KFSpacing.md) {
-            Text("🌐")
-                .font(.system(size: 30))
-                .frame(width: 44, height: 44)
-                .background(Color.kfSurface)
-                .clipShape(Circle())
+        return HStack(spacing: 14) {
+            // ISO chip for "auto"
+            isoChip("AU")
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 3) {
                 Text("Auto (Best Available)")
-                    .font(KFFont.body(16).weight(.semibold))
-                    .foregroundStyle(Color.kfTextPrimary)
+                    .font(.kataDisplay(20, weight: .medium))
+                    .foregroundStyle(Color.kataIce)
+                    .lineLimit(1)
                 Text("GeoIP + latency selection")
-                    .font(KFFont.caption(12))
-                    .foregroundStyle(Color.kfTextMuted)
+                    .font(.kataMono(11))
+                    .foregroundStyle(Color.kataChampagne.opacity(0.5))
             }
 
             Spacer()
 
             if isAuto && vpn.status == .connected {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(Color.kfAccentBlue)
-                    .font(.system(size: 18))
+                Image(systemName: "checkmark")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Color.kataGold)
             }
         }
-        .padding(KFSpacing.md)
-        .frame(maxWidth: .infinity)
-        .background(Color.kfSurface.opacity(0.92))
-        .clipShape(RoundedRectangle(cornerRadius: KFRadius.md, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: KFRadius.md, style: .continuous)
-                .stroke(Color.kfBorder, lineWidth: 1)
-        )
+        .padding(.horizontal, 16)
+        .padding(.vertical, 18)
         .contentShape(Rectangle())
         .onTapGesture {
+            Task { @MainActor in KataHaptic.tap.fire() }
             dismiss()
             Task { try? await vpn.connectToRegion("auto") }
         }
@@ -175,27 +183,26 @@ struct RegionPickerView: View {
 
     private func regionRow(_ region: RegionSummary) -> some View {
         let bestPing = bestPingMs(for: region)
+        let isSelected = vpn.connectedServer?.region == region.id
 
         return HStack(spacing: 0) {
-            // Main tap area — connect
+            // Main tap — connect
             Button {
+                Task { @MainActor in KataHaptic.tap.fire() }
                 dismiss()
                 Task { try? await vpn.connectToRegion(region.id) }
             } label: {
-                HStack(spacing: KFSpacing.md) {
-                    Text(continentFlag(region.continent))
-                        .font(.system(size: 30))
-                        .frame(width: 44, height: 44)
-                        .background(Color.kfSurface)
-                        .clipShape(Circle())
+                HStack(spacing: 14) {
+                    isoChip(regionISOCode(region))
 
-                    VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: 3) {
                         Text(region.label)
-                            .font(KFFont.body(16).weight(.semibold))
-                            .foregroundStyle(Color.kfTextPrimary)
+                            .font(.kataDisplay(20, weight: .medium))
+                            .foregroundStyle(Color.kataIce)
+                            .lineLimit(1)
                         Text(nodeCountDescription(region))
-                            .font(KFFont.caption(12))
-                            .foregroundStyle(Color.kfTextMuted)
+                            .font(.kataMono(11))
+                            .foregroundStyle(Color.kataChampagne.opacity(0.5))
                     }
 
                     Spacer()
@@ -203,51 +210,60 @@ struct RegionPickerView: View {
                     VStack(alignment: .trailing, spacing: 4) {
                         if let ping = bestPing {
                             Text("\(Int(ping)) ms")
-                                .font(KFFont.mono(13))
-                                .foregroundStyle(pingColor(ping))
+                                .font(.kataMono(13))
+                                .foregroundStyle(Color.kataChampagne)
                         } else {
                             Text("—")
-                                .font(KFFont.mono(13))
-                                .foregroundStyle(Color.kfTextMuted)
+                                .font(.kataMono(13))
+                                .foregroundStyle(Color.kataChampagne.opacity(0.35))
                         }
                         loadBadge(score: region.avgLoadScore)
                     }
 
-                    if vpn.connectedServer?.region == region.id {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundStyle(Color.kfAccentBlue)
-                            .font(.system(size: 18))
+                    if isSelected {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(Color.kataGold)
+                            .padding(.leading, 8)
                     }
                 }
-                .padding(KFSpacing.md)
-                .padding(.trailing, KFSpacing.xs)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 18)
             }
             .buttonStyle(.plain)
 
-            // Drill-down button
-            Divider()
-                .frame(height: 28)
-                .background(Color.kfBorder)
-                .padding(.vertical, KFSpacing.md)
+            // Drill-down
+            Rectangle()
+                .fill(Color.kataGold.opacity(0.3))
+                .frame(width: 0.5, height: 28)
 
             Button {
                 drillDownRegion = region
             } label: {
                 Image(systemName: "info.circle")
-                    .font(.system(size: 14))
-                    .foregroundStyle(Color.kfTextMuted)
-                    .padding(.horizontal, KFSpacing.sm)
-                    .padding(.vertical, KFSpacing.md)
+                    .font(.system(size: 13))
+                    .foregroundStyle(Color.kataChampagne.opacity(0.4))
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 18)
             }
             .buttonStyle(.plain)
         }
-        .frame(maxWidth: .infinity)
-        .background(Color.kfSurface.opacity(0.92))
-        .clipShape(RoundedRectangle(cornerRadius: KFRadius.md, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: KFRadius.md, style: .continuous)
-                .stroke(Color.kfBorder, lineWidth: 1)
-        )
+        .contentShape(Rectangle())
+    }
+
+    // MARK: - ISO chip helper
+
+    private func isoChip(_ code: String, size: CGFloat = 12) -> some View {
+        Text(code)
+            .font(.kataMono(size == 12 ? 9 : 11, weight: .bold))
+            .foregroundStyle(Color.kataIce)
+            .frame(width: size == 12 ? 28 : 42, height: size == 12 ? 28 : 42)
+            .background(Color.kataSapphire.opacity(0.6))
+            .overlay(
+                RoundedRectangle(cornerRadius: 3)
+                    .stroke(Color.kataGold.opacity(0.4), lineWidth: 1)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 3))
     }
 
     // MARK: - Drill-down destination
@@ -256,103 +272,105 @@ struct RegionPickerView: View {
     private func regionDrillDown(region: RegionSummary) -> some View {
         let regionServers = servers.servers.filter { $0.server.region == region.id }
         ZStack {
-            Color.kfBackground.ignoresSafeArea()
+            Color.kataMidnight.ignoresSafeArea()
             if regionServers.isEmpty {
-                VStack(spacing: KFSpacing.md) {
+                VStack(spacing: 16) {
                     if servers.isLoading {
-                        ProgressView().tint(Color.kfAccentBlue)
+                        ProgressView().tint(Color.kataChampagne)
                         Text("Loading servers…")
-                            .font(KFFont.caption(13))
-                            .foregroundStyle(Color.kfTextMuted)
+                            .font(.kataMono(12))
+                            .foregroundStyle(Color.kataChampagne.opacity(0.5))
                     } else {
                         Text("No servers in this region")
-                            .font(KFFont.body(14))
-                            .foregroundStyle(Color.kfTextMuted)
+                            .font(.kataDisplay(18, weight: .regular))
+                            .foregroundStyle(Color.kataChampagne.opacity(0.6))
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 ScrollView {
-                    LazyVStack(spacing: KFSpacing.xs) {
-                        ForEach(regionServers.sorted {
+                    VStack(spacing: 0) {
+                        ForEach(Array(regionServers.sorted {
                             switch ($0.milliseconds, $1.milliseconds) {
                             case (let a?, let b?): return a < b
                             case (.some, nil):     return true
                             default:               return false
                             }
-                        }) { item in
+                        }.enumerated()), id: \.element.server.nodeId) { idx, item in
                             Button {
                                 servers.selectServer(item.server)
                                 dismiss()
                                 Task { try? await vpn.connectToServer(item.server) }
                             } label: {
-                                HStack(spacing: KFSpacing.md) {
-                                    Text(item.server.flagEmoji)
-                                        .font(.system(size: 24))
-                                        .frame(width: 36)
-                                    VStack(alignment: .leading, spacing: 2) {
+                                HStack(spacing: 14) {
+                                    isoChip(siteToISO(item.server.site))
+                                    VStack(alignment: .leading, spacing: 3) {
                                         Text(item.server.cityName)
-                                            .font(KFFont.body(15).weight(.semibold))
-                                            .foregroundStyle(.white)
+                                            .font(.kataDisplay(18, weight: .medium))
+                                            .foregroundStyle(Color.kataIce)
                                         Text(item.server.nodeId)
-                                            .font(KFFont.mono(10))
-                                            .foregroundStyle(Color.kfTextMuted)
+                                            .font(.kataMono(10))
+                                            .foregroundStyle(Color.kataChampagne.opacity(0.4))
                                     }
                                     Spacer()
                                     if let ms = item.milliseconds {
                                         Text("\(Int(ms)) ms")
-                                            .font(KFFont.mono(12))
-                                            .foregroundStyle(pingColor(ms))
+                                            .font(.kataMono(12))
+                                            .foregroundStyle(Color.kataChampagne)
                                     } else {
-                                        Text("—").font(KFFont.mono(12)).foregroundStyle(Color.kfTextMuted)
+                                        Text("—")
+                                            .font(.kataMono(12))
+                                            .foregroundStyle(Color.kataChampagne.opacity(0.35))
                                     }
                                     if servers.selectedServer?.nodeId == item.server.nodeId {
-                                        Image(systemName: "checkmark.circle.fill")
-                                            .foregroundStyle(Color.kfAccentBlue)
+                                        Image(systemName: "checkmark")
+                                            .font(.system(size: 13, weight: .semibold))
+                                            .foregroundStyle(Color.kataGold)
                                     }
                                 }
-                                .padding(KFSpacing.md)
-                                .background(Color.kfSurface)
-                                .clipShape(RoundedRectangle(cornerRadius: KFRadius.md, style: .continuous))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: KFRadius.md, style: .continuous)
-                                        .stroke(Color.kfBorder, lineWidth: 1)
-                                )
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 18)
                             }
                             .buttonStyle(.plain)
+
+                            if idx < regionServers.count - 1 {
+                                ledgerDivider
+                            }
                         }
                     }
-                    .padding(.horizontal, KFSpacing.md)
-                    .padding(.vertical, KFSpacing.sm)
                 }
             }
         }
         .navigationTitle(region.label)
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(Color.kfBackground, for: .navigationBar)
+        .toolbarBackground(Color.kataMidnight, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .task {
             if servers.servers.isEmpty { await servers.refresh() }
         }
     }
 
+    // MARK: - Load badge
+
     private func loadBadge(score: Int) -> some View {
-        let (label, color): (String, Color) = {
+        let (label, opacity): (String, Double) = {
             switch score {
-            case 0..<200:   return ("IDLE",   .green)
-            case 200..<500: return ("LIGHT",  .green)
-            case 500..<700: return ("BUSY",   .yellow)
-            default:        return ("HEAVY",  .orange)
+            case 0..<200:   return ("IDLE",  0.45)
+            case 200..<500: return ("LIGHT", 0.55)
+            case 500..<700: return ("BUSY",  0.75)
+            default:        return ("HEAVY", 0.9)
             }
         }()
         return Text(label)
-            .font(KFFont.caption(10, weight: .bold))
+            .font(.kataMono(9, weight: .bold))
             .kerning(0.8)
-            .foregroundStyle(color)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(color.opacity(0.15))
-            .clipShape(Capsule())
+            .foregroundStyle(Color.kataChampagne.opacity(opacity))
+            .padding(.horizontal, 6)
+            .padding(.vertical, 3)
+            .overlay(
+                Capsule()
+                    .stroke(Color.kataGold.opacity(0.3), lineWidth: 0.5)
+            )
     }
 
     // MARK: - Logic
@@ -366,14 +384,6 @@ struct RegionPickerView: View {
             .filter { $0.server.region == region.id && $0.milliseconds != nil }
             .min { ($0.milliseconds ?? Double.infinity) < ($1.milliseconds ?? Double.infinity) }?
             .milliseconds
-    }
-
-    private func pingColor(_ ms: Double) -> Color {
-        switch ms {
-        case ..<80:  return Color(hex: "#22c55e")
-        case ..<180: return Color(hex: "#f59e0b")
-        default:     return Color(hex: "#ef4444")
-        }
     }
 
     private var sortedRegions: [RegionSummary] {
@@ -394,16 +404,52 @@ struct RegionPickerView: View {
         return n == 1 ? "1 server online" : "\(n) servers online"
     }
 
-    private func continentFlag(_ continent: String) -> String {
-        switch continent {
-        case "NA": return "🌎"
-        case "SA": return "🌎"
-        case "EU": return "🌍"
-        case "AF": return "🌍"
-        case "AS": return "🌏"
-        case "OC": return "🌏"
-        default:   return "🌐"
+    /// Map region id or continent code to a 2-letter ISO country code for the chip.
+    /// Falls back to first 2 chars of region label uppercased.
+    private func regionISOCode(_ region: RegionSummary) -> String {
+        // Try matching common region ids
+        let id = region.id.lowercased()
+        if id.contains("us") || id.contains("ash") || id.contains("iad") ||
+           id.contains("hil") || id.contains("ewr") || id.contains("pdx") { return "US" }
+        if id.contains("eu") || id.contains("nbg") || id.contains("hel") ||
+           id.contains("de") || id.contains("fi")  { return "EU" }
+        if id.contains("sg") || id.contains("sin") || id.contains("sgp") { return "SG" }
+        if id.contains("jp") || id.contains("nrt") || id.contains("tok") { return "JP" }
+        if id.contains("in") || id.contains("bom") || id.contains("mum") { return "IN" }
+        if id.contains("ca") || id.contains("bhs") || id.contains("tor") { return "CA" }
+        if id.contains("au") || id.contains("syd") { return "AU" }
+        if id.contains("uk") || id.contains("lon") { return "GB" }
+        if id.contains("br") || id.contains("sao") { return "BR" }
+        // Continent fallback
+        switch region.continent {
+        case "NA": return "US"
+        case "EU": return "EU"
+        case "AS": return "SG"
+        case "SA": return "BR"
+        case "OC": return "AU"
+        case "AF": return "ZA"
+        default:   break
         }
+        // Last resort: first 2 chars of label
+        let prefix = String(region.label.filter { $0.isLetter }.prefix(2)).uppercased()
+        return prefix.isEmpty ? "??" : prefix
+    }
+
+
+    // Maps a site code (e.g. "sgp2", "nbg1") to a 2-letter ISO country code.
+    private func siteToISO(_ site: String) -> String {
+        let s = site.lowercased()
+        if s.hasPrefix("sgp") || s.hasPrefix("sg") { return "SG" }
+        if s.hasPrefix("nrt") || s.hasPrefix("jp") { return "JP" }
+        if s.hasPrefix("bom") { return "IN" }
+        if s.hasPrefix("ewr") || s.hasPrefix("ash") || s.hasPrefix("iad") ||
+           s.hasPrefix("hil") || s.hasPrefix("pdx") { return "US" }
+        if s.hasPrefix("nbg") { return "DE" }
+        if s.hasPrefix("hel") { return "FI" }
+        if s.hasPrefix("bhs") { return "CA" }
+        if s.hasPrefix("syd") { return "AU" }
+        let prefix = String(site.filter { $0.isLetter }.prefix(2)).uppercased()
+        return prefix.isEmpty ? "??" : prefix
     }
 
     private func loadRegions() async {

@@ -258,7 +258,20 @@ final class WireGuardManager: ObservableObject {
         await stopAllActiveTunnels()
         status = .connecting
 
-        if isMultiHop { await revokeAllPeers() }
+        if isMultiHop {
+            await revokeAllPeers()
+            // Clear multi-hop state entirely when switching to single region
+            KeychainHelper.shared.delete(for: .multiHopGroupId)
+            KeychainHelper.shared.delete(for: .multiHopEntryPeerId)
+            KeychainHelper.shared.delete(for: .multiHopExitPeerId)
+            KeychainHelper.shared.delete(for: .multiHopEntryNodeId)
+            KeychainHelper.shared.delete(for: .multiHopExitNodeId)
+            KeychainHelper.shared.delete(for: .multiHopEntryRegion)
+            KeychainHelper.shared.delete(for: .multiHopExitRegion)
+            isMultiHop = false
+            multiHopEntryServer = nil
+            multiHopExitServer = nil
+        }
 
         // Servers list gives us endpoint metadata for the NE profile install step.
         let allServers = (try? await APIClient.shared.fetchServers()) ?? []
@@ -987,26 +1000,29 @@ final class WireGuardManager: ObservableObject {
     }
 
     private func installProfile(configText: String, server: VPNServer) async throws {
-        // 1. Stop any running tunnel (own or other) so we don't fight iOS state.
+        // 1. Stop any running tunnel (our own or other apps)
         await stopAllActiveTunnels()
-
-        // 2. Always remove ALL prior profiles for our bundle ID before installing.
-        //    iOS NEVPN caches protocol attributes across saveToPreferences calls;
-        //    on config changes (wg0 → wg1, multi-hop → single, region switch),
-        //    the tunnel goes connecting→disconnected within ms because the
-        //    extension keeps the OLD config in memory. Wiping forces a clean slate.
-        if let allMgrs = try? await NETunnelProviderManager.loadAllFromPreferences() {
-            for mgr in allMgrs where (mgr.protocolConfiguration as? NETunnelProviderProtocol)?.providerBundleIdentifier == tunnelBundleId {
-                try? await mgr.removeFromPreferences()
+        
+        // 2. Try to load an existing manager WE own
+        let existingOurs: NETunnelProviderManager?
+        if let all = try? await NETunnelProviderManager.loadAllFromPreferences() {
+            existingOurs = all.first { m in
+                (m.protocolConfiguration as? NETunnelProviderProtocol)?.providerBundleIdentifier == tunnelBundleId
             }
+        } else {
+            existingOurs = nil
         }
-        self.manager = nil  // ours is gone now too
-
-        // 3. Brief settle — give NEVPN subsystem time to release state.
-        try? await Task.sleep(for: .milliseconds(250))
-
-        // 4. Build a fresh manager + profile.
-        let mgr = NETunnelProviderManager()
+        
+        let mgr: NETunnelProviderManager
+        if let existing = existingOurs {
+            // In-place update — no re-approval prompt
+            mgr = existing
+        } else {
+            // First install — fresh manager (iOS will show "Allow VPN Configuration")
+            mgr = NETunnelProviderManager()
+        }
+        
+        // 3. Build protocol config
         let proto = NETunnelProviderProtocol()
         proto.providerBundleIdentifier = tunnelBundleId
         proto.serverAddress = server.endpoints.primary
@@ -1016,13 +1032,11 @@ final class WireGuardManager: ObservableObject {
         ]
         proto.includeAllNetworks = (tunnelMode == .full)
         proto.excludeLocalNetworks = true
-
+        
         mgr.protocolConfiguration = proto
-        mgr.localizedDescription  = "WraithVPN — \(server.cityName)"
-        mgr.isEnabled             = true
-
-        // 5. On-demand only if user enabled it. Don't add a permanent connect rule
-        //    on every install — that fights manual disconnect and confuses NEVPN.
+        mgr.localizedDescription = "WraithVPN — \(server.cityName)"
+        mgr.isEnabled = true
+        
         if autoConnectEnabled {
             let onDemandRule = NEOnDemandRuleConnect()
             onDemandRule.interfaceTypeMatch = .any
@@ -1032,11 +1046,12 @@ final class WireGuardManager: ObservableObject {
             mgr.onDemandRules = []
             mgr.isOnDemandEnabled = false
         }
-
+        
         try await mgr.saveToPreferences()
         try await mgr.loadFromPreferences()
         self.manager = mgr
     }
+
 
     /// Updates isOnDemandEnabled on the saved NE profile without touching the config.
     private func applyOnDemand(_ enabled: Bool) async {

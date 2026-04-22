@@ -946,6 +946,17 @@ struct SettingsView: View {
                 }
                 .foregroundStyle(Color.kfError)
             }
+
+            Divider().background(Color.kfBorder)
+
+            Button {
+                Task { await vpn.disconnect() }
+            } label: {
+                SettingsRow(icon: "wifi.slash", label: "Force Disconnect") {
+                    EmptyView()
+                }
+                .foregroundStyle(Color.kfError)
+            }
         }
         .padding(KFSpacing.md)
         .kfCard()

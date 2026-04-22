@@ -102,7 +102,7 @@ struct PaywallView: View {
                 .font(KFFont.display(30))
                 .foregroundStyle(.white)
 
-            Text("Haven DNS is free forever. Enclave adds VPN. Sovereign adds storage & sync.")
+            Text("Haven DNS is free forever. Enclave adds VPN. Sovereign adds multi-hop routing & encrypted storage.")
                 .font(KFFont.body(15))
                 .foregroundStyle(Color.kfTextSecondary)
                 .multilineTextAlignment(.center)

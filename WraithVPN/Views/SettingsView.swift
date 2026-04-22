@@ -543,8 +543,8 @@ struct SettingsView: View {
                     .tint(Color.kfAccentBlue)
                 }
                 Text(vpn.tunnelMode == .full
-                     ? "Full mode: iOS forces all traffic through the tunnel. If the VPN drops, there is no internet until it reconnects."
-                     : "Standard mode: your traffic still routes through the VPN exit, but if the tunnel drops iOS falls back to your normal connection. System apps like Mail and Maps stay functional.")
+                     ? "Kill Switch enabled: All traffic is blocked if the VPN disconnects. Your IP address stays hidden, but you'll lose internet until the tunnel reconnects."
+                     : "Kill Switch disabled: If the VPN drops, your traffic falls back to your regular connection. You stay connected, but some apps may see your real IP.")
                     .font(KFFont.caption(11))
                     .foregroundStyle(Color.kfTextMuted)
                     .padding(.leading, 36)

@@ -26,6 +26,10 @@ final class WireGuardManager: ObservableObject {
     // MARK: - Published state
 
     @Published var status: VPNStatus = .disconnected
+    @Published private(set) var connectStartedAt: Date? = nil
+    @Published private(set) var isSwitching: Bool = false
+    @Published private(set) var switchingMessage: String? = nil
+
     @Published var connectedServer: VPNServer? = nil
     @Published var assignedIP: String? = nil
     @Published var activePeerId: String? = nil
@@ -193,6 +197,8 @@ final class WireGuardManager: ObservableObject {
         isProvisioning = true
         defer { isProvisioning = false }
         await stopAllActiveTunnels()
+        connectStartedAt = Date()
+
         status = .connecting
 
         // Switching from multi-hop to single-hop: revoke both multi-hop peers and
@@ -239,6 +245,8 @@ final class WireGuardManager: ObservableObject {
 
         await applyOnDemand(autoConnectEnabled)
         try? await manager?.loadFromPreferences()
+        isSwitching = false
+        switchingMessage = nil
         try startTunnel()
     }
 
@@ -256,6 +264,8 @@ final class WireGuardManager: ObservableObject {
         isProvisioning = true
         defer { isProvisioning = false }
         await stopAllActiveTunnels()
+        connectStartedAt = Date()
+
         status = .connecting
 
         if isMultiHop { await revokeAllPeers() }
@@ -484,6 +494,8 @@ final class WireGuardManager: ObservableObject {
         defer { isProvisioning = false }
 
         await stopAllActiveTunnels()
+        connectStartedAt = Date()
+
         status = .connecting
 
         // Revoke any existing single-hop or multi-hop peers before provisioning new ones.
@@ -574,10 +586,14 @@ final class WireGuardManager: ObservableObject {
     /// Starts the already-installed VPN profile.
     func connect() async throws {
         guard isProvisioned else {
+            connectStartedAt = nil
+
             status = .failed("No VPN profile installed.")
             return
         }
         await stopAllActiveTunnels()
+        connectStartedAt = Date()
+
         status = .connecting
         // Reload preferences so the manager reflects the latest saved profile,
         // then apply on-demand before starting. Running applyOnDemand as a
@@ -609,6 +625,8 @@ final class WireGuardManager: ObservableObject {
     /// that precede connectToServer() so the UI responds without delay.
     func setConnectingState() {
         guard status != .connecting && status != .connected else { return }
+        connectStartedAt = Date()
+
         status = .connecting
     }
 
@@ -634,6 +652,16 @@ final class WireGuardManager: ObservableObject {
         }
     }
 
+    func cancelConnect() {
+        connectTask?.cancel()
+        manager?.connection.stopVPNTunnel()
+        reprovisionAttempts = 0
+        connectStartedAt = nil
+        status = .disconnected
+        DebugLogger.shared.peer("User cancelled connect attempt")
+    }
+
+
     /// Persists the tunnel mode. If connected, reinstalls the existing profile with the
     /// updated includeAllNetworks flag and restarts the tunnel — no re-provisioning needed.
     func setTunnelMode(_ mode: TunnelMode) async {
@@ -644,6 +672,8 @@ final class WireGuardManager: ObservableObject {
               let proto = mgr.protocolConfiguration as? NETunnelProviderProtocol,
               let configText = proto.providerConfiguration?["wgConfig"] as? String,
               let server = connectedServer else { return }
+        connectStartedAt = Date()
+
         status = .connecting
         mgr.connection.stopVPNTunnel()
         // Poll until the tunnel actually disconnects (up to 2 s), then reinstall.
@@ -670,6 +700,8 @@ final class WireGuardManager: ObservableObject {
     func revokePeer() async {
         await revokeAllPeers()
         await removeProfile()
+        connectStartedAt = nil
+
         status = .disconnected
     }
 
@@ -715,6 +747,8 @@ final class WireGuardManager: ObservableObject {
         // Tunnel is dead — try to reprovision (max 2 attempts per connect session).
         guard reprovisionAttempts < maxReprovisionAttempts else {
             DebugLogger.shared.wg("Reprovision limit reached (\(maxReprovisionAttempts)). Network may be blocking UDP 51820.")
+            connectStartedAt = nil
+
             status = .failed("VPN tunnel blocked. Try switching to cellular or a different network.")
             return
         }
@@ -766,6 +800,8 @@ final class WireGuardManager: ObservableObject {
             DebugLogger.shared.wg("Auto-reprovision complete. Tunnel restarted.")
         } catch {
             DebugLogger.shared.wg("Auto-reprovision FAILED: \(error.localizedDescription)")
+            connectStartedAt = nil
+
             status = .failed("Tunnel dead, re-provision failed: \(error.localizedDescription)")
         }
     }
@@ -982,6 +1018,8 @@ final class WireGuardManager: ObservableObject {
             observeStatus()
             syncStatus()
         } catch {
+            connectStartedAt = nil
+
             status = .failed("Failed to load VPN preferences: \(error.localizedDescription)")
         }
     }
@@ -1109,31 +1147,45 @@ final class WireGuardManager: ObservableObject {
 
     private func syncStatus() {
         guard let connection = manager?.connection else {
+            connectStartedAt = nil
+
             status = .disconnected
             return
         }
         switch connection.status {
         case .invalid:
+            connectStartedAt = nil
+
             status = .disconnected
             connectedSince = nil
         case .disconnected:
+            connectStartedAt = nil
+
             status = .disconnected
             connectedSince = nil
         case .connecting:
+            connectStartedAt = Date()
+
             status = .connecting
             connectedSince = nil
         case .connected:
             if connectedSince == nil { connectedSince = connection.connectedDate ?? Date() }
+            connectStartedAt = nil
+
             status = .connected
             // Do NOT reset reprovisionAttempts here — .connected just means the NE
             // extension started, NOT that the WG handshake succeeded. The health check
             // resets the counter when it confirms the tunnel is actually routing traffic.
         case .reasserting:
+            connectStartedAt = Date()
+
             status = .connecting
         case .disconnecting:
             status = .disconnecting
             connectedSince = nil
         @unknown default:
+            connectStartedAt = nil
+
             status = .disconnected
             connectedSince = nil
         }

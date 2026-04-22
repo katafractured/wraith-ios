@@ -28,6 +28,8 @@ struct ConnectView: View {
     @State private var hiddenTapCount = 0
     @State private var showCodeSheet = false
     @State private var tapResetTimer: Task<Void, Never>? = nil
+    @State private var canCancelConnect: Bool = false
+    @State private var cancelTimerTask: Task<Void, Never>? = nil
 
     private var isAnimatingRing: Bool {
         vpn.status == .connecting || vpn.status == .disconnecting || vpn.isProvisioning
@@ -317,6 +319,23 @@ struct ConnectView: View {
 
     private func heroSection(layout: ConnectLayout) -> some View {
         VStack(spacing: layout.heroSpacing) {
+            if vpn.isSwitching {
+                HStack(spacing: 10) {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                    Text(vpn.switchingMessage ?? "Switching…")
+                        .font(.kataCaption(13))
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .strokeBorder(Color.kataGold.opacity(0.4), lineWidth: 0.6)
+                )
+                .transition(.opacity.combined(with: .scale))
+            }
+
             connectButton
             statusSection
         }
@@ -560,7 +579,11 @@ struct ConnectView: View {
         Task {
             do {
                 if vpn.status == .connected || vpn.status == .connecting || vpn.isProvisioning {
-                    vpn.disconnect()
+                    if vpn.status == .connecting && canCancelConnect {
+                        vpn.cancelConnect()
+                    } else {
+                        vpn.disconnect()
+                    }
                     return
                 }
 
@@ -668,6 +691,9 @@ private struct ConnectLayout {
 // MARK: - Connect button view (concentric hairline rings + sapphire core)
 
 private struct ConnectButtonView: View {
+    @State private var canCancelConnect: Bool = false
+    @State private var cancelTimerTask: Task<Void, Never>? = nil
+
 
     @EnvironmentObject var vpn: WireGuardManager
     let isAnimatingRing: Bool
@@ -788,7 +814,12 @@ private struct ConnectButtonView: View {
         if vpn.isProvisioning { return "CANCEL" }
         switch vpn.status {
         case .connected:     return "DISCONNECT"
-        case .connecting:    return "CANCEL"
+        case .connecting:
+            if canCancelConnect {
+                return "Cancel"
+            } else {
+                return "Connecting…"
+            }
         case .disconnecting: return "DISCONNECTING"
         default:             return "CONNECT"
         }

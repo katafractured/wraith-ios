@@ -158,8 +158,12 @@ struct OnboardingView: View {
                         .fill(currentPage == page.id ? Color.white : Color.white.opacity(0.22))
                         .frame(width: currentPage == page.id ? 28 : 8, height: 8)
                         .animation(.spring(response: 0.35), value: currentPage)
+                        .accessibilityLabel("Page \(page.id + 1) indicator")
+                        .accessibilityHint(currentPage == page.id ? "Current page" : "")
                 }
             }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Onboarding pages")
 
             Button(action: advance) {
                 Text(currentPage == pages.count - 1 ? "Get Started" : "Continue")
@@ -171,6 +175,7 @@ struct OnboardingView: View {
                     .clipShape(Capsule())
                     .shadow(color: Color.kfAccentPurple.opacity(0.22), radius: 24, y: 12)
             }
+            .accessibilityLabel(currentPage == pages.count - 1 ? "Get Started" : "Continue")
             .padding(.horizontal, layout.horizontalPadding)
 
             Button("Skip") { onComplete() }
@@ -178,6 +183,8 @@ struct OnboardingView: View {
                 .foregroundStyle(Color.kfTextMuted)
                 .opacity(currentPage < pages.count - 1 ? 1 : 0)
                 .disabled(currentPage == pages.count - 1)
+                .accessibilityLabel("Skip onboarding")
+                .accessibilityHint("Go directly to app")
         }
         .padding(.top, layout.controlsTopPadding)
         .padding(.bottom, layout.bottomPadding)

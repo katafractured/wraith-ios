@@ -171,7 +171,7 @@ struct ConnectView: View {
 
     private var hopModeSection: some View {
         VStack(spacing: KFSpacing.sm) {
-            if storeKit.hasVPN {
+            if storeKit.hasVPN && (storeKit.hasSovereign || storeKit.isFounder) {
                 Picker("Hop Mode", selection: $multiHopMode) {
                     Text("Single Hop").tag(false)
                     Text("Multi-Hop").tag(true)

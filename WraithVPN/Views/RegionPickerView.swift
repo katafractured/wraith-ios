@@ -30,8 +30,6 @@ struct RegionPickerView: View {
                         loadingState
                     } else if let msg = errorMessage, regions.isEmpty {
                         errorState(msg)
-                    } else if regions.isEmpty {
-                        emptyState
                     } else {
                         regionList
                     }
@@ -69,16 +67,6 @@ struct RegionPickerView: View {
             Text("Loading regions…")
                 .font(.kataMono(12))
                 .foregroundStyle(Color.kataChampagne.opacity(0.5))
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
-    private var emptyState: some View {
-        VStack(spacing: 16) {
-            isoChip("?", size: 36)
-            Text("No regions available")
-                .font(.kataDisplay(18, weight: .regular))
-                .foregroundStyle(Color.kataChampagne.opacity(0.6))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }

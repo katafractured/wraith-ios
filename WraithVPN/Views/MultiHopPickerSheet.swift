@@ -82,7 +82,7 @@ struct MultiHopPickerSheet: View {
                         if let err = errorMessage {
                             Text(err)
                                 .font(KFFont.body(14))
-                                .foregroundStyle(Color.red.opacity(0.85))
+                                .foregroundStyle(Color.kataChampagne.opacity(0.6))
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal, KFSpacing.lg)
                         }
@@ -187,7 +187,7 @@ struct MultiHopPickerSheet: View {
             if let e = resolvedEntry, let x = resolvedExit, e.nodeId == x.nodeId {
                 Text("Entry and exit must be different nodes.")
                     .font(KFFont.caption(13))
-                    .foregroundStyle(Color.red.opacity(0.8))
+                    .foregroundStyle(Color.kataChampagne.opacity(0.5))
                     .padding(.top, 4)
             }
         }

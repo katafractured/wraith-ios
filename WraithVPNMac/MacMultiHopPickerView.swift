@@ -153,7 +153,7 @@ struct MacMultiHopPickerView: View {
                 if let e = resolvedEntry, let x = resolvedExit, e.nodeId == x.nodeId {
                     Label("Entry and exit must be in different regions", systemImage: "exclamationmark.triangle")
                         .font(KFFont.caption(12))
-                        .foregroundStyle(Color.orange)
+                        .foregroundStyle(.kataGold.opacity(0.65))
                 }
 
                 if let err = errorMessage {

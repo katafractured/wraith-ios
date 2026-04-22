@@ -175,7 +175,7 @@ struct DebugLogView: View {
         switch cat {
         case .api:  return .blue
         case .wg:   return .green
-        case .ne:   return .orange
+        case .ne:   return .kataGold.opacity(0.7)
         case .dns:  return .purple
         case .peer: return .cyan
         case .app:  return .gray

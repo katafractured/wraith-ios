@@ -376,7 +376,7 @@ struct MacAccountView: View {
             if let status = platformStatus {
                 HStack(spacing: KFSpacing.sm) {
                     Circle()
-                        .fill(status.isHealthy ? Color.kfConnected : (status.isDegraded ? Color.orange : Color.kfError))
+                        .fill(status.isHealthy ? Color.kfConnected : (status.isDegraded ? Color.kataGold.opacity(0.6) : Color.kfError))
                         .frame(width: 8, height: 8)
                     Text(status.displayStatus)
                         .font(KFFont.caption(12))
@@ -433,7 +433,7 @@ struct MacAccountView: View {
                 .font(.system(size: 12, design: .monospaced))
 
             if let err = identityLinkError {
-                Text(err).font(.system(size: 11)).foregroundStyle(.red)
+                Text(err).font(.system(size: 11)).foregroundStyle(Color.kataChampagne.opacity(0.6))
             }
 
             HStack {

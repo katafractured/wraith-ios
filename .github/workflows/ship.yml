@@ -90,7 +90,7 @@ jobs:
             -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
             archive 2>&1 | grep -E "error:|warning:|\*\* |Signing Identity|Provisioning Profile|WireGuardTunnel" | tail -40
 
-      - name: Ensure tunnel extension is embedded + re-sign if needed
+      - name: Ensure tunnel extension is embedded (no re-sign; exportArchive resigns)
         run: |
           APP="$ARCHIVE_PATH/Products/Applications/WraithVPN.app"
           TUNNEL_BUILT=$(find "$HOME/Library/Developer/Xcode/DerivedData" -name WireGuardTunnel.appex -path "*BuildProductsPath*iphoneos*" 2>/dev/null | head -1)
@@ -99,16 +99,9 @@ jobs:
               echo "::error::tunnel never built — check scheme has WireGuardTunnel BuildActionEntry"
               exit 1
             fi
-            echo "tunnel missing from archive — embedding from $TUNNEL_BUILT"
+            echo "tunnel missing from archive — copying from $TUNNEL_BUILT"
             mkdir -p "$APP/PlugIns"
             cp -R "$TUNNEL_BUILT" "$APP/PlugIns/"
-            # Re-sign the main app so CodeResources hash includes the new appex.
-            # Uses whichever Apple Development identity is in the keychain.
-            DEV_ID=$(security find-identity -v -p codesigning "$KEYCHAIN" | awk '/Apple Development/{print $2; exit}')
-            if [ -n "$DEV_ID" ]; then
-              echo "re-signing app with $DEV_ID"
-              codesign --force --sign "$DEV_ID" --preserve-metadata=entitlements,identifier "$APP" 2>&1 | tail -5
-            fi
           fi
           ls -la "$APP/PlugIns/"
 

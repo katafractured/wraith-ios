@@ -14,6 +14,7 @@
 		'AA000005' = {isa = PBXBuildFile; fileRef = AA100005; };
 		'AA000006' = {isa = PBXBuildFile; fileRef = AA100006; };
 		'AA000007' = {isa = PBXBuildFile; fileRef = AA100007; };
+		'AA000041' = {isa = PBXBuildFile; fileRef = AA100041; };
 		'AA000008' = {isa = PBXBuildFile; fileRef = AA100008; };
 		'AA000009' = {isa = PBXBuildFile; fileRef = AA100009; };
 		'AA000010' = {isa = PBXBuildFile; fileRef = AA100010; };
@@ -179,6 +180,7 @@
 		'AA100005' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		'AA100006' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		'AA100007' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
+		'AA100041' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeRedemptionView.swift; sourceTree = "<group>"; };
 		'AA100008' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		'AA100009' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		'AA100010' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WireGuardManager.swift; sourceTree = "<group>"; };
@@ -334,6 +336,7 @@
 				AA10001F,
 				AA10002F,
 				AA100026,
+			AA100041,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -716,6 +719,7 @@
 				AA000005,
 				AA000006,
 				AA000007,
+				AA000041,
 				AA00001A,
 				AA00001B,
 				AA00001C,

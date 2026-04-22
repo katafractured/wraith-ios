@@ -25,6 +25,9 @@ struct ConnectView: View {
     @State private var showHopSwitchConfirm    = false
     @State private var pendingHopMode: Bool?   = nil
     @State private var suppressNextHopModeChange = false
+    @State private var hiddenTapCount = 0
+    @State private var showCodeSheet = false
+    @State private var tapResetTimer: Task<Void, Never>? = nil
 
     private var isAnimatingRing: Bool {
         vpn.status == .connecting || vpn.status == .disconnecting || vpn.isProvisioning
@@ -145,6 +148,9 @@ struct ConnectView: View {
         }
         .sensoryFeedback(.impact(weight: .medium), trigger: vpn.status == .connected)
         .sensoryFeedback(.impact(weight: .light),  trigger: vpn.status == .disconnected)
+        .sheet(isPresented: $showCodeSheet) {
+            CodeRedemptionView()
+        }
     }
 
     // MARK: - Helpers
@@ -263,6 +269,20 @@ struct ConnectView: View {
                         Circle()
                             .stroke(Color.kfBorder, lineWidth: 1)
                     )
+            }
+        }
+        .onTapGesture {
+            hiddenTapCount += 1
+            if hiddenTapCount >= 7 {
+                hiddenTapCount = 0
+                KataHaptic.unlocked.fire()
+                showCodeSheet = true
+            }
+            // Reset counter after 3 seconds of inactivity
+            tapResetTimer?.cancel()
+            tapResetTimer = Task {
+                try? await Task.sleep(for: .seconds(3))
+                hiddenTapCount = 0
             }
         }
     }

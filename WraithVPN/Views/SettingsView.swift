@@ -5,6 +5,7 @@
 // sign-out, regenerate keypair option, and app version.
 
 import SwiftUI
+import KatafractStyle
 import StoreKit
 
 struct SettingsView: View {
@@ -305,7 +306,7 @@ struct SettingsView: View {
                 sectionHeader("Devices")
                 Spacer()
                 if isPeerListLoading {
-                    ProgressView().tint(Color.kfAccentBlue).scaleEffect(0.8)
+                    KataProgressRing(size: 22)
                 }
             }
 
@@ -382,7 +383,7 @@ struct SettingsView: View {
                         } label: {
                             SettingsRow(icon: "plus.circle.fill", label: "Add 5 Device Slots") {
                                 if storeKit.isPurchasingSeatPack {
-                                    ProgressView().tint(Color.kfAccentBlue)
+                                    KataProgressRing()
                                 } else {
                                     Text(storeKit.products.first(where: { $0.id == "com.katafract.wraith.seats.5" })?.displayPrice ?? "")
                                         .font(KFFont.caption(12))
@@ -460,7 +461,7 @@ struct SettingsView: View {
 
             if !isActive {
                 if revokingPeerIds.contains(peer.peerId) {
-                    ProgressView().tint(Color.kfError).scaleEffect(0.7)
+                    KataProgressRing(size: 20)
                 } else {
                     Button {
                         Task { await revokePeer(peer) }
@@ -621,7 +622,7 @@ struct SettingsView: View {
                 Spacer()
 
                 if haven.isLoading {
-                    ProgressView().tint(Color.kfAccentBlue)
+                    KataProgressRing()
                 }
             }
 
@@ -799,7 +800,7 @@ struct SettingsView: View {
             } label: {
                 SettingsRow(icon: "arrow.clockwise", label: "Restore Purchase") {
                     if isRestoring {
-                        ProgressView().tint(Color.kfAccentBlue)
+                        KataProgressRing()
                     } else {
                         Image(systemName: "chevron.right")
                             .font(.system(size: 13))
@@ -1007,7 +1008,7 @@ struct SettingsView: View {
                 } label: {
                     Group {
                         if isLinkingIdentity {
-                            ProgressView().tint(.white)
+                            KataProgressRing()
                         } else {
                             Text("Link Email")
                                 .font(KFFont.body(15))

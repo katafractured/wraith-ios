@@ -10,6 +10,7 @@
 // from the entry node — neither hop alone can correlate identity and activity.
 
 import SwiftUI
+import KatafractStyle
 
 struct MultiHopPickerSheet: View {
 
@@ -271,7 +272,7 @@ struct MultiHopPickerSheet: View {
         } label: {
             HStack(spacing: KFSpacing.sm) {
                 if isConnecting {
-                    ProgressView()
+                    KataProgressRing()
                         .tint(.white)
                         .scaleEffect(0.85)
                 } else {

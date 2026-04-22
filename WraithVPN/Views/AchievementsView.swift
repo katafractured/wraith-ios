@@ -1,4 +1,5 @@
 import SwiftUI
+import KatafractStyle
 
 // MARK: - Tier Gradient Helper
 
@@ -242,7 +243,7 @@ struct AchievementsView: View {
                 Color.kfBackground.ignoresSafeArea()
 
                 if isLoading {
-                    ProgressView()
+                    KataProgressRing()
                         .tint(Color.kfAccentBlue)
                 } else if let err = error {
                     errorView(message: err)

@@ -5,6 +5,7 @@
 // badge, and load indicator. Technical details (IPs, node IDs) are hidden.
 
 import SwiftUI
+import KatafractStyle
 
 struct ServerPickerView: View {
 
@@ -70,7 +71,7 @@ struct ServerPickerView: View {
                 }
                 ToolbarItem(placement: .navigationBarLeading) {
                     if servers.isLoading {
-                        ProgressView()
+                        KataProgressRing()
                             .tint(Color.kfAccentBlue)
                     }
                 }
@@ -180,7 +181,7 @@ struct ServerPickerView: View {
     private var loadingState: some View {
         VStack(spacing: KFSpacing.lg) {
             Spacer()
-            ProgressView()
+            KataProgressRing()
                 .tint(Color.kfAccentBlue)
                 .scaleEffect(1.4)
             Text("Loading servers…")

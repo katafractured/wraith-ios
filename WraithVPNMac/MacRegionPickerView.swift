@@ -4,6 +4,7 @@
 // macOS port of RegionPickerView. List-based, native Mac style.
 
 import SwiftUI
+import KatafractStyle
 
 struct MacRegionPickerView: View {
 
@@ -35,7 +36,7 @@ struct MacRegionPickerView: View {
             Divider().background(Color.kfBorder)
 
             if isLoading && regions.isEmpty {
-                HStack { Spacer(); ProgressView().tint(Color.kfAccentBlue); Spacer() }
+                HStack { Spacer(); KataProgressRing(); Spacer() }
                     .padding(24)
             } else if let msg = errorMessage, regions.isEmpty {
                 VStack(spacing: 12) {
@@ -61,7 +62,7 @@ struct MacRegionPickerView: View {
                             }
                             Spacer()
                             if connecting == "auto" {
-                                ProgressView().scaleEffect(0.7)
+                                KataProgressRing(size: 20)
                             }
                         }
                     }
@@ -91,7 +92,7 @@ struct MacRegionPickerView: View {
                                         .foregroundStyle(pingColor(ping))
                                 }
                                 if connecting == region.id {
-                                    ProgressView().scaleEffect(0.7)
+                                    KataProgressRing(size: 20)
                                 } else if vpn.connectedServer?.region == region.id {
                                     Image(systemName: "checkmark.circle.fill")
                                         .foregroundStyle(Color.kfAccentBlue)

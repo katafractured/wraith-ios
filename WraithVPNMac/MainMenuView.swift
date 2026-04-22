@@ -5,6 +5,7 @@
 // Dynamic server list is fetched from the API — new nodes appear automatically.
 
 import SwiftUI
+import KatafractStyle
 
 struct MainMenuView: View {
 
@@ -144,7 +145,7 @@ struct MainMenuView: View {
                 HStack {
                     Spacer()
                     if vpn.status == .connecting || vpn.status == .disconnecting {
-                        ProgressView()
+                        KataProgressRing()
                             .scaleEffect(0.7)
                             .tint(.white)
                     }
@@ -244,7 +245,7 @@ struct MainMenuView: View {
             if servers.isLoading && servers.servers.isEmpty {
                 HStack {
                     Spacer()
-                    ProgressView()
+                    KataProgressRing()
                         .scaleEffect(0.7)
                     Spacer()
                 }
@@ -397,7 +398,7 @@ struct MainMenuView: View {
             Spacer()
 
             if haven.isLoading {
-                ProgressView()
+                KataProgressRing()
                     .scaleEffect(0.7)
             } else {
                 Toggle("", isOn: Binding(

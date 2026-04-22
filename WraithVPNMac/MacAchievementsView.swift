@@ -4,6 +4,7 @@
 // macOS port of AchievementsView.
 
 import SwiftUI
+import KatafractStyle
 
 struct MacAchievementsView: View {
 
@@ -35,7 +36,7 @@ struct MacAchievementsView: View {
             Group {
                 if isLoading {
                     VStack(spacing: 12) {
-                        ProgressView().tint(Color.kfAccentBlue)
+                        KataProgressRing()
                         Text("Loading achievements…")
                             .font(KFFont.caption(13))
                             .foregroundStyle(Color.kfTextMuted)

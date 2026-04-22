@@ -6,6 +6,7 @@
 // access them without needing explicit passing.
 
 import SwiftUI
+import KatafractStyle
 
 @main
 struct WraithVPNApp: App {
@@ -28,6 +29,7 @@ struct WraithVPNApp: App {
                 .environmentObject(haven)
                 // Force dark colour scheme app-wide; individual screens can override.
                 .preferredColorScheme(.dark)
+                .tint(KataAccent.gold)
         }
     }
 }

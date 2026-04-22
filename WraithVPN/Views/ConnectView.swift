@@ -5,6 +5,7 @@
 // current assigned IP when connected, and quick-access to server picker.
 
 import SwiftUI
+import KatafractStyle
 
 struct ConnectView: View {
 

@@ -5,6 +5,7 @@
 // but in a full-size persistent window suitable for leaving open.
 
 import SwiftUI
+import KatafractStyle
 
 struct MacMainView: View {
 
@@ -126,7 +127,7 @@ struct MacMainView: View {
             Button(action: handleConnectTap) {
                 HStack(spacing: 8) {
                     if vpn.status == .connecting || vpn.status == .disconnecting {
-                        ProgressView()
+                        KataProgressRing()
                             .scaleEffect(0.7)
                             .tint(.white)
                     }
@@ -212,7 +213,7 @@ struct MacMainView: View {
     private var serverListView: some View {
         Group {
             if servers.isLoading && servers.servers.isEmpty {
-                HStack { Spacer(); ProgressView().scaleEffect(0.7); Spacer() }
+                HStack { Spacer(); KataProgressRing(size: 20); Spacer() }
                     .padding(.vertical, 14)
             } else {
                 ScrollView {
@@ -381,7 +382,7 @@ struct MacMainView: View {
             }
             Spacer()
             if haven.isLoading {
-                ProgressView().scaleEffect(0.7)
+                KataProgressRing(size: 20)
             } else {
                 Toggle("", isOn: Binding(
                     get: { haven.isEnabled },

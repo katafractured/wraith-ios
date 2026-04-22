@@ -6,6 +6,7 @@
 // and daily history in a simple bar chart.
 
 import SwiftUI
+import KatafractStyle
 
 struct DnsStatsView: View {
 
@@ -169,7 +170,7 @@ struct DnsStatsView: View {
 
     private var loadingState: some View {
         VStack(spacing: KFSpacing.lg) {
-            ProgressView()
+            KataProgressRing()
                 .tint(Color.kfAccentBlue)
 
             Text("Fetching stats…")

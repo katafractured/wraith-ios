@@ -6,6 +6,7 @@
 // Sheet is ~420 pt wide; tiers stack vertically for readability.
 
 import SwiftUI
+import KatafractStyle
 import StoreKit
 
 // MARK: - UpgradeReason (Mac-side definition; mirrors WraithVPN/Views/UpgradeSheet.swift)
@@ -239,7 +240,7 @@ struct MacUpgradeSheet: View {
     private var featureCard: some View {
         VStack(alignment: .leading, spacing: 10) {
             if storeKit.isLoading && storeKit.products.isEmpty {
-                ProgressView()
+                KataProgressRing()
                     .tint(accentColor)
                     .frame(maxWidth: .infinity, minHeight: 60)
             } else {
@@ -320,7 +321,7 @@ struct MacUpgradeSheet: View {
         } label: {
             Group {
                 if storeKit.isLoading {
-                    ProgressView().tint(.white)
+                    KataProgressRing()
                 } else {
                     Text("Subscribe to \(selectedTier.displayName)")
                         .font(KFFont.caption(13, weight: .semibold))

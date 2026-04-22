@@ -5,6 +5,7 @@
 // No emoji flags — ISO code tile chips. Midnight background, serif names, mono pings.
 
 import SwiftUI
+import KatafractStyle
 
 struct RegionPickerView: View {
 
@@ -46,7 +47,7 @@ struct RegionPickerView: View {
                 }
                 ToolbarItem(placement: .navigationBarLeading) {
                     if isLoading {
-                        ProgressView().tint(Color.kataChampagne)
+                        KataProgressRing()
                     }
                 }
             }
@@ -64,7 +65,7 @@ struct RegionPickerView: View {
 
     private var loadingState: some View {
         VStack(spacing: 16) {
-            ProgressView().tint(Color.kataChampagne)
+            KataProgressRing()
             Text("Loading regions…")
                 .font(.kataMono(12))
                 .foregroundStyle(Color.kataChampagne.opacity(0.5))
@@ -276,7 +277,7 @@ struct RegionPickerView: View {
             if regionServers.isEmpty {
                 VStack(spacing: 16) {
                     if servers.isLoading {
-                        ProgressView().tint(Color.kataChampagne)
+                        KataProgressRing()
                         Text("Loading servers…")
                             .font(.kataMono(12))
                             .foregroundStyle(Color.kataChampagne.opacity(0.5))

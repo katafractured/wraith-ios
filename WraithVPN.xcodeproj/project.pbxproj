@@ -45,6 +45,8 @@
 		'AA000033' = {isa = PBXBuildFile; fileRef = AA100033; };
 		'AA000034' = {isa = PBXBuildFile; fileRef = AA100030; };
 		'AA000035' = {isa = PBXBuildFile; productRef = BCWGPROD001; };
+		'KFSTYLE_IOS_BF' = {isa = PBXBuildFile; productRef = KFSTYLE_IOS_PROD; };
+		'KFSTYLE_MAC_BF' = {isa = PBXBuildFile; productRef = KFSTYLE_MAC_PROD; };
 		'AA000036' = {isa = PBXBuildFile; fileRef = AA100040; };
 		'AACOPYREF001' = {isa = PBXBuildFile; fileRef = AAPROD002; platformFilters = (iphoneos, ); settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		'AAPRIV001' = {isa = PBXBuildFile; fileRef = AAPRIV100; };
@@ -55,7 +57,6 @@
 		'AATST204' = {isa = PBXBuildFile; fileRef = AATST104; };
 		'AATST205' = {isa = PBXBuildFile; fileRef = AATST105; };
 		'AATUNPRIV001' = {isa = PBXBuildFile; fileRef = AATUNPRIV100; };
-		BA364CD2B726B7DF211A5FD2 /* KataStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F504F7FB6AD0AE7D83D979D /* KataStyle.swift */; };
 		'BBMAC050' = {isa = PBXBuildFile; fileRef = BBMAC010; };
 		'BBMAC054' = {isa = PBXBuildFile; fileRef = AA100009; };
 		'BBMAC055' = {isa = PBXBuildFile; fileRef = AA100011; };
@@ -171,7 +172,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		8F504F7FB6AD0AE7D83D979D /* KataStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = KataStyle.swift; path = WraithVPN/Design/KataStyle.swift; sourceTree = SOURCE_ROOT; };
 		'AA100001' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WraithVPNApp.swift; sourceTree = "<group>"; };
 		'AA100002' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		'AA100003' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectView.swift; sourceTree = "<group>"; };
@@ -253,6 +253,7 @@
 				AA000031,
 				AA000032,
 				AA000033,
+				KFSTYLE_IOS_BF,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -270,6 +271,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				BBMAC068,
+				KFSTYLE_MAC_BF,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -296,7 +298,6 @@
 				AAGRP009,
 				AAGRP010,
 				BC9FECE02F80E5140020F723 /* WireGuard.xcodeproj */,
-				8F504F7FB6AD0AE7D83D979D /* KataStyle.swift */,
 			);
 			sourceTree = "<group>";
 		};
@@ -487,6 +488,9 @@
 				AADEP001,
 			);
 			name = WraithVPN;
+			packageProductDependencies = (
+				KFSTYLE_IOS_PROD,
+			);
 			productName = WraithVPN;
 			productReference = AAPROD001;
 			productType = "com.apple.product-type.application";
@@ -542,6 +546,9 @@
 				BBMACDEP001,
 			);
 			name = WraithVPNMac;
+			packageProductDependencies = (
+				KFSTYLE_MAC_PROD,
+			);
 			productName = WraithVPNMac;
 			productReference = BBMACPROD001;
 			productType = "com.apple.product-type.application";
@@ -602,6 +609,7 @@
 			mainGroup = AAGRP000;
 			packageReferences = (
 				BC8F55772F80E2F4009FC332 /* XCLocalSwiftPackageReference "wireguard-apple" */,
+				KFSTYLE001 /* XCLocalSwiftPackageReference "KatafractStyle" */,
 			);
 			productRefGroup = AAGRP010;
 			projectDirPath = "";
@@ -730,7 +738,6 @@
 				AA000028,
 				AA000029,
 				AA000036,
-				BA364CD2B726B7DF211A5FD2 /* KataStyle.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1216,6 +1223,10 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = "wireguard-apple";
 		};
+		KFSTYLE001 /* XCLocalSwiftPackageReference "KatafractStyle" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "../KatafractStyle";
+		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -1228,6 +1239,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = BC8F55772F80E2F4009FC332 /* XCLocalSwiftPackageReference "wireguard-apple" */;
 			productName = WireGuardKit;
+		};
+		'KFSTYLE_IOS_PROD' = {
+			isa = XCSwiftPackageProductDependency;
+			package = KFSTYLE001 /* XCLocalSwiftPackageReference "KatafractStyle" */;
+			productName = KatafractStyle;
+		};
+		'KFSTYLE_MAC_PROD' = {
+			isa = XCSwiftPackageProductDependency;
+			package = KFSTYLE001 /* XCLocalSwiftPackageReference "KatafractStyle" */;
+			productName = KatafractStyle;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

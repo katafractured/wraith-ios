@@ -2,6 +2,7 @@
 // WraithVPNMac
 
 import SwiftUI
+import KatafractStyle
 
 @main
 struct WraithVPNMacApp: App {
@@ -37,6 +38,7 @@ struct WraithVPNMacApp: App {
                 .foregroundStyle(menuBarTint)
         }
         .menuBarExtraStyle(.window)
+        .tint(KataAccent.gold)
 
         Window("Account & Settings", id: "settings") {
             MacAccountView()

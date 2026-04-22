@@ -6,6 +6,7 @@
 // gated — free users see a locked state with an upgrade prompt.
 
 import SwiftUI
+import KatafractStyle
 
 struct HavenDNSSettingsView: View {
 
@@ -310,7 +311,7 @@ struct HavenDNSSettingsView: View {
 
     private var loadingState: some View {
         VStack(spacing: KFSpacing.lg) {
-            ProgressView()
+            KataProgressRing()
                 .tint(Color.kfAccentBlue)
                 .scaleEffect(1.3)
             Text("Loading settings…")

@@ -5,6 +5,7 @@
 // with monthly/annual toggle per tier and real App Store prices.
 
 import SwiftUI
+import KatafractStyle
 import StoreKit
 
 struct PaywallView: View {
@@ -209,7 +210,7 @@ struct PaywallView: View {
     private var featureCard: some View {
         VStack(alignment: .leading, spacing: KFSpacing.sm) {
             if storeKit.isLoading && storeKit.products.isEmpty {
-                ProgressView()
+                KataProgressRing()
                     .tint(Color.kfAccentBlue)
                     .frame(maxWidth: .infinity, minHeight: 80)
             } else {
@@ -277,7 +278,7 @@ struct PaywallView: View {
         } label: {
             Group {
                 if storeKit.isLoading {
-                    ProgressView().tint(.white)
+                    KataProgressRing()
                 } else {
                     Text("Subscribe to \(selectedTier.displayName)")
                         .font(KFFont.heading(18))

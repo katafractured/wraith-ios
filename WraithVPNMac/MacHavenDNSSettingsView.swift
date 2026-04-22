@@ -4,6 +4,7 @@
 // macOS port of HavenDNSSettingsView. Form-based native Mac layout.
 
 import SwiftUI
+import KatafractStyle
 
 struct MacHavenDNSSettingsView: View {
 
@@ -152,7 +153,7 @@ struct MacHavenDNSSettingsView: View {
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
-                    HStack { Spacer(); ProgressView().tint(Color.kfAccentBlue); Spacer() }
+                    HStack { Spacer(); KataProgressRing(); Spacer() }
                         .frame(maxHeight: .infinity)
                 }
             }

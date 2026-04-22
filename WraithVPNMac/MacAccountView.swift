@@ -4,6 +4,7 @@
 // Settings / account management window — full feature parity with iOS SettingsView.
 
 import SwiftUI
+import KatafractStyle
 
 struct MacAccountView: View {
 
@@ -151,7 +152,7 @@ struct MacAccountView: View {
             sectionHeader("Device Management")
 
             if isPeerListLoading {
-                HStack { Spacer(); ProgressView().scaleEffect(0.8); Spacer() }
+                HStack { Spacer(); KataProgressRing(size: 22); Spacer() }
             } else if let err = peerListError {
                 Text(err).font(KFFont.caption(12)).foregroundStyle(Color.kfError)
             } else if let pl = peerList {
@@ -201,7 +202,7 @@ struct MacAccountView: View {
                         }
                         Spacer()
                         if revokingPeerIds.contains(peer.peerId) {
-                            ProgressView().scaleEffect(0.7)
+                            KataProgressRing(size: 20)
                         } else {
                             Button {
                                 Task { await revokePeer(peer) }
@@ -334,7 +335,7 @@ struct MacAccountView: View {
             if isRestoring {
                 HStack {
                     Spacer()
-                    ProgressView("Restoring…").scaleEffect(0.8)
+                    HStack(spacing: 8) { KataProgressRing(size: 22); Text("Restoring…").font(.kataBody(14)) }
                     Spacer()
                 }
             }

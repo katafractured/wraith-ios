@@ -4,6 +4,7 @@
 // macOS port of DnsStatsView.
 
 import SwiftUI
+import KatafractStyle
 import Charts
 
 struct MacDnsStatsView: View {
@@ -42,7 +43,7 @@ struct MacDnsStatsView: View {
             Group {
                 if isLoading && stats == nil {
                     VStack(spacing: 12) {
-                        ProgressView().tint(Color.kfAccentBlue)
+                        KataProgressRing()
                         Text("Fetching stats…")
                             .font(KFFont.caption(13))
                             .foregroundStyle(Color.kfTextMuted)

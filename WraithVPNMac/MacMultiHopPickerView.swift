@@ -4,6 +4,7 @@
 // macOS port of MultiHopPickerSheet. Two-column layout for entry/exit selection.
 
 import SwiftUI
+import KatafractStyle
 
 struct MacMultiHopPickerView: View {
 
@@ -179,7 +180,7 @@ struct MacMultiHopPickerView: View {
                     HStack {
                         Spacer()
                         if isConnecting {
-                            ProgressView().scaleEffect(0.8).tint(.white)
+                            KataProgressRing(size: 22)
                         }
                         Text(isConnecting ? "Connecting…" : "Connect Multi-Hop")
                             .font(KFFont.caption(13, weight: .semibold))

@@ -46,6 +46,7 @@ final class KeychainHelper {
         case wgExitIP           = "com.katafract.wraith.wgExitIP"
         case activeNodeId       = "com.katafract.wraith.activeNodeId"
         case activeRegion       = "com.katafract.wraith.activeRegion"
+        case activeShadowsocksConfig = "com.katafract.wraith.activeShadowsocksConfig"
         // Multi-hop
         case multiHopGroupId    = "com.katafract.wraith.multiHopGroupId"
         case multiHopEntryPeerId = "com.katafract.wraith.multiHopEntryPeerId"

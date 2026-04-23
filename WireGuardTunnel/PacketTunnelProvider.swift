@@ -39,6 +39,12 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
             return
         }
 
+        // Extract Shadowsocks config if present (for Phase 2 implementation)
+        let ssConfigData = providerConfig["shadowsocks"] as? [String: Any]
+        if let ssData = ssConfigData {
+            log.info("SS config present: host=\(ssData["host"] as? String ?? "unknown", privacy: .public), method=\(ssData["method"] as? String ?? "unknown", privacy: .public)")
+        }
+
         let tunnelConfiguration: TunnelConfiguration
         do {
             tunnelConfiguration = try TunnelConfiguration.makeWraithConfiguration(from: wgConfig, name: "wraith")

@@ -28,6 +28,8 @@ struct ConnectView: View {
     @State private var hiddenTapCount = 0
     @State private var showCodeSheet = false
     @State private var tapResetTimer: Task<Void, Never>? = nil
+    @State private var showStealthModeToast = false
+    @State private var stealthModeToastTask: Task<Void, Never>? = nil
 
     private var isAnimatingRing: Bool {
         vpn.status == .connecting || vpn.status == .disconnecting || vpn.isProvisioning
@@ -62,6 +64,56 @@ struct ConnectView: View {
                 .padding(.horizontal, KFSpacing.lg)
                 .padding(.top, layout.topPadding)
                 .padding(.bottom, layout.bottomPadding)
+
+                // Stealth mode badge (when active)
+                if vpn.activeTransport == .shadowsocks {
+                    VStack {
+                        HStack(spacing: 6) {
+                            Image(systemName: "shield.fill")
+                                .font(.system(size: 12, weight: .semibold))
+                            Text("Stealth on")
+                                .font(KFFont.body(13, weight: .semibold))
+                        }
+                        .foregroundStyle(Color.kataGold)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(Color.kataGold.opacity(0.15))
+                        .clipShape(Capsule())
+
+                        Spacer()
+                    }
+                    .padding(KFSpacing.lg)
+                    .transition(.opacity.animation(.easeInOut(duration: 0.3)))
+                }
+
+                // Stealth mode toast (fallback event)
+                if showStealthModeToast {
+                    VStack {
+                        Spacer()
+
+                        HStack(spacing: 10) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundStyle(.white)
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("WireGuard Blocked")
+                                    .font(KFFont.body(14, weight: .semibold))
+                                    .foregroundStyle(.white)
+                                Text("Switched to Stealth mode")
+                                    .font(KFFont.caption(12))
+                                    .foregroundStyle(Color.kfTextMuted)
+                            }
+
+                            Spacer()
+                        }
+                        .padding(KFSpacing.md)
+                        .background(Color.kataGold.opacity(0.9))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .padding(KFSpacing.lg)
+                    }
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
             }
         }
         .sheet(isPresented: $showRegionPicker) {
@@ -91,6 +143,21 @@ struct ConnectView: View {
             } else {
                 applyDefaultHopMode()
             }
+
+            // Listen for stealth mode fallback notification
+            let observer = NotificationCenter.default.addObserver(
+                forName: NSNotification.Name("WireGuardFallbackToShadowsocks"),
+                object: nil,
+                queue: nil
+            ) { _ in
+                showStealthModeToast = true
+                stealthModeToastTask?.cancel()
+                stealthModeToastTask = Task {
+                    try? await Task.sleep(nanoseconds: 3_000_000_000) // 3 sec
+                    showStealthModeToast = false
+                }
+            }
+            return { NotificationCenter.default.removeObserver(observer) }
         }
         .onChange(of: vpn.connectedServer?.nodeId) { _, _ in
             syncSelectedToConnected()

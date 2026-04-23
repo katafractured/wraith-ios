@@ -52,6 +52,14 @@ final class WireGuardManager: ObservableObject {
     @Published var multiHopEntryServer: VPNServer? = nil
     /// Exit node for the active multi-hop session (same as connectedServer for multi-hop).
     @Published var multiHopExitServer: VPNServer? = nil
+    /// Current transport being used: wireguard or shadowsocks (fallback).
+    @Published var activeTransport: TunnelTransport = .wireguard
+    /// User preference for tunnel transport mode.
+    @Published var transportPreference: TransportPreference = TransportPreference(
+        rawValue: UserDefaults.standard.string(forKey: "transportPreference") ?? ""
+    ) ?? .automatic
+    /// Shadowsocks manager for fallback transport.
+    @Published var shadowsocksManager = ShadowsocksTransportManager()
 
     // MARK: - Private
 
@@ -310,13 +318,21 @@ final class WireGuardManager: ObservableObject {
             ?? VPNServer.stub(nodeId: provision.nodeId, region: regionId)
 
         let config = try injectPrivateKey(into: provision.config)
-        try await installProfile(configText: config, server: server)
+        try await installProfile(configText: config, server: server, shadowsocksConfig: provision.shadowsocks)
 
         activePeerId    = provision.peerId
         assignedIP      = provision.assignedIpv4
         exitIP          = provision.exitIpv4 ?? (server.ipv4.isEmpty ? nil : server.ipv4)
         connectedServer = server
         isProvisioned   = true
+
+        // Store SS config for fallback use
+        if let ssConfig = provision.shadowsocks {
+            try? KeychainHelper.shared.save(
+                try JSONEncoder().encode(ssConfig),
+                for: .activeShadowsocksConfig
+            )
+        }
         NotificationCenter.default.post(name: .vpnServerDidChange, object: nil)
         do {
             try KeychainHelper.shared.save(provision.peerId, for: .activePeerId)
@@ -582,6 +598,33 @@ final class WireGuardManager: ObservableObject {
         multiHopEntryServer = nil
         multiHopExitServer  = nil
         isProvisioned       = false
+    }
+
+    /// Handle WireGuard handshake timeout and fallback to Shadowsocks if configured.
+    /// Called after ~5-10 seconds with no handshake response on UDP 51821.
+    func handleWireGuardTimeout(ssConfig: ShadowsocksConfig?) async {
+        guard transportPreference == .automatic, let ssConfig = ssConfig else {
+            return
+        }
+
+        reprovisionAttempts += 1
+        if reprovisionAttempts >= maxReprovisionAttempts {
+            status = .failed("WireGuard blocked and no more fallback attempts available.")
+            return
+        }
+
+        // Disconnect WG and switch to SS
+        try? await disconnect()
+        await shadowsocksManager.connect(with: ssConfig)
+        activeTransport = .shadowsocks
+        status = .connected
+        connectedSince = Date()
+
+        // Post notification for UI toast
+        NotificationCenter.default.post(
+            name: NSNotification.Name("WireGuardFallbackToShadowsocks"),
+            object: nil
+        )
     }
 
     /// Starts the already-installed VPN profile.
@@ -999,10 +1042,10 @@ final class WireGuardManager: ObservableObject {
         }
     }
 
-    private func installProfile(configText: String, server: VPNServer) async throws {
+    private func installProfile(configText: String, server: VPNServer, shadowsocksConfig: ShadowsocksConfig? = nil) async throws {
         // 1. Stop any running tunnel (our own or other apps)
         await stopAllActiveTunnels()
-        
+
         // 2. Try to load an existing manager WE own
         let existingOurs: NETunnelProviderManager?
         if let all = try? await NETunnelProviderManager.loadAllFromPreferences() {
@@ -1012,7 +1055,7 @@ final class WireGuardManager: ObservableObject {
         } else {
             existingOurs = nil
         }
-        
+
         let mgr: NETunnelProviderManager
         if let existing = existingOurs {
             // In-place update — no re-approval prompt
@@ -1021,15 +1064,30 @@ final class WireGuardManager: ObservableObject {
             // First install — fresh manager (iOS will show "Allow VPN Configuration")
             mgr = NETunnelProviderManager()
         }
-        
+
         // 3. Build protocol config
         let proto = NETunnelProviderProtocol()
         proto.providerBundleIdentifier = tunnelBundleId
         proto.serverAddress = server.endpoints.primary
-        proto.providerConfiguration = [
+
+        var providerConfig: [String: Any] = [
             "wgConfig": configText,
             "serverName": server.cityName,
         ]
+
+        // Add Shadowsocks fallback config if present
+        if let ssConfig = shadowsocksConfig,
+           transportPreference == .stealthMode || transportPreference == .automatic {
+            providerConfig["shadowsocks"] = [
+                "host": ssConfig.host,
+                "port": ssConfig.port,
+                "method": ssConfig.method,
+                "password": ssConfig.password,
+                "obfsHost": ssConfig.obfsHost ?? ""
+            ]
+        }
+
+        proto.providerConfiguration = providerConfig
         proto.includeAllNetworks = (tunnelMode == .full)
         proto.excludeLocalNetworks = true
         

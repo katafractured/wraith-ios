@@ -5,6 +5,20 @@
 
 import Foundation
 
+// MARK: - Tunnel transport
+
+enum TunnelTransport: String, Codable {
+    case wireguard = "wg"
+    case shadowsocks = "ss"
+}
+
+/// User's transport preference for tunnel connection mode.
+enum TransportPreference: String, Codable {
+    case automatic = "auto"      // Try WG first; fall back to SS on handshake timeout
+    case wireguardOnly = "wg-only"
+    case stealthMode = "stealth" // Force SS from the start
+}
+
 // MARK: - Server / Node
 
 struct VPNServer: Codable, Identifiable, Hashable {
@@ -122,6 +136,7 @@ struct ProvisionResponse: Decodable {
     let nodeId: String
     let endpoint: String
     let exitIpv4: String?
+    let shadowsocks: ShadowsocksConfig?  // Optional Shadowsocks fallback config
 
     enum CodingKeys: String, CodingKey {
         case peerId       = "peer_id"
@@ -132,6 +147,23 @@ struct ProvisionResponse: Decodable {
         case nodeId       = "node_id"
         case endpoint
         case exitIpv4     = "exit_ipv4"
+        case shadowsocks
+    }
+}
+
+struct ShadowsocksConfig: Codable, Equatable {
+    let host: String
+    let port: Int
+    let method: String      // e.g., "chacha20-poly1305"
+    let password: String
+    let obfsHost: String?   // optional obfs SNI hostname for TLS obfuscation
+
+    enum CodingKeys: String, CodingKey {
+        case host
+        case port
+        case method
+        case password
+        case obfsHost = "obfs_host"
     }
 }
 

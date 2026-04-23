@@ -15,6 +15,7 @@ struct SettingsView: View {
     @EnvironmentObject var haven:    HavenDNSManager
     @AppStorage("hasUnlockedFreeTier") private var hasUnlockedFreeTier = false
     @AppStorage("simpleMode") private var simpleMode = true
+    @AppStorage("transportPreference") private var transportPreference: String = TransportPreference.automatic.rawValue
 
 
     @State private var showSignOutAlert    = false
@@ -48,6 +49,7 @@ struct SettingsView: View {
                 VStack(spacing: KFSpacing.lg) {
                     overviewCard
                     modeCard
+                    connectionModeCard
                     accountCard
                     devicesCard
                     havenDNSCard
@@ -1187,6 +1189,74 @@ struct SettingsRow<Trailing: View>: View {
             Spacer()
 
             trailing()
+        }
+    }
+
+    private var connectionModeCard: some View {
+        VStack(alignment: .leading, spacing: KFSpacing.sm) {
+            HStack(spacing: KFSpacing.md) {
+                ZStack {
+                    Circle()
+                        .fill(Color.kataGold.opacity(0.15))
+                        .frame(width: 44, height: 44)
+                    Image(systemName: "shield.fill")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundStyle(Color.kataGold)
+                }
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Connection Mode")
+                        .font(KFFont.heading(16))
+                        .foregroundStyle(.white)
+                    Text("Choose transport method for DPI resistance")
+                        .font(KFFont.caption(12))
+                        .foregroundStyle(Color.kfTextMuted)
+                }
+
+                Spacer()
+            }
+
+            Picker("Transport", selection: $transportPreference) {
+                Text("Automatic").tag(TransportPreference.automatic.rawValue)
+                Text("WireGuard only").tag(TransportPreference.wireguardOnly.rawValue)
+                Text("Stealth mode").tag(TransportPreference.stealthMode.rawValue)
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal, KFSpacing.sm)
+
+            VStack(alignment: .leading, spacing: KFSpacing.xs) {
+                Label("Automatic: Tries WireGuard first, falls back to Shadowsocks if blocked",
+                      systemImage: "info.circle.fill")
+                    .font(KFFont.caption(11))
+                    .foregroundStyle(Color.kfTextMuted)
+                    .lineLimit(3)
+
+                Label("Stealth: Uses Shadowsocks from the start for maximum DPI evasion",
+                      systemImage: "shield.fill")
+                    .font(KFFont.caption(11))
+                    .foregroundStyle(Color.kataGold.opacity(0.8))
+                    .lineLimit(3)
+            }
+            .padding(.horizontal, KFSpacing.sm)
+        }
+        .padding(KFSpacing.md)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.kfCardBackground)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .strokeBorder(Color.kfBorder, lineWidth: 1)
+        )
+        .onChange(of: transportPreference) { _, newValue in
+            vpn.transportPreference = TransportPreference(rawValue: newValue) ?? .automatic
+            if vpn.status == .connected {
+                // Kick tunnel to reconnect with new mode
+                Task {
+                    try? await vpn.disconnect()
+                    try? await vpn.connect()
+                }
+            }
         }
     }
 }

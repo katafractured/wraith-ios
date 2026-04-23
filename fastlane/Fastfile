@@ -1,0 +1,36 @@
+# Katafract screenshot pipeline — fastlane lanes
+# Doctrine: feedback_screenshots_never_manual.md — every UI change auto-refreshes.
+
+default_platform(:ios)
+
+platform :ios do
+  desc "Capture screenshots locally (output: fastlane/screenshots/)"
+  lane :screenshots do
+    capture_ios_screenshots
+  end
+
+  desc "Capture + upload App Store Version screenshots to ASC (no binary, no metadata)"
+  lane :submit_version_screenshots do
+    capture_ios_screenshots
+    deliver(
+      skip_binary_upload: true,
+      skip_metadata: true,
+      skip_app_version_update: true,
+      overwrite_screenshots: true,
+      force: true,
+      run_precheck_before_submit: false
+    )
+  end
+
+  desc "Re-upload screenshots from existing fastlane/screenshots/ without re-capturing"
+  lane :resubmit_version_screenshots do
+    deliver(
+      skip_binary_upload: true,
+      skip_metadata: true,
+      skip_app_version_update: true,
+      overwrite_screenshots: true,
+      force: true,
+      run_precheck_before_submit: false
+    )
+  end
+end

@@ -7,105 +7,108 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		'AA000001' = {isa = PBXBuildFile; fileRef = AA100001; };
-		'AA000002' = {isa = PBXBuildFile; fileRef = AA100002; };
-		'AA000003' = {isa = PBXBuildFile; fileRef = AA100003; };
-		'AA000004' = {isa = PBXBuildFile; fileRef = AA100004; };
-		'AA000005' = {isa = PBXBuildFile; fileRef = AA100005; };
-		'AA000006' = {isa = PBXBuildFile; fileRef = AA100006; };
-		'AA000007' = {isa = PBXBuildFile; fileRef = AA100007; };
-		'AA000041' = {isa = PBXBuildFile; fileRef = AA100041; };
-		'AA000008' = {isa = PBXBuildFile; fileRef = AA100008; };
-		'AA000009' = {isa = PBXBuildFile; fileRef = AA100009; };
-		'AA000010' = {isa = PBXBuildFile; fileRef = AA100010; };
-		'AA000011' = {isa = PBXBuildFile; fileRef = AA100011; };
-		'AA000012' = {isa = PBXBuildFile; fileRef = AA100012; };
-		'AA000013' = {isa = PBXBuildFile; fileRef = AA100013; };
-		'AA000014' = {isa = PBXBuildFile; fileRef = AA100014; };
-		'AA000015' = {isa = PBXBuildFile; fileRef = AA100015; };
-		'AA000016' = {isa = PBXBuildFile; fileRef = AA100018; };
-		'AA00001A' = {isa = PBXBuildFile; fileRef = AA10001A; };
-		'AA00001B' = {isa = PBXBuildFile; fileRef = AA10001B; };
-		'AA00001C' = {isa = PBXBuildFile; fileRef = AA10001C; };
-		'AA00001E' = {isa = PBXBuildFile; fileRef = AA10001E; };
-		'AA00001F' = {isa = PBXBuildFile; fileRef = AA10001F; };
-		'AA000020' = {isa = PBXBuildFile; fileRef = AA100020; };
-		'AA000021' = {isa = PBXBuildFile; fileRef = AA100022; };
-		'AA000022' = {isa = PBXBuildFile; fileRef = AA100023; };
-		'AA000023' = {isa = PBXBuildFile; fileRef = AA100024; };
-		'AA000024' = {isa = PBXBuildFile; fileRef = AA100025; };
-		'AA000025' = {isa = PBXBuildFile; fileRef = AA100026; };
-		'AA000026' = {isa = PBXBuildFile; fileRef = AA100027; };
-		'AA000027' = {isa = PBXBuildFile; fileRef = AA100028; };
-		'AA000028' = {isa = PBXBuildFile; fileRef = AA100029; };
-		'AA000029' = {isa = PBXBuildFile; fileRef = AA100039; };
-		'AA00002F' = {isa = PBXBuildFile; fileRef = AA10002F; };
-		'AA000030' = {isa = PBXBuildFile; fileRef = AA100030; };
-		'AA000031' = {isa = PBXBuildFile; fileRef = AA100031; };
-		'AA000032' = {isa = PBXBuildFile; fileRef = AA100032; };
-		'AA000033' = {isa = PBXBuildFile; fileRef = AA100033; };
-		'AA000034' = {isa = PBXBuildFile; fileRef = AA100030; };
-		'AA000035' = {isa = PBXBuildFile; productRef = BCWGPROD001; };
-		'KFSTYLE_IOS_BF' = {isa = PBXBuildFile; productRef = KFSTYLE_IOS_PROD; };
-		'KFSTYLE_MAC_BF' = {isa = PBXBuildFile; productRef = KFSTYLE_MAC_PROD; };
-		'AA000036' = {isa = PBXBuildFile; fileRef = AA100040; };
-		'AACOPYREF001' = {isa = PBXBuildFile; fileRef = AAPROD002; platformFilters = (iphoneos, ); settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		'AAPRIV001' = {isa = PBXBuildFile; fileRef = AAPRIV100; };
-		'AATST200' = {isa = PBXBuildFile; fileRef = AATST100; };
-		'AATST201' = {isa = PBXBuildFile; fileRef = AATST101; };
-		'AATST202' = {isa = PBXBuildFile; fileRef = AATST102; };
-		'AATST203' = {isa = PBXBuildFile; fileRef = AATST103; };
-		'AATST204' = {isa = PBXBuildFile; fileRef = AATST104; };
-		'AATST205' = {isa = PBXBuildFile; fileRef = AATST105; };
-		'AATUNPRIV001' = {isa = PBXBuildFile; fileRef = AATUNPRIV100; };
-		'BBMAC050' = {isa = PBXBuildFile; fileRef = BBMAC010; };
-		'BBMAC054' = {isa = PBXBuildFile; fileRef = AA100009; };
-		'BBMAC055' = {isa = PBXBuildFile; fileRef = AA100011; };
-		'BBMAC056' = {isa = PBXBuildFile; fileRef = AA100018; };
-		'BBMAC057' = {isa = PBXBuildFile; fileRef = AA100013; };
-		'BBMAC058' = {isa = PBXBuildFile; fileRef = AA100008; };
-		'BBMAC060' = {isa = PBXBuildFile; fileRef = BBMAC015; };
-		'BBMAC062' = {isa = PBXBuildFile; fileRef = AA100015; };
-		'BBMAC063' = {isa = PBXBuildFile; fileRef = AA100010; };
-		'BBMAC064' = {isa = PBXBuildFile; fileRef = AA100012; };
-		'BBMAC065' = {isa = PBXBuildFile; fileRef = AA100014; };
-		'BBMAC066' = {isa = PBXBuildFile; fileRef = BBMAC020; };
-		'BBMAC067' = {isa = PBXBuildFile; fileRef = BBMAC021; };
-		'BBMAC068' = {isa = PBXBuildFile; fileRef = AA100030; };
-		'BBMAC069' = {isa = PBXBuildFile; fileRef = AA100024; };
-		'BBMAC070' = {isa = PBXBuildFile; fileRef = AA100025; };
-		'BBMAC071' = {isa = PBXBuildFile; fileRef = AA100039; };
-		'BBMAC099' = {isa = PBXBuildFile; fileRef = AA100040; };
-		'BBMAC100' = {isa = PBXBuildFile; fileRef = BBMAC025; };
-		'BBMACNFW001' = {isa = PBXBuildFile; fileRef = BBMACNEW001; };
-		'BBMACNFW002' = {isa = PBXBuildFile; fileRef = BBMACNEW002; };
-		'BBMACNFW003' = {isa = PBXBuildFile; fileRef = BBMACNEW003; };
-		'BBMACNFW004' = {isa = PBXBuildFile; fileRef = BBMACNEW004; };
-		'BBMACNFW005' = {isa = PBXBuildFile; fileRef = BBMACNEW005; };
-		'BBMACNFW006' = {isa = PBXBuildFile; fileRef = BBMACNEW006; };
-		'BBMACTUNBF002' = {isa = PBXBuildFile; fileRef = AA100020; };
-		'BBMACTUNBF004' = {isa = PBXBuildFile; fileRef = BBMACTUNFR003; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		'BBMACTUNBF005' = {isa = PBXBuildFile; productRef = BBMACTUNWG001; };
+		2906B162EABEB3EC7EA98B36 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E032FDEE137C4898E58F8EBC /* Foundation.framework */; };
+		3B9AAF5B5558D10A59877C91 /* ScreenshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AE810893CC4B1EF12D98611 /* ScreenshotTests.swift */; };
+		AA000001 /* WraithVPNApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100001 /* WraithVPNApp.swift */; };
+		AA000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100002 /* ContentView.swift */; };
+		AA000003 /* ConnectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100003 /* ConnectView.swift */; };
+		AA000004 /* ServerPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100004 /* ServerPickerView.swift */; };
+		AA000005 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100005 /* OnboardingView.swift */; };
+		AA000006 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100006 /* SettingsView.swift */; };
+		AA000007 /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100007 /* PaywallView.swift */; };
+		AA000008 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100008 /* Models.swift */; };
+		AA000009 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100009 /* APIClient.swift */; };
+		AA000010 /* WireGuardManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100010 /* WireGuardManager.swift */; };
+		AA000011 /* StoreKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100011 /* StoreKitManager.swift */; };
+		AA000012 /* ServerListManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100012 /* ServerListManager.swift */; };
+		AA000013 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100013 /* KeychainHelper.swift */; };
+		AA000014 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100014 /* DesignSystem.swift */; };
+		AA000015 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA100015 /* Assets.xcassets */; };
+		AA000016 /* HavenDNSManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100018 /* HavenDNSManager.swift */; };
+		AA00001A /* HavenDNSSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10001A /* HavenDNSSettingsView.swift */; };
+		AA00001B /* AchievementsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10001B /* AchievementsView.swift */; };
+		AA00001C /* DnsStatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10001C /* DnsStatsView.swift */; };
+		AA00001E /* UpgradeSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10001E /* UpgradeSheet.swift */; };
+		AA00001F /* MultiHopPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10001F /* MultiHopPickerSheet.swift */; };
+		AA000020 /* PacketTunnelProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100020 /* PacketTunnelProvider.swift */; };
+		AA000021 /* TunnelConfiguration+WgQuickConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100022 /* TunnelConfiguration+WgQuickConfig.swift */; };
+		AA000022 /* String+ArrayConversion.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100023 /* String+ArrayConversion.swift */; };
+		AA000023 /* DebugLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100024 /* DebugLogger.swift */; };
+		AA000024 /* DNSHealthCheck.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100025 /* DNSHealthCheck.swift */; };
+		AA000025 /* DebugLogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100026 /* DebugLogView.swift */; };
+		AA000026 /* ConnectVPNIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100027 /* ConnectVPNIntent.swift */; };
+		AA000027 /* DisconnectVPNIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100028 /* DisconnectVPNIntent.swift */; };
+		AA000028 /* WraithAppShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100029 /* WraithAppShortcuts.swift */; };
+		AA000029 /* TelemetryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100039 /* TelemetryManager.swift */; };
+		AA00002F /* RegionPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10002F /* RegionPickerView.swift */; };
+		AA000030 /* NetworkExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA100030 /* NetworkExtension.framework */; };
+		AA000031 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA100031 /* StoreKit.framework */; };
+		AA000032 /* CryptoKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA100032 /* CryptoKit.framework */; };
+		AA000033 /* Network.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA100033 /* Network.framework */; };
+		AA000034 /* NetworkExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA100030 /* NetworkExtension.framework */; };
+		AA000035 /* WireGuardKit in Frameworks */ = {isa = PBXBuildFile; productRef = BCWGPROD001 /* WireGuardKit */; };
+		AA000036 /* LatencyProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100040 /* LatencyProbe.swift */; };
+		AA000041 /* CodeRedemptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100041 /* CodeRedemptionView.swift */; };
+		AACOPYREF001 /* WireGuardTunnel.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AAPROD002 /* WireGuardTunnel.appex */; platformFilters = (iphoneos, ); settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		AAPRIV001 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = AAPRIV100 /* PrivacyInfo.xcprivacy */; };
+		AATST200 /* ModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AATST100 /* ModelTests.swift */; };
+		AATST201 /* KeychainHelperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AATST101 /* KeychainHelperTests.swift */; };
+		AATST202 /* APIClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AATST102 /* APIClientTests.swift */; };
+		AATST203 /* StoreKitManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AATST103 /* StoreKitManagerTests.swift */; };
+		AATST204 /* ServerListManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AATST104 /* ServerListManagerTests.swift */; };
+		AATST205 /* HavenDNSManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AATST105 /* HavenDNSManagerTests.swift */; };
+		AATUNPRIV001 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = AATUNPRIV100 /* PrivacyInfo.xcprivacy */; };
+		BBMAC050 /* WraithVPNMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBMAC010 /* WraithVPNMacApp.swift */; };
+		BBMAC054 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100009 /* APIClient.swift */; };
+		BBMAC055 /* StoreKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100011 /* StoreKitManager.swift */; };
+		BBMAC056 /* HavenDNSManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100018 /* HavenDNSManager.swift */; };
+		BBMAC057 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100013 /* KeychainHelper.swift */; };
+		BBMAC058 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100008 /* Models.swift */; };
+		BBMAC060 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = BBMAC015 /* PrivacyInfo.xcprivacy */; };
+		BBMAC062 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA100015 /* Assets.xcassets */; };
+		BBMAC063 /* WireGuardManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100010 /* WireGuardManager.swift */; };
+		BBMAC064 /* ServerListManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100012 /* ServerListManager.swift */; };
+		BBMAC065 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100014 /* DesignSystem.swift */; };
+		BBMAC066 /* MainMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBMAC020 /* MainMenuView.swift */; };
+		BBMAC067 /* MacAccountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBMAC021 /* MacAccountView.swift */; };
+		BBMAC068 /* NetworkExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA100030 /* NetworkExtension.framework */; };
+		BBMAC069 /* DebugLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100024 /* DebugLogger.swift */; };
+		BBMAC070 /* DNSHealthCheck.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100025 /* DNSHealthCheck.swift */; };
+		BBMAC071 /* TelemetryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100039 /* TelemetryManager.swift */; };
+		BBMAC099 /* LatencyProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100040 /* LatencyProbe.swift */; };
+		BBMAC100 /* MacMainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBMAC025 /* MacMainView.swift */; };
+		BBMACNFW001 /* MacRegionPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBMACNEW001 /* MacRegionPickerView.swift */; };
+		BBMACNFW002 /* MacMultiHopPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBMACNEW002 /* MacMultiHopPickerView.swift */; };
+		BBMACNFW003 /* MacHavenDNSSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBMACNEW003 /* MacHavenDNSSettingsView.swift */; };
+		BBMACNFW004 /* MacDnsStatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBMACNEW004 /* MacDnsStatsView.swift */; };
+		BBMACNFW005 /* MacAchievementsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBMACNEW005 /* MacAchievementsView.swift */; };
+		BBMACNFW006 /* MacUpgradeSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBMACNEW006 /* MacUpgradeSheet.swift */; };
+		BBMACTUNBF002 /* PacketTunnelProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100020 /* PacketTunnelProvider.swift */; };
+		BBMACTUNBF004 /* WraithVPNMacTunnel.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = BBMACTUNFR003 /* WraithVPNMacTunnel.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		BBMACTUNBF005 /* WireGuardKit in Frameworks */ = {isa = PBXBuildFile; productRef = BBMACTUNWG001 /* WireGuardKit */; };
+		D23E842CD4882048071FBE21 /* SnapshotHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04C7408A151052A26A9E2AA2 /* SnapshotHelper.swift */; };
+		KFSTYLE_IOS_BF /* KatafractStyle in Frameworks */ = {isa = PBXBuildFile; productRef = KFSTYLE_IOS_PROD /* KatafractStyle */; };
+		KFSTYLE_MAC_BF /* KatafractStyle in Frameworks */ = {isa = PBXBuildFile; productRef = KFSTYLE_MAC_PROD /* KatafractStyle */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		'AADEPPROXY001' = {
+		AADEPPROXY001 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = AAPROJ001;
+			containerPortal = AAPROJ001 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = AATGT002;
 			remoteInfo = WireGuardTunnel;
 		};
-		'AATST_PROXY' = {
+		AATST_PROXY /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = AAPROJ001;
+			containerPortal = AAPROJ001 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = AATGT001;
 			remoteInfo = WraithVPN;
 		};
-		'BBMACPROXY001' = {
+		BBMACPROXY001 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = AAPROJ001;
+			containerPortal = AAPROJ001 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = BBMACTUN001;
 			remoteInfo = WraithVPNMacTunnel;
@@ -148,24 +151,24 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		'AACOPY001' = {
+		AACOPY001 /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				AACOPYREF001,
+				AACOPYREF001 /* WireGuardTunnel.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		'BBMACEMBED001' = {
+		BBMACEMBED001 /* Embed App Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				BBMACTUNBF004,
+				BBMACTUNBF004 /* WraithVPNMacTunnel.appex in Embed App Extensions */,
 			);
 			name = "Embed App Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -173,289 +176,321 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		'AA100001' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WraithVPNApp.swift; sourceTree = "<group>"; };
-		'AA100002' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		'AA100003' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectView.swift; sourceTree = "<group>"; };
-		'AA100004' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerPickerView.swift; sourceTree = "<group>"; };
-		'AA100005' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
-		'AA100006' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
-		'AA100007' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
-		'AA100041' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeRedemptionView.swift; sourceTree = "<group>"; };
-		'AA100008' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
-		'AA100009' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
-		'AA100010' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WireGuardManager.swift; sourceTree = "<group>"; };
-		'AA100011' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitManager.swift; sourceTree = "<group>"; };
-		'AA100012' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerListManager.swift; sourceTree = "<group>"; };
-		'AA100013' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
-		'AA100014' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
-		'AA100015' = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		'AA100016' = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		'AA100017' = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WraithVPN.entitlements; sourceTree = "<group>"; };
-		'AA100018' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HavenDNSManager.swift; sourceTree = "<group>"; };
-		'AA10001A' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HavenDNSSettingsView.swift; sourceTree = "<group>"; };
-		'AA10001B' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AchievementsView.swift; sourceTree = "<group>"; };
-		'AA10001C' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DnsStatsView.swift; sourceTree = "<group>"; };
-		'AA10001E' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpgradeSheet.swift; sourceTree = "<group>"; };
-		'AA10001F' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultiHopPickerSheet.swift; sourceTree = "<group>"; };
-		'AA100020' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PacketTunnelProvider.swift; sourceTree = "<group>"; };
-		'AA100021' = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WireGuardTunnel.entitlements; sourceTree = "<group>"; };
-		'AA100022' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TunnelConfiguration+WgQuickConfig.swift"; sourceTree = "<group>"; };
-		'AA100023' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+ArrayConversion.swift"; sourceTree = "<group>"; };
-		'AA100024' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugLogger.swift; sourceTree = "<group>"; };
-		'AA100025' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DNSHealthCheck.swift; sourceTree = "<group>"; };
-		'AA100026' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugLogView.swift; sourceTree = "<group>"; };
-		'AA100027' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectVPNIntent.swift; sourceTree = "<group>"; };
-		'AA100028' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisconnectVPNIntent.swift; sourceTree = "<group>"; };
-		'AA100029' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WraithAppShortcuts.swift; sourceTree = "<group>"; };
-		'AA10002F' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegionPickerView.swift; sourceTree = "<group>"; };
-		'AA100030' = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = NetworkExtension.framework; path = System/Library/Frameworks/NetworkExtension.framework; sourceTree = SDKROOT; };
-		'AA100031' = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
-		'AA100032' = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CryptoKit.framework; path = System/Library/Frameworks/CryptoKit.framework; sourceTree = SDKROOT; };
-		'AA100033' = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Network.framework; path = System/Library/Frameworks/Network.framework; sourceTree = SDKROOT; };
-		'AA100039' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetryManager.swift; sourceTree = "<group>"; };
-		'AA100040' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LatencyProbe.swift; sourceTree = "<group>"; };
-		'AAPRIV100' = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		'AAPROD001' = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WraithVPN.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		'AAPROD002' = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WireGuardTunnel.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		'AATST100' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelTests.swift; sourceTree = "<group>"; };
-		'AATST101' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelperTests.swift; sourceTree = "<group>"; };
-		'AATST102' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClientTests.swift; sourceTree = "<group>"; };
-		'AATST103' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitManagerTests.swift; sourceTree = "<group>"; };
-		'AATST104' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerListManagerTests.swift; sourceTree = "<group>"; };
-		'AATST105' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HavenDNSManagerTests.swift; sourceTree = "<group>"; };
-		'AATST_PROD' = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WraithVPNTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		'AATUNPRIV100' = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		'BBMAC010' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WraithVPNMacApp.swift; sourceTree = "<group>"; };
-		'BBMAC014' = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		'BBMAC015' = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		'BBMAC016' = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WraithVPNMac.entitlements; sourceTree = "<group>"; };
-		'BBMAC020' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainMenuView.swift; sourceTree = "<group>"; };
-		'BBMAC021' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacAccountView.swift; sourceTree = "<group>"; };
-		'BBMAC025' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacMainView.swift; sourceTree = "<group>"; };
-		'BBMACNEW001' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacRegionPickerView.swift; sourceTree = "<group>"; };
-		'BBMACNEW002' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacMultiHopPickerView.swift; sourceTree = "<group>"; };
-		'BBMACNEW003' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacHavenDNSSettingsView.swift; sourceTree = "<group>"; };
-		'BBMACNEW004' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacDnsStatsView.swift; sourceTree = "<group>"; };
-		'BBMACNEW005' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacAchievementsView.swift; sourceTree = "<group>"; };
-		'BBMACNEW006' = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacUpgradeSheet.swift; sourceTree = "<group>"; };
-		'BBMACPROD001' = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WraithVPNMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		'BBMACTUNFR001' = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		'BBMACTUNFR002' = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WraithVPNMacTunnel.entitlements; sourceTree = "<group>"; };
-		'BBMACTUNFR003' = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WraithVPNMacTunnel.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		04C7408A151052A26A9E2AA2 /* SnapshotHelper.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "WraithVPN/UITests/SnapshotHelper.swift"; sourceTree = SOURCE_ROOT; };
+		5AE810893CC4B1EF12D98611 /* ScreenshotTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "WraithVPN/UITests/ScreenshotTests.swift"; sourceTree = SOURCE_ROOT; };
+		AA100001 /* WraithVPNApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WraithVPNApp.swift; sourceTree = "<group>"; };
+		AA100002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		AA100003 /* ConnectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectView.swift; sourceTree = "<group>"; };
+		AA100004 /* ServerPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerPickerView.swift; sourceTree = "<group>"; };
+		AA100005 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		AA100006 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		AA100007 /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
+		AA100008 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		AA100009 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		AA100010 /* WireGuardManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WireGuardManager.swift; sourceTree = "<group>"; };
+		AA100011 /* StoreKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitManager.swift; sourceTree = "<group>"; };
+		AA100012 /* ServerListManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerListManager.swift; sourceTree = "<group>"; };
+		AA100013 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
+		AA100014 /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
+		AA100015 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		AA100016 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		AA100017 /* WraithVPN.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WraithVPN.entitlements; sourceTree = "<group>"; };
+		AA100018 /* HavenDNSManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HavenDNSManager.swift; sourceTree = "<group>"; };
+		AA10001A /* HavenDNSSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HavenDNSSettingsView.swift; sourceTree = "<group>"; };
+		AA10001B /* AchievementsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AchievementsView.swift; sourceTree = "<group>"; };
+		AA10001C /* DnsStatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DnsStatsView.swift; sourceTree = "<group>"; };
+		AA10001E /* UpgradeSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpgradeSheet.swift; sourceTree = "<group>"; };
+		AA10001F /* MultiHopPickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultiHopPickerSheet.swift; sourceTree = "<group>"; };
+		AA100020 /* PacketTunnelProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PacketTunnelProvider.swift; sourceTree = "<group>"; };
+		AA100021 /* WireGuardTunnel.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WireGuardTunnel.entitlements; sourceTree = "<group>"; };
+		AA100022 /* TunnelConfiguration+WgQuickConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TunnelConfiguration+WgQuickConfig.swift"; sourceTree = "<group>"; };
+		AA100023 /* String+ArrayConversion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+ArrayConversion.swift"; sourceTree = "<group>"; };
+		AA100024 /* DebugLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugLogger.swift; sourceTree = "<group>"; };
+		AA100025 /* DNSHealthCheck.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DNSHealthCheck.swift; sourceTree = "<group>"; };
+		AA100026 /* DebugLogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugLogView.swift; sourceTree = "<group>"; };
+		AA100027 /* ConnectVPNIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectVPNIntent.swift; sourceTree = "<group>"; };
+		AA100028 /* DisconnectVPNIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisconnectVPNIntent.swift; sourceTree = "<group>"; };
+		AA100029 /* WraithAppShortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WraithAppShortcuts.swift; sourceTree = "<group>"; };
+		AA10002F /* RegionPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegionPickerView.swift; sourceTree = "<group>"; };
+		AA100030 /* NetworkExtension.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = NetworkExtension.framework; path = System/Library/Frameworks/NetworkExtension.framework; sourceTree = SDKROOT; };
+		AA100031 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
+		AA100032 /* CryptoKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CryptoKit.framework; path = System/Library/Frameworks/CryptoKit.framework; sourceTree = SDKROOT; };
+		AA100033 /* Network.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Network.framework; path = System/Library/Frameworks/Network.framework; sourceTree = SDKROOT; };
+		AA100039 /* TelemetryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetryManager.swift; sourceTree = "<group>"; };
+		AA100040 /* LatencyProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LatencyProbe.swift; sourceTree = "<group>"; };
+		AA100041 /* CodeRedemptionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeRedemptionView.swift; sourceTree = "<group>"; };
+		AAPRIV100 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		AAPROD001 /* WraithVPN.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WraithVPN.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AAPROD002 /* WireGuardTunnel.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WireGuardTunnel.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		AATST100 /* ModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelTests.swift; sourceTree = "<group>"; };
+		AATST101 /* KeychainHelperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelperTests.swift; sourceTree = "<group>"; };
+		AATST102 /* APIClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClientTests.swift; sourceTree = "<group>"; };
+		AATST103 /* StoreKitManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitManagerTests.swift; sourceTree = "<group>"; };
+		AATST104 /* ServerListManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerListManagerTests.swift; sourceTree = "<group>"; };
+		AATST105 /* HavenDNSManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HavenDNSManagerTests.swift; sourceTree = "<group>"; };
+		AATST_PROD /* WraithVPNTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WraithVPNTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AATUNPRIV100 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		BBMAC010 /* WraithVPNMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WraithVPNMacApp.swift; sourceTree = "<group>"; };
+		BBMAC014 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		BBMAC015 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		BBMAC016 /* WraithVPNMac.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WraithVPNMac.entitlements; sourceTree = "<group>"; };
+		BBMAC020 /* MainMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainMenuView.swift; sourceTree = "<group>"; };
+		BBMAC021 /* MacAccountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacAccountView.swift; sourceTree = "<group>"; };
+		BBMAC025 /* MacMainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacMainView.swift; sourceTree = "<group>"; };
+		BBMACNEW001 /* MacRegionPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacRegionPickerView.swift; sourceTree = "<group>"; };
+		BBMACNEW002 /* MacMultiHopPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacMultiHopPickerView.swift; sourceTree = "<group>"; };
+		BBMACNEW003 /* MacHavenDNSSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacHavenDNSSettingsView.swift; sourceTree = "<group>"; };
+		BBMACNEW004 /* MacDnsStatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacDnsStatsView.swift; sourceTree = "<group>"; };
+		BBMACNEW005 /* MacAchievementsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacAchievementsView.swift; sourceTree = "<group>"; };
+		BBMACNEW006 /* MacUpgradeSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacUpgradeSheet.swift; sourceTree = "<group>"; };
+		BBMACPROD001 /* WraithVPNMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WraithVPNMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		BBMACTUNFR001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		BBMACTUNFR002 /* WraithVPNMacTunnel.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WraithVPNMacTunnel.entitlements; sourceTree = "<group>"; };
+		BBMACTUNFR003 /* WraithVPNMacTunnel.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WraithVPNMacTunnel.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		BC9FECE02F80E5140020F723 /* WireGuard.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = WireGuard.xcodeproj; sourceTree = "<group>"; };
 		BCC37CBF2F84CC2E00ABBF3E /* TestPlan.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = TestPlan.xctestplan; sourceTree = "<group>"; };
+		E032FDEE137C4898E58F8EBC /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		F61CDF7E8AB10DFBD5494A53 /* WraithVPNUITests */ = {isa = PBXFileReference; includeInIndex = 0; path = WraithVPNUITests; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		'AABP001' = {
+		581BEAB255C06203C0EA60AB /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AA000030,
-				AA000031,
-				AA000032,
-				AA000033,
-				KFSTYLE_IOS_BF,
+				2906B162EABEB3EC7EA98B36 /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		'AABP002' = {
+		AABP001 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AA000034,
-				AA000035,
+				AA000030 /* NetworkExtension.framework in Frameworks */,
+				AA000031 /* StoreKit.framework in Frameworks */,
+				AA000032 /* CryptoKit.framework in Frameworks */,
+				AA000033 /* Network.framework in Frameworks */,
+				KFSTYLE_IOS_BF /* KatafractStyle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		'BBMACBP001' = {
+		AABP002 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BBMAC068,
-				KFSTYLE_MAC_BF,
+				AA000034 /* NetworkExtension.framework in Frameworks */,
+				AA000035 /* WireGuardKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		'BBMACTUNBP001' = {
+		BBMACBP001 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BBMACTUNBF005,
+				BBMAC068 /* NetworkExtension.framework in Frameworks */,
+				KFSTYLE_MAC_BF /* KatafractStyle in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BBMACTUNBP001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BBMACTUNBF005 /* WireGuardKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		'AAGRP000' = {
+		21AA0463483712D8F99C527F /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				E032FDEE137C4898E58F8EBC /* Foundation.framework */,
+			);
+			name = iOS;
+			sourceTree = "<group>";
+		};
+		7E6FDCD9D7CA227E5DE41B2E /* UITests */ = {
+			isa = PBXGroup;
+			children = (
+				5AE810893CC4B1EF12D98611 /* ScreenshotTests.swift */,
+				04C7408A151052A26A9E2AA2 /* SnapshotHelper.swift */,
+			);
+			name = UITests;
+			sourceTree = "<group>";
+		};
+		AAGRP000 = {
 			isa = PBXGroup;
 			children = (
 				BCC37CBF2F84CC2E00ABBF3E /* TestPlan.xctestplan */,
-				AAGRP001,
-				AAGRP005,
-				BBMACGRP001,
-				BBMACTUNGRP01,
-				AAGRP006,
-				AAGRP009,
-				AAGRP010,
+				AAGRP001 /* WraithVPN */,
+				AAGRP005 /* WireGuardTunnel */,
+				BBMACGRP001 /* WraithVPNMac */,
+				BBMACTUNGRP01 /* WraithVPNMacTunnel */,
+				AAGRP006 /* WraithVPNTests */,
+				AAGRP009 /* Frameworks */,
+				AAGRP010 /* Products */,
 				BC9FECE02F80E5140020F723 /* WireGuard.xcodeproj */,
 			);
 			sourceTree = "<group>";
 		};
-		'AAGRP001' = {
+		AAGRP001 /* WraithVPN */ = {
 			isa = PBXGroup;
 			children = (
-				AA100001,
-				AAGRP002,
-				AAGRP003,
-				AAGRP004,
-				AAGRP004B,
-				AAGRP005B,
-				AA100015,
-				AA100016,
-				AA100017,
-				AAPRIV100,
+				AA100001 /* WraithVPNApp.swift */,
+				AAGRP002 /* Views */,
+				AAGRP003 /* Managers */,
+				AAGRP004 /* Helpers */,
+				AAGRP004B /* Models */,
+				AAGRP005B /* Intents */,
+				AA100015 /* Assets.xcassets */,
+				AA100016 /* Info.plist */,
+				AA100017 /* WraithVPN.entitlements */,
+				AAPRIV100 /* PrivacyInfo.xcprivacy */,
+				7E6FDCD9D7CA227E5DE41B2E /* UITests */,
 			);
 			path = WraithVPN;
 			sourceTree = "<group>";
 		};
-		'AAGRP002' = {
+		AAGRP002 /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				AA100002,
-				AA100003,
-				AA100004,
-				AA100005,
-				AA100006,
-				AA100007,
-				AA10001A,
-				AA10001B,
-				AA10001C,
-				AA10001E,
-				AA10001F,
-				AA10002F,
-				AA100026,
-			AA100041,
+				AA100002 /* ContentView.swift */,
+				AA100003 /* ConnectView.swift */,
+				AA100004 /* ServerPickerView.swift */,
+				AA100005 /* OnboardingView.swift */,
+				AA100006 /* SettingsView.swift */,
+				AA100007 /* PaywallView.swift */,
+				AA10001A /* HavenDNSSettingsView.swift */,
+				AA10001B /* AchievementsView.swift */,
+				AA10001C /* DnsStatsView.swift */,
+				AA10001E /* UpgradeSheet.swift */,
+				AA10001F /* MultiHopPickerSheet.swift */,
+				AA10002F /* RegionPickerView.swift */,
+				AA100026 /* DebugLogView.swift */,
+				AA100041 /* CodeRedemptionView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
 		};
-		'AAGRP003' = {
+		AAGRP003 /* Managers */ = {
 			isa = PBXGroup;
 			children = (
-				AA100009,
-				AA100010,
-				AA100011,
-				AA100012,
-				AA100018,
-				AA100024,
-				AA100025,
-				AA100039,
-				AA100040,
+				AA100009 /* APIClient.swift */,
+				AA100010 /* WireGuardManager.swift */,
+				AA100011 /* StoreKitManager.swift */,
+				AA100012 /* ServerListManager.swift */,
+				AA100018 /* HavenDNSManager.swift */,
+				AA100024 /* DebugLogger.swift */,
+				AA100025 /* DNSHealthCheck.swift */,
+				AA100039 /* TelemetryManager.swift */,
+				AA100040 /* LatencyProbe.swift */,
 			);
 			path = Managers;
 			sourceTree = "<group>";
 		};
-		'AAGRP004' = {
+		AAGRP004 /* Helpers */ = {
 			isa = PBXGroup;
 			children = (
-				AA100013,
-				AA100014,
+				AA100013 /* KeychainHelper.swift */,
+				AA100014 /* DesignSystem.swift */,
 			);
 			path = Helpers;
 			sourceTree = "<group>";
 		};
-		'AAGRP004B' = {
+		AAGRP004B /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				AA100008,
+				AA100008 /* Models.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
 		};
-		'AAGRP005' = {
+		AAGRP005 /* WireGuardTunnel */ = {
 			isa = PBXGroup;
 			children = (
-				AA100020,
-				AA100022,
-				AA100023,
-				AA100021,
-				AATUNPRIV100,
+				AA100020 /* PacketTunnelProvider.swift */,
+				AA100022 /* TunnelConfiguration+WgQuickConfig.swift */,
+				AA100023 /* String+ArrayConversion.swift */,
+				AA100021 /* WireGuardTunnel.entitlements */,
+				AATUNPRIV100 /* PrivacyInfo.xcprivacy */,
 			);
 			path = WireGuardTunnel;
 			sourceTree = "<group>";
 		};
-		'AAGRP005B' = {
+		AAGRP005B /* Intents */ = {
 			isa = PBXGroup;
 			children = (
-				AA100027,
-				AA100028,
-				AA100029,
+				AA100027 /* ConnectVPNIntent.swift */,
+				AA100028 /* DisconnectVPNIntent.swift */,
+				AA100029 /* WraithAppShortcuts.swift */,
 			);
 			path = Intents;
 			sourceTree = "<group>";
 		};
-		'AAGRP006' = {
+		AAGRP006 /* WraithVPNTests */ = {
 			isa = PBXGroup;
 			children = (
-				AATST100,
-				AATST101,
-				AATST102,
-				AATST103,
-				AATST104,
-				AATST105,
+				AATST100 /* ModelTests.swift */,
+				AATST101 /* KeychainHelperTests.swift */,
+				AATST102 /* APIClientTests.swift */,
+				AATST103 /* StoreKitManagerTests.swift */,
+				AATST104 /* ServerListManagerTests.swift */,
+				AATST105 /* HavenDNSManagerTests.swift */,
 			);
 			path = WraithVPNTests;
 			sourceTree = "<group>";
 		};
-		'AAGRP009' = {
+		AAGRP009 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				AA100030,
-				AA100031,
-				AA100032,
-				AA100033,
+				AA100030 /* NetworkExtension.framework */,
+				AA100031 /* StoreKit.framework */,
+				AA100032 /* CryptoKit.framework */,
+				AA100033 /* Network.framework */,
+				21AA0463483712D8F99C527F /* iOS */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		'AAGRP010' = {
+		AAGRP010 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				AAPROD001,
-				AAPROD002,
-				BBMACPROD001,
-				AATST_PROD,
+				AAPROD001 /* WraithVPN.app */,
+				AAPROD002 /* WireGuardTunnel.appex */,
+				BBMACPROD001 /* WraithVPNMac.app */,
+				AATST_PROD /* WraithVPNTests.xctest */,
+				F61CDF7E8AB10DFBD5494A53 /* WraithVPNUITests */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		'BBMACGRP001' = {
+		BBMACGRP001 /* WraithVPNMac */ = {
 			isa = PBXGroup;
 			children = (
-				BBMAC010,
-				BBMAC020,
-				BBMAC021,
-				BBMAC025,
-				BBMACNEW001,
-				BBMACNEW002,
-				BBMACNEW003,
-				BBMACNEW004,
-				BBMACNEW005,
-				BBMACNEW006,
-				BBMAC014,
-				BBMAC015,
-				BBMAC016,
+				BBMAC010 /* WraithVPNMacApp.swift */,
+				BBMAC020 /* MainMenuView.swift */,
+				BBMAC021 /* MacAccountView.swift */,
+				BBMAC025 /* MacMainView.swift */,
+				BBMACNEW001 /* MacRegionPickerView.swift */,
+				BBMACNEW002 /* MacMultiHopPickerView.swift */,
+				BBMACNEW003 /* MacHavenDNSSettingsView.swift */,
+				BBMACNEW004 /* MacDnsStatsView.swift */,
+				BBMACNEW005 /* MacAchievementsView.swift */,
+				BBMACNEW006 /* MacUpgradeSheet.swift */,
+				BBMAC014 /* Info.plist */,
+				BBMAC015 /* PrivacyInfo.xcprivacy */,
+				BBMAC016 /* WraithVPNMac.entitlements */,
 			);
 			path = WraithVPNMac;
 			sourceTree = "<group>";
 		};
-		'BBMACTUNGRP01' = {
+		BBMACTUNGRP01 /* WraithVPNMacTunnel */ = {
 			isa = PBXGroup;
 			children = (
-				BBMACTUNFR002,
-				BBMACTUNFR001,
+				BBMACTUNFR002 /* WraithVPNMacTunnel.entitlements */,
+				BBMACTUNFR001 /* Info.plist */,
 			);
 			path = WraithVPNMacTunnel;
 			sourceTree = "<group>";
@@ -468,7 +503,7 @@
 				BC9FECEF2F80E5150020F723 /* WireGuard.app */,
 				BC9FECF12F80E5150020F723 /* WireGuardNetworkExtension.appex */,
 				BC9FECF32F80E5150020F723 /* WireGuardLoginItemHelper.app */,
-				BBMACTUNFR003,
+				BBMACTUNFR003 /* WraithVPNMacTunnel.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -476,35 +511,53 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		'AATGT001' = {
+		860EB75C45ED6FFC5B32B3D3 /* WraithVPNUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = AACL001;
+			productType = "com.apple.product-type.bundle.ui-testing";
+			buildConfigurationList = 85BB95AD68DDD01141287377 /* Build configuration list for PBXNativeTarget "WraithVPNUITests" */;
 			buildPhases = (
-				AABP001,
-				AASP001,
-				AARES001,
-				AACOPY001,
+				7E02171455421306AA52683C /* Sources */,
+				581BEAB255C06203C0EA60AB /* Frameworks */,
+				FB439FC4537B136F8BC74574 /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				AADEP001,
+				7DEE05BB4C89C3D07F02AE8A /* PBXTargetDependency */,
+			);
+			name = WraithVPNUITests;
+			productName = WraithVPNUITests;
+			productReference = F61CDF7E8AB10DFBD5494A53 /* WraithVPNUITests */;
+		};
+		AATGT001 /* WraithVPN */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AACL001 /* Build configuration list for PBXNativeTarget "WraithVPN" */;
+			buildPhases = (
+				AABP001 /* Frameworks */,
+				AASP001 /* Sources */,
+				AARES001 /* Resources */,
+				AACOPY001 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AADEP001 /* PBXTargetDependency */,
 			);
 			name = WraithVPN;
 			packageProductDependencies = (
-				KFSTYLE_IOS_PROD,
+				KFSTYLE_IOS_PROD /* KatafractStyle */,
 			);
 			productName = WraithVPN;
-			productReference = AAPROD001;
+			productReference = AAPROD001 /* WraithVPN.app */;
 			productType = "com.apple.product-type.application";
 		};
-		'AATGT002' = {
+		AATGT002 /* WireGuardTunnel */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = AACL002;
+			buildConfigurationList = AACL002 /* Build configuration list for PBXNativeTarget "WireGuardTunnel" */;
 			buildPhases = (
-				AABP002,
-				AASP002,
-				AATUNRES001,
+				AABP002 /* Frameworks */,
+				AASP002 /* Sources */,
+				AATUNRES001 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -512,57 +565,57 @@
 			);
 			name = WireGuardTunnel;
 			packageProductDependencies = (
-				BCWGPROD001,
+				BCWGPROD001 /* WireGuardKit */,
 			);
 			productName = WireGuardTunnel;
-			productReference = AAPROD002;
+			productReference = AAPROD002 /* WireGuardTunnel.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
-		'AATST001' = {
+		AATST001 /* WraithVPNTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = AACL003;
+			buildConfigurationList = AACL003 /* Build configuration list for PBXNativeTarget "WraithVPNTests" */;
 			buildPhases = (
-				AATST010,
+				AATST010 /* Sources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				AATST_DEP,
+				AATST_DEP /* PBXTargetDependency */,
 			);
 			name = WraithVPNTests;
 			productName = WraithVPNTests;
-			productReference = AATST_PROD;
+			productReference = AATST_PROD /* WraithVPNTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		'BBMACTGT001' = {
+		BBMACTGT001 /* WraithVPNMac */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = BBMACCL001;
+			buildConfigurationList = BBMACCL001 /* Build configuration list for PBXNativeTarget "WraithVPNMac" */;
 			buildPhases = (
-				BBMACBP001,
-				BBMACSP001,
-				BBMACRES001,
-				BBMACEMBED001,
+				BBMACBP001 /* Frameworks */,
+				BBMACSP001 /* Sources */,
+				BBMACRES001 /* Resources */,
+				BBMACEMBED001 /* Embed App Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				BBMACDEP001,
+				BBMACDEP001 /* PBXTargetDependency */,
 			);
 			name = WraithVPNMac;
 			packageProductDependencies = (
-				KFSTYLE_MAC_PROD,
+				KFSTYLE_MAC_PROD /* KatafractStyle */,
 			);
 			productName = WraithVPNMac;
-			productReference = BBMACPROD001;
+			productReference = BBMACPROD001 /* WraithVPNMac.app */;
 			productType = "com.apple.product-type.application";
 		};
-		'BBMACTUN001' = {
+		BBMACTUN001 /* WraithVPNMacTunnel */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = BBMACTUNCL001;
+			buildConfigurationList = BBMACTUNCL001 /* Build configuration list for PBXNativeTarget "WraithVPNMacTunnel" */;
 			buildPhases = (
-				BBMACTUNSP001,
-				BBMACTUNBP001,
-				BBMACTUNRP001,
+				BBMACTUNSP001 /* Sources */,
+				BBMACTUNBP001 /* Frameworks */,
+				BBMACTUNRP001 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -570,16 +623,16 @@
 			);
 			name = WraithVPNMacTunnel;
 			packageProductDependencies = (
-				BBMACTUNWG001,
+				BBMACTUNWG001 /* WireGuardKit */,
 			);
 			productName = WraithVPNMacTunnel;
-			productReference = BBMACTUNFR003;
+			productReference = BBMACTUNFR003 /* WraithVPNMacTunnel.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		'AAPROJ001' = {
+		AAPROJ001 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
@@ -601,7 +654,7 @@
 					};
 				};
 			};
-			buildConfigurationList = AACL000;
+			buildConfigurationList = AACL000 /* Build configuration list for PBXProject "WraithVPN" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -614,7 +667,7 @@
 				BC8F55772F80E2F4009FC332 /* XCLocalSwiftPackageReference "wireguard-apple" */,
 				KFSTYLE001 /* XCLocalSwiftPackageReference "KatafractStyle" */,
 			);
-			productRefGroup = AAGRP010;
+			productRefGroup = AAGRP010 /* Products */;
 			projectDirPath = "";
 			projectReferences = (
 				{
@@ -624,11 +677,12 @@
 			);
 			projectRoot = "";
 			targets = (
-				AATGT001,
-				AATGT002,
-				BBMACTGT001,
-				AATST001,
-				BBMACTUN001,
+				AATGT001 /* WraithVPN */,
+				AATGT002 /* WireGuardTunnel */,
+				BBMACTGT001 /* WraithVPNMac */,
+				AATST001 /* WraithVPNTests */,
+				BBMACTUN001 /* WraithVPNMacTunnel */,
+				860EB75C45ED6FFC5B32B3D3 /* WraithVPNUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -672,33 +726,40 @@
 /* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
-		'AARES001' = {
+		AARES001 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AA000015,
-				AAPRIV001,
+				AA000015 /* Assets.xcassets in Resources */,
+				AAPRIV001 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		'AATUNRES001' = {
+		AATUNRES001 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AATUNPRIV001,
+				AATUNPRIV001 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		'BBMACRES001' = {
+		BBMACRES001 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BBMAC060,
-				BBMAC062,
+				BBMAC060 /* PrivacyInfo.xcprivacy in Resources */,
+				BBMAC062 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		'BBMACTUNRP001' = {
+		BBMACTUNRP001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FB439FC4537B136F8BC74574 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -708,128 +769,162 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		'AASP001' = {
+		7E02171455421306AA52683C /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AA000001,
-				AA000002,
-				AA000003,
-				AA000004,
-				AA000005,
-				AA000006,
-				AA000007,
-				AA000041,
-				AA00001A,
-				AA00001B,
-				AA00001C,
-				AA00001E,
-				AA00001F,
-				AA00002F,
-				AA000008,
-				AA000009,
-				AA000010,
-				AA000011,
-				AA000012,
-				AA000013,
-				AA000014,
-				AA000016,
-				AA000023,
-				AA000024,
-				AA000025,
-				AA000026,
-				AA000027,
-				AA000028,
-				AA000029,
-				AA000036,
+				3B9AAF5B5558D10A59877C91 /* ScreenshotTests.swift in Sources */,
+				D23E842CD4882048071FBE21 /* SnapshotHelper.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		'AASP002' = {
+		AASP001 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AA000020,
-				AA000021,
-				AA000022,
+				AA000001 /* WraithVPNApp.swift in Sources */,
+				AA000002 /* ContentView.swift in Sources */,
+				AA000003 /* ConnectView.swift in Sources */,
+				AA000004 /* ServerPickerView.swift in Sources */,
+				AA000005 /* OnboardingView.swift in Sources */,
+				AA000006 /* SettingsView.swift in Sources */,
+				AA000007 /* PaywallView.swift in Sources */,
+				AA000041 /* CodeRedemptionView.swift in Sources */,
+				AA00001A /* HavenDNSSettingsView.swift in Sources */,
+				AA00001B /* AchievementsView.swift in Sources */,
+				AA00001C /* DnsStatsView.swift in Sources */,
+				AA00001E /* UpgradeSheet.swift in Sources */,
+				AA00001F /* MultiHopPickerSheet.swift in Sources */,
+				AA00002F /* RegionPickerView.swift in Sources */,
+				AA000008 /* Models.swift in Sources */,
+				AA000009 /* APIClient.swift in Sources */,
+				AA000010 /* WireGuardManager.swift in Sources */,
+				AA000011 /* StoreKitManager.swift in Sources */,
+				AA000012 /* ServerListManager.swift in Sources */,
+				AA000013 /* KeychainHelper.swift in Sources */,
+				AA000014 /* DesignSystem.swift in Sources */,
+				AA000016 /* HavenDNSManager.swift in Sources */,
+				AA000023 /* DebugLogger.swift in Sources */,
+				AA000024 /* DNSHealthCheck.swift in Sources */,
+				AA000025 /* DebugLogView.swift in Sources */,
+				AA000026 /* ConnectVPNIntent.swift in Sources */,
+				AA000027 /* DisconnectVPNIntent.swift in Sources */,
+				AA000028 /* WraithAppShortcuts.swift in Sources */,
+				AA000029 /* TelemetryManager.swift in Sources */,
+				AA000036 /* LatencyProbe.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		'AATST010' = {
+		AASP002 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AATST200,
-				AATST201,
-				AATST202,
-				AATST203,
-				AATST204,
-				AATST205,
+				AA000020 /* PacketTunnelProvider.swift in Sources */,
+				AA000021 /* TunnelConfiguration+WgQuickConfig.swift in Sources */,
+				AA000022 /* String+ArrayConversion.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		'BBMACSP001' = {
+		AATST010 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BBMAC050,
-				BBMAC054,
-				BBMAC055,
-				BBMAC056,
-				BBMAC057,
-				BBMAC058,
-				BBMAC063,
-				BBMAC064,
-				BBMAC065,
-				BBMAC066,
-				BBMAC067,
-				BBMAC100,
-				BBMACNFW001,
-				BBMACNFW002,
-				BBMACNFW003,
-				BBMACNFW004,
-				BBMACNFW005,
-				BBMACNFW006,
-				BBMAC069,
-				BBMAC070,
-				BBMAC071,
-				BBMAC099,
+				AATST200 /* ModelTests.swift in Sources */,
+				AATST201 /* KeychainHelperTests.swift in Sources */,
+				AATST202 /* APIClientTests.swift in Sources */,
+				AATST203 /* StoreKitManagerTests.swift in Sources */,
+				AATST204 /* ServerListManagerTests.swift in Sources */,
+				AATST205 /* HavenDNSManagerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		'BBMACTUNSP001' = {
+		BBMACSP001 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BBMACTUNBF002,
+				BBMAC050 /* WraithVPNMacApp.swift in Sources */,
+				BBMAC054 /* APIClient.swift in Sources */,
+				BBMAC055 /* StoreKitManager.swift in Sources */,
+				BBMAC056 /* HavenDNSManager.swift in Sources */,
+				BBMAC057 /* KeychainHelper.swift in Sources */,
+				BBMAC058 /* Models.swift in Sources */,
+				BBMAC063 /* WireGuardManager.swift in Sources */,
+				BBMAC064 /* ServerListManager.swift in Sources */,
+				BBMAC065 /* DesignSystem.swift in Sources */,
+				BBMAC066 /* MainMenuView.swift in Sources */,
+				BBMAC067 /* MacAccountView.swift in Sources */,
+				BBMAC100 /* MacMainView.swift in Sources */,
+				BBMACNFW001 /* MacRegionPickerView.swift in Sources */,
+				BBMACNFW002 /* MacMultiHopPickerView.swift in Sources */,
+				BBMACNFW003 /* MacHavenDNSSettingsView.swift in Sources */,
+				BBMACNFW004 /* MacDnsStatsView.swift in Sources */,
+				BBMACNFW005 /* MacAchievementsView.swift in Sources */,
+				BBMACNFW006 /* MacUpgradeSheet.swift in Sources */,
+				BBMAC069 /* DebugLogger.swift in Sources */,
+				BBMAC070 /* DNSHealthCheck.swift in Sources */,
+				BBMAC071 /* TelemetryManager.swift in Sources */,
+				BBMAC099 /* LatencyProbe.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BBMACTUNSP001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BBMACTUNBF002 /* PacketTunnelProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		'AADEP001' = {
+		7DEE05BB4C89C3D07F02AE8A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AATGT001 /* WraithVPN */;
+		};
+		AADEP001 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			platformFilters = (
 				iphoneos,
 			);
-			target = AATGT002;
-			targetProxy = AADEPPROXY001;
+			target = AATGT002 /* WireGuardTunnel */;
+			targetProxy = AADEPPROXY001 /* PBXContainerItemProxy */;
 		};
-		'AATST_DEP' = {
+		AATST_DEP /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = AATGT001;
-			targetProxy = AATST_PROXY;
+			target = AATGT001 /* WraithVPN */;
+			targetProxy = AATST_PROXY /* PBXContainerItemProxy */;
 		};
-		'BBMACDEP001' = {
+		BBMACDEP001 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = BBMACTUN001;
-			targetProxy = BBMACPROXY001;
+			target = BBMACTUN001 /* WraithVPNMacTunnel */;
+			targetProxy = BBMACPROXY001 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		'AAXC000D' = {
+		6C84C91C83D681807FB41A5F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				DEFINES_MODULE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.katafract.wraith.tests.ui;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.9;
+				TARGET_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/WraithVPN.app/WraithVPN";
+				TEST_TARGET_NAME = WraithVPN;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		AAXC000D /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -884,7 +979,7 @@
 			};
 			name = Debug;
 		};
-		'AAXC000R' = {
+		AAXC000R /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -934,7 +1029,7 @@
 			};
 			name = Release;
 		};
-		'AAXC001D' = {
+		AAXC001D /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -961,7 +1056,7 @@
 			};
 			name = Debug;
 		};
-		'AAXC001R' = {
+		AAXC001R /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -988,7 +1083,7 @@
 			};
 			name = Release;
 		};
-		'AAXC002D' = {
+		AAXC002D /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = WireGuardTunnel/WireGuardTunnel.entitlements;
@@ -1012,7 +1107,7 @@
 			};
 			name = Debug;
 		};
-		'AAXC002R' = {
+		AAXC002R /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = WireGuardTunnel/WireGuardTunnel.entitlements;
@@ -1036,7 +1131,7 @@
 			};
 			name = Release;
 		};
-		'AAXC003D' = {
+		AAXC003D /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -1053,7 +1148,7 @@
 			};
 			name = Debug;
 		};
-		'AAXC003R' = {
+		AAXC003R /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -1070,7 +1165,7 @@
 			};
 			name = Release;
 		};
-		'BBMACTUND001' = {
+		BBMACTUND001 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = WraithVPNMacTunnel/WraithVPNMacTunnel.entitlements;
@@ -1092,7 +1187,7 @@
 			};
 			name = Debug;
 		};
-		'BBMACTUNR001' = {
+		BBMACTUNR001 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = WraithVPNMacTunnel/WraithVPNMacTunnel.entitlements;
@@ -1113,7 +1208,7 @@
 			};
 			name = Release;
 		};
-		'BBMACXC001D' = {
+		BBMACXC001D /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -1138,7 +1233,7 @@
 			};
 			name = Debug;
 		};
-		'BBMACXC001R' = {
+		BBMACXC001R /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -1163,59 +1258,90 @@
 			};
 			name = Release;
 		};
+		EC9233213D2226F3A91F1633 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				USES_XCTRUNNER = NO;
+				USES_XCTRUNNER = NO;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				DEFINES_MODULE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.katafract.wraith.tests.ui;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.9;
+				TARGET_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/WraithVPN.app/WraithVPN";
+				TEST_TARGET_NAME = WraithVPN;
+			};
+			name = Debug;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		'AACL000' = {
+		85BB95AD68DDD01141287377 /* Build configuration list for PBXNativeTarget "WraithVPNUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				AAXC000D,
-				AAXC000R,
+				6C84C91C83D681807FB41A5F /* Release */,
+				EC9233213D2226F3A91F1633 /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		'AACL001' = {
+		AACL000 /* Build configuration list for PBXProject "WraithVPN" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				AAXC001D,
-				AAXC001R,
+				AAXC000D /* Debug */,
+				AAXC000R /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		'AACL002' = {
+		AACL001 /* Build configuration list for PBXNativeTarget "WraithVPN" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				AAXC002D,
-				AAXC002R,
+				AAXC001D /* Debug */,
+				AAXC001R /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		'AACL003' = {
+		AACL002 /* Build configuration list for PBXNativeTarget "WireGuardTunnel" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				AAXC003D,
-				AAXC003R,
+				AAXC002D /* Debug */,
+				AAXC002R /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		'BBMACCL001' = {
+		AACL003 /* Build configuration list for PBXNativeTarget "WraithVPNTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				BBMACXC001D,
-				BBMACXC001R,
+				AAXC003D /* Debug */,
+				AAXC003R /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		'BBMACTUNCL001' = {
+		BBMACCL001 /* Build configuration list for PBXNativeTarget "WraithVPNMac" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				BBMACTUND001,
-				BBMACTUNR001,
+				BBMACXC001D /* Debug */,
+				BBMACXC001R /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BBMACTUNCL001 /* Build configuration list for PBXNativeTarget "WraithVPNMacTunnel" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BBMACTUND001 /* Debug */,
+				BBMACTUNR001 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -1229,32 +1355,32 @@
 		};
 		KFSTYLE001 /* XCLocalSwiftPackageReference "KatafractStyle" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = "../KatafractStyle";
+			relativePath = ../KatafractStyle;
 		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		'BBMACTUNWG001' = {
+		BBMACTUNWG001 /* WireGuardKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = BC8F55772F80E2F4009FC332 /* XCLocalSwiftPackageReference "wireguard-apple" */;
 			productName = WireGuardKit;
 		};
-		'BCWGPROD001' = {
+		BCWGPROD001 /* WireGuardKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = BC8F55772F80E2F4009FC332 /* XCLocalSwiftPackageReference "wireguard-apple" */;
 			productName = WireGuardKit;
 		};
-		'KFSTYLE_IOS_PROD' = {
+		KFSTYLE_IOS_PROD /* KatafractStyle */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = KFSTYLE001 /* XCLocalSwiftPackageReference "KatafractStyle" */;
 			productName = KatafractStyle;
 		};
-		'KFSTYLE_MAC_PROD' = {
+		KFSTYLE_MAC_PROD /* KatafractStyle */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = KFSTYLE001 /* XCLocalSwiftPackageReference "KatafractStyle" */;
 			productName = KatafractStyle;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
-	rootObject = AAPROJ001;
+	rootObject = AAPROJ001 /* Project object */;
 }

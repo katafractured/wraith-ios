@@ -36,10 +36,12 @@ jobs:
             -d "\$PAYLOAD" || true
 
       - name: Clone sibling KatafractStyle
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           PARENT="$(dirname "$GITHUB_WORKSPACE")"
           if [ ! -d "$PARENT/KatafractStyle/.git" ]; then
-            git clone --depth 1 https://github.com/katafract-io/KatafractStyle "$PARENT/KatafractStyle"
+            git clone --depth 1 "https://oauth2:${GH_TOKEN}@github.com/katafract-io/KatafractStyle" "$PARENT/KatafractStyle"
           else
             git -C "$PARENT/KatafractStyle" fetch --depth 1 origin main && git -C "$PARENT/KatafractStyle" reset --hard origin/main
           fi

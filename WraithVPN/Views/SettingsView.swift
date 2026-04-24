@@ -61,6 +61,7 @@ struct SettingsView: View {
                     if isAdminTokenState {
                         debugCard
                     }
+                    diagnosticsCard
                     dangerCard
                     versionFooter
                 }
@@ -1108,6 +1109,26 @@ struct SettingsView: View {
                                 .foregroundStyle(Color.kfTextMuted)
                         }
                     }
+                }
+            }
+        }
+        .padding(KFSpacing.md)
+        .kfCard()
+    }
+
+    // MARK: - Diagnostics card
+
+    private var diagnosticsCard: some View {
+        VStack(alignment: .leading, spacing: KFSpacing.md) {
+            sectionHeader("Diagnostics")
+
+            NavigationLink {
+                AppGroupDiagnosticsView()
+            } label: {
+                SettingsRow(icon: "checklist", label: "App Group Diagnostics") {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Color.kfTextMuted)
                 }
             }
         }

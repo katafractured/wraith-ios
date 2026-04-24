@@ -653,6 +653,7 @@ struct SettingsView: View {
                         }
                     }
                 }
+                .accessibilityIdentifier("haven-row")
             } else {
                 NavigationLink {
                     PaywallView()
@@ -699,6 +700,7 @@ struct SettingsView: View {
                         .foregroundStyle(Color.kfTextMuted)
                 }
             }
+            .accessibilityIdentifier("stats-row")
 
             Divider().background(Color.kfBorder)
 

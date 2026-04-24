@@ -7,75 +7,83 @@ final class WraithVPNScreenshotTests: XCTestCase {
         continueAfterFailure = false
     }
 
-    func testCaptureHeroOnboarding() {
+    func testCapture01Hero() {
         let app = launch(flags: [
-            "--screenshots", "--force-onboarding", "--mock-subscribed",
+            "--screenshots", "--skip-onboarding", "--mock-subscribed", "--mock-connected",
         ])
         sleep(4)
         snapshot("01_hero")
     }
 
-    func testCaptureRegionPicker() {
-        let app = launch(flags: defaultFlags)
+    func testCapture02Operator() {
+        let app = launch(flags: [
+            "--screenshots", "--force-onboarding",
+        ])
         sleep(3)
+        snapshot("02_operator")
+    }
+
+    func testCapture03Regions() {
+        let app = launch(flags: [
+            "--screenshots", "--skip-onboarding", "--mock-subscribed", "--mock-regions",
+        ])
         let regionButton = app.buttons.matching(identifier: "region-button").firstMatch
         if regionButton.waitForExistence(timeout: 5) {
             regionButton.tap()
-            sleep(2)
-        }
-        snapshot("02_regions")
-    }
-
-    func testCaptureConnectedState() {
-        let app = launch(flags: [
-            "--screenshots", "--skip-onboarding", "--mock-subscribed",
-        ])
-        sleep(3)
-        let connectButton = app.buttons.matching(identifier: "connect-button").firstMatch
-        if connectButton.waitForExistence(timeout: 5) {
-            connectButton.tap()
             sleep(3)
         }
-        snapshot("03_connected")
+        snapshot("03_regions")
     }
 
-    func testCaptureHavenTierPicker() {
-        let app = launch(flags: defaultFlags)
-        sleep(3)
-        let havensButton = app.buttons.matching(identifier: "haven-button").firstMatch
-        if havensButton.waitForExistence(timeout: 5) {
-            havensButton.tap()
-            sleep(2)
-        }
-        snapshot("04_haven_tiers")
-    }
-
-    func testCapturePaywallV2() {
+    func testCapture04Haven() {
         let app = launch(flags: [
-            "--screenshots", "--skip-onboarding", "--mock-unsubscribed",
+            "--screenshots", "--skip-onboarding", "--mock-subscribed", "--mock-haven-prefs",
         ])
-        sleep(3)
-        triggerPaywall(app: app)
-        sleep(3)
-        snapshot("05_paywall_enclave_sovereign")
-    }
-
-    func testCaptureSettings() {
-        let app = launch(flags: defaultFlags)
-        sleep(3)
         let settingsTab = app.buttons.matching(identifier: "settings-tab").firstMatch
         if settingsTab.waitForExistence(timeout: 5) {
             settingsTab.tap()
-            sleep(2)
         }
-        snapshot("06_settings_transport")
+        let havenRow = app.buttons.matching(identifier: "haven-row").firstMatch
+        if havenRow.waitForExistence(timeout: 5) {
+            havenRow.tap()
+            sleep(3)
+        }
+        snapshot("04_haven")
+    }
+
+    func testCapture05Stats() {
+        let app = launch(flags: [
+            "--screenshots", "--skip-onboarding", "--mock-subscribed", "--mock-dns-stats",
+        ])
+        let settingsTab = app.buttons.matching(identifier: "settings-tab").firstMatch
+        if settingsTab.waitForExistence(timeout: 5) {
+            settingsTab.tap()
+        }
+        let statsRow = app.buttons.matching(identifier: "stats-row").firstMatch
+        if statsRow.waitForExistence(timeout: 5) {
+            statsRow.tap()
+            sleep(3)
+        }
+        snapshot("05_stats")
+    }
+
+    func testCapture06Paywall() {
+        let app = launch(flags: [
+            "--screenshots", "--skip-onboarding", "--mock-unsubscribed", "--paywall-sovereign-annual",
+        ])
+        sleep(4)
+        snapshot("06_paywall")
+    }
+
+    func testCapture07KillSwitch() {
+        let app = launch(flags: [
+            "--screenshots", "--skip-onboarding", "--mock-subscribed", "--mock-disconnected-advanced",
+        ])
+        sleep(4)
+        snapshot("07_killswitch")
     }
 
     // MARK: - Helpers
-
-    private var defaultFlags: [String] {
-        ["--screenshots", "--skip-onboarding", "--mock-subscribed"]
-    }
 
     private func launch(flags: [String]) -> XCUIApplication {
         let app = XCUIApplication()
@@ -83,17 +91,5 @@ final class WraithVPNScreenshotTests: XCTestCase {
         app.launchArguments += flags
         app.launch()
         return app
-    }
-
-    private func triggerPaywall(app: XCUIApplication) {
-        let upgradeButton = app.buttons.matching(identifier: "upgrade-button").firstMatch
-        if upgradeButton.waitForExistence(timeout: 5) {
-            upgradeButton.tap()
-            return
-        }
-        let paywallButton = app.buttons["Upgrade"].firstMatch
-        if paywallButton.waitForExistence(timeout: 3) {
-            paywallButton.tap()
-        }
     }
 }

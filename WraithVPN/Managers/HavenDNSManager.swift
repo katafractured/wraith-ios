@@ -151,6 +151,21 @@ final class HavenDNSManager: ObservableObject {
     }
 
     func loadPreferences() async {
+        // Mock Haven preferences for screenshots
+        if ScreenshotMode.mockHavenPrefs {
+            preferences = DnsPreferences(
+                tier: "pro",
+                protectionLevel: "STANDARD",
+                protectionLevels: ["NONE", "LOW", "STANDARD", "STRICT"],
+                safeBrowsing: true,
+                familyFilter: false,
+                blockedServices: [],
+                blockableServices: [],
+                updatedAt: nil
+            )
+            return
+        }
+
         guard KeychainHelper.shared.readOptional(for: .subscriptionToken) != nil else { return }
         isLoadingPreferences = true
         loadPreferencesError = false

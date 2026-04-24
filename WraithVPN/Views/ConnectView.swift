@@ -271,6 +271,7 @@ struct ConnectView: View {
                             .stroke(Color.kfBorder, lineWidth: 1)
                     )
             }
+            .accessibilityIdentifier("settings-tab")
         }
         .onTapGesture {
             hiddenTapCount += 1
@@ -314,6 +315,7 @@ struct ConnectView: View {
                 }
             }
         }
+        .accessibilityIdentifier("connect-button")
     }
 
     private func heroSection(layout: ConnectLayout) -> some View {
@@ -553,6 +555,7 @@ struct ConnectView: View {
         }
         .disabled(simpleMode || storeKit.isHavenOnly)
         .opacity(storeKit.isHavenOnly ? 0.4 : 1)
+        .accessibilityIdentifier("region-button")
     }
 
     // MARK: - Actions

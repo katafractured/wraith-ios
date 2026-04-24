@@ -78,6 +78,12 @@ struct PaywallView: View {
         .onChange(of: showAnnual) { _, _ in
             selectedProductId = selectedProduct.rawValue
         }
+        .onAppear {
+            if ScreenshotMode.paywallSovereignAnnual {
+                selectedTier = .sovereign
+                showAnnual = true
+            }
+        }
         .alert("Purchase Error", isPresented: .init(
             get: { storeKit.purchaseError != nil },
             set: { if !$0 { storeKit.purchaseError = nil } }
@@ -292,6 +298,7 @@ struct PaywallView: View {
         }
         .disabled(storeKit.isLoading || activeStoreProduct == nil)
         .shadow(color: Color.kfAccentPurple.opacity(0.25), radius: 24, y: 14)
+        .accessibilityIdentifier("upgrade-button")
     }
 
     // MARK: - Free Haven button

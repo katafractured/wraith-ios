@@ -15,6 +15,12 @@ enum ScreenshotMode {
     static var mockUnsubscribed: Bool { isActive && args.contains("--mock-unsubscribed") }
     static var skipOnboarding: Bool   { isActive && args.contains("--skip-onboarding") }
     static var forceOnboarding: Bool  { isActive && args.contains("--force-onboarding") }
+    static var mockConnected: Bool { isActive && args.contains("--mock-connected") }
+    static var mockDisconnectedAdvanced: Bool { isActive && args.contains("--mock-disconnected-advanced") }
+    static var mockRegions: Bool { isActive && args.contains("--mock-regions") }
+    static var mockHavenPrefs: Bool { isActive && args.contains("--mock-haven-prefs") }
+    static var mockDnsStats: Bool { isActive && args.contains("--mock-dns-stats") }
+    static var paywallSovereignAnnual: Bool { isActive && args.contains("--paywall-sovereign-annual") }
 
     private static var args: [String] { ProcessInfo.processInfo.arguments }
 }

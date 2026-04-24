@@ -20,6 +20,15 @@ struct WraithVPNApp: App {
 
     // MARK: - Scene
 
+    init() {
+        // Set simpleMode for screenshot modes
+        if ScreenshotMode.mockDisconnectedAdvanced {
+            UserDefaults.standard.set(false, forKey: "simpleMode")
+        } else if ScreenshotMode.mockConnected {
+            UserDefaults.standard.set(true, forKey: "simpleMode")
+        }
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()

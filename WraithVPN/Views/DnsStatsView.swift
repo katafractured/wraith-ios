@@ -217,6 +217,31 @@ struct DnsStatsView: View {
     // MARK: - Lifecycle
 
     private func load() async {
+        // Mock DNS stats for screenshots
+        if ScreenshotMode.mockDnsStats {
+            stats = DnsStatsResponse(
+                totalQueries: 48217,
+                adsBlocked: 4128,
+                trackersBlocked: 2536,
+                malwareBlocked: 187,
+                blockedTotal: 6891,
+                blockRatePercent: 14.3,
+                since: "April 17",
+                updatedAt: nil,
+                dailyHistory: [
+                    DailyDNSStat(date: "Apr 11", blocked: 800, total: 5200),
+                    DailyDNSStat(date: "Apr 12", blocked: 950, total: 6100),
+                    DailyDNSStat(date: "Apr 13", blocked: 750, total: 5000),
+                    DailyDNSStat(date: "Apr 14", blocked: 650, total: 4500),
+                    DailyDNSStat(date: "Apr 15", blocked: 1100, total: 7200),
+                    DailyDNSStat(date: "Apr 16", blocked: 1200, total: 7500),
+                    DailyDNSStat(date: "Apr 17", blocked: 900, total: 6000),
+                ]
+            )
+            isLoading = false
+            return
+        }
+
         isLoading = true
         error = nil
 

@@ -111,6 +111,21 @@ final class WireGuardManager: ObservableObject {
     // MARK: - Init / lifecycle
 
     init() {
+        // Mock injection for screenshots
+        if ScreenshotMode.mockConnected {
+            status = .connected
+            exitIP = "178.104.49.211"
+            assignedIP = "10.10.1.14"
+            connectedSince = Date(timeIntervalSinceNow: -222)
+            connectedServer = VPNServer(nodeId: "nbg1", site: "nbg1", region: "de", displayName: "Frankfurt", ipv4: "178.104.49.211", ipv6: "fd10:0:1::1", endpoints: .init(primary: "nbg1.example.com", secondary: "178.104.49.211"), publicKey: "")
+            isMultiHop = false
+        }
+        if ScreenshotMode.mockDisconnectedAdvanced {
+            status = .disconnected
+            tunnelMode = .full
+            UserDefaults.standard.set(false, forKey: "simpleMode")
+        }
+
         managerLoadTask = Task { await loadOrCreateManager() }
         // Re-sync UI state whenever the app returns to the foreground.
         // NE may have reconnected the tunnel while the app was backgrounded/suspended;

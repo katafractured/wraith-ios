@@ -195,6 +195,17 @@ final class StoreKitManager: ObservableObject {
         Task {
             await reloadFromKeychain()
             await fetchProducts()
+            // Mock products for screenshots
+            if ScreenshotMode.isActive {
+                if ScreenshotMode.mockSubscribed {
+                    subscription = TokenResponse(plan: "enclave", expiresAt: Date(timeIntervalSinceNow: 86400 * 365))
+                    hasPurchased = true
+                }
+                if ScreenshotMode.mockUnsubscribed {
+                    subscription = nil
+                    hasPurchased = false
+                }
+            }
         }
         // When APIClient detects a 401, credentials are already cleared.
         // Reset local subscription state so the UI routes to the paywall.

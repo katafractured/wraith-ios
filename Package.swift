@@ -17,11 +17,7 @@ let package = Package(
         .iOS(.v17),
         .macOS(.v14),
     ],
-    dependencies: [
-        .package(
-            path: "./wireguard-apple"
-        ),
-    ],
+    dependencies: [],
     targets: [
         // This manifest is informational only for developers cloning the repo.
         // The actual linking is done inside the .xcodeproj.

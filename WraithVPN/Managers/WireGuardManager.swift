@@ -117,7 +117,7 @@ final class WireGuardManager: ObservableObject {
             exitIP = "178.104.49.211"
             assignedIP = "10.10.1.14"
             connectedSince = Date(timeIntervalSinceNow: -222)
-            connectedServer = VPNServer(nodeId: "nbg1", site: "nbg1", region: "de", displayName: "Frankfurt", ipv4: "178.104.49.211", ipv6: "fd10:0:1::1", endpoints: .init(primary: "nbg1.example.com", secondary: "178.104.49.211"), publicKey: "")
+            connectedServer = VPNServer(nodeId: "nbg1", site: "nbg1", region: "de", displayName: "Frankfurt", ipv4: "178.104.49.211", ipv6: "fd10:0:1::1", endpoints: .init(primary: "nbg1.example.com", secondary: "178.104.49.211"), publicKey: "", wgPort: 51820, loadScore: 0.5, ipv6Available: true, geodnsWeight: 100)
             isMultiHop = false
         }
         if ScreenshotMode.mockDisconnectedAdvanced {

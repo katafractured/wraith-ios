@@ -198,7 +198,7 @@ final class StoreKitManager: ObservableObject {
             // Mock products for screenshots
             if ScreenshotMode.isActive {
                 if ScreenshotMode.mockSubscribed {
-                    subscription = TokenResponse(plan: "enclave", expiresAt: Date(timeIntervalSinceNow: 86400 * 365))
+                    subscription = SubscriptionInfo(plan: "enclave", expiresAt: Date(timeIntervalSinceNow: 86400 * 365), token: "mock-token")
                     hasPurchased = true
                 }
                 if ScreenshotMode.mockUnsubscribed {

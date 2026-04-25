@@ -1,0 +1,25 @@
+name: runner-smoke-test
+on:
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    name: Smoke test on chronos-macbuilder
+    runs-on: [self-hosted, chronos-macbuilder]
+    steps:
+      - name: Identify the runner
+        run: |
+          echo "==== Runner identity ===="
+          hostname
+          whoami
+          uname -a
+          sw_vers
+          echo "==== CPU + RAM ===="
+          sysctl -n machdep.cpu.brand_string || true
+          sysctl -n hw.ncpu
+          sysctl -n hw.memsize | awk '{printf "RAM: %.1f GB\n", $1/1073741824}'
+          echo "==== Disk ===="
+          df -h / | tail -2
+          echo "==== Tailscale mesh IP ===="
+          /Applications/Tailscale.app/Contents/MacOS/Tailscale ip 2>/dev/null | head -1 || echo "tailscale not in path"
+          echo "==== Done ===="

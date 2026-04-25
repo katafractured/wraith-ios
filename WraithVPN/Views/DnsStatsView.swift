@@ -229,13 +229,13 @@ struct DnsStatsView: View {
                 since: "April 17",
                 updatedAt: nil,
                 dailyHistory: [
-                    DailyDNSStat(date: "Apr 11", blocked: 800, total: 5200),
-                    DailyDNSStat(date: "Apr 12", blocked: 950, total: 6100),
-                    DailyDNSStat(date: "Apr 13", blocked: 750, total: 5000),
-                    DailyDNSStat(date: "Apr 14", blocked: 650, total: 4500),
-                    DailyDNSStat(date: "Apr 15", blocked: 1100, total: 7200),
-                    DailyDNSStat(date: "Apr 16", blocked: 1200, total: 7500),
-                    DailyDNSStat(date: "Apr 17", blocked: 900, total: 6000),
+                    DailyDNSStat(date: "Apr 11", queries: 5200, blocked: 800),
+                    DailyDNSStat(date: "Apr 12", queries: 6100, blocked: 950),
+                    DailyDNSStat(date: "Apr 13", queries: 5000, blocked: 750),
+                    DailyDNSStat(date: "Apr 14", queries: 4500, blocked: 650),
+                    DailyDNSStat(date: "Apr 15", queries: 7200, blocked: 1100),
+                    DailyDNSStat(date: "Apr 16", queries: 7500, blocked: 1200),
+                    DailyDNSStat(date: "Apr 17", queries: 6000, blocked: 900),
                 ]
             )
             isLoading = false

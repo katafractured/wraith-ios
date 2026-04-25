@@ -95,6 +95,14 @@ enum RegionInfo {
     static func flag(site: String, region: String) -> String {
         siteMap[site]?.flag ?? regionMap[region]?.flag ?? "🌐"
     }
+
+    static func cityName(for region: String) -> String {
+        regionMap[region]?.city ?? region
+    }
+
+    static func flag(for region: String) -> String {
+        regionMap[region]?.flag ?? "🌐"
+    }
 }
 
 // MARK: - Peer provision

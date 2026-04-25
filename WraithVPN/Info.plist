@@ -2,6 +2,7 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <!-- App identity -->
     <key>CFBundleDisplayName</key>
     <string>WraithVPN</string>
     <key>CFBundleIdentifier</key>
@@ -16,6 +17,8 @@
     <string>$(PRODUCT_NAME)</string>
     <key>CFBundlePackageType</key>
     <string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
+
+    <!-- iOS deployment -->
     <key>LSRequiresIPhoneOS</key>
     <true/>
     <key>UIRequiredDeviceCapabilities</key>
@@ -38,8 +41,12 @@
         <string>UIInterfaceOrientationLandscapeLeft</string>
         <string>UIInterfaceOrientationLandscapeRight</string>
     </array>
+
+    <!-- Privacy usage strings (required even if not directly accessing these) -->
     <key>NSLocalNetworkUsageDescription</key>
     <string>WraithVPN uses the local network to measure latency to VPN servers.</string>
+
+    <!-- App Transport Security — API uses HTTPS; allow our backend -->
     <key>NSAppTransportSecurity</key>
     <dict>
         <key>NSAllowsArbitraryLoads</key>
@@ -55,8 +62,16 @@
             </dict>
         </dict>
     </dict>
+
+    <!-- Encryption compliance — FALSE is correct: WraithVPN ships WireGuard
+         (ChaCha20-Poly1305, Curve25519, BLAKE2s) but all three are publicly-available
+         open-source standard algorithms. ASC wizard classifies this as exempt under
+         15 CFR §740.17(b) / Category 5 Part 2 Note 4. France distribution excluded in
+         v1.0 — revisit with ANSSI filing before enabling. -->
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
+
+    <!-- SwiftUI lifecycle -->
     <key>UIApplicationSceneManifest</key>
     <dict>
         <key>UIApplicationSupportsMultipleScenes</key>

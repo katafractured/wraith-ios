@@ -16,6 +16,9 @@
     <string>$(PRODUCT_NAME)</string>
     <key>CFBundlePackageType</key>
     <string>XPC!</string>
+
+    <!-- NetworkExtension metadata — must match the NETunnelProviderProtocol
+         providerBundleIdentifier set in WireGuardManager.swift -->
     <key>NSExtension</key>
     <dict>
         <key>NSExtensionPointIdentifier</key>

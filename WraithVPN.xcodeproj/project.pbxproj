@@ -49,6 +49,7 @@
 		AA000035 /* WireGuardKit in Frameworks */ = {isa = PBXBuildFile; productRef = BCWGPROD001 /* WireGuardKit */; };
 		AA000036 /* LatencyProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100040 /* LatencyProbe.swift */; };
 		AA000041 /* CodeRedemptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100041 /* CodeRedemptionView.swift */; };
+		AA000042 /* ScreenshotMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100042 /* ScreenshotMode.swift */; };
 		AACOPYREF001 /* WireGuardTunnel.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AAPROD002 /* WireGuardTunnel.appex */; platformFilters = (iphoneos, ); settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		AAPRIV001 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = AAPRIV100 /* PrivacyInfo.xcprivacy */; };
 		AATST200 /* ModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AATST100 /* ModelTests.swift */; };
@@ -219,6 +220,7 @@
 		AA100039 /* TelemetryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetryManager.swift; sourceTree = "<group>"; };
 		AA100040 /* LatencyProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LatencyProbe.swift; sourceTree = "<group>"; };
 		AA100041 /* CodeRedemptionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeRedemptionView.swift; sourceTree = "<group>"; };
+		AA100042 /* ScreenshotMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/ScreenshotMode.swift; sourceTree = "<group>"; };
 		AAPRIV100 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		AAPROD001 /* WraithVPN.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WraithVPN.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AAPROD002 /* WireGuardTunnel.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WireGuardTunnel.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -812,6 +814,7 @@
 				AA000028 /* WraithAppShortcuts.swift in Sources */,
 				AA000029 /* TelemetryManager.swift in Sources */,
 				AA000036 /* LatencyProbe.swift in Sources */,
+				AA000042 /* ScreenshotMode.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

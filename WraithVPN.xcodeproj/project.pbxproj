@@ -11,6 +11,7 @@
 		3B9AAF5B5558D10A59877C91 /* ScreenshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AE810893CC4B1EF12D98611 /* ScreenshotTests.swift */; };
 		AA000001 /* WraithVPNApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100001 /* WraithVPNApp.swift */; };
 		AA000099 /* ScreenshotMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100099 /* ScreenshotMode.swift */; };
+		AA00009A /* AppGroupDiagnosticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10009A /* AppGroupDiagnosticsView.swift */; };
 		AA000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100002 /* ContentView.swift */; };
 		AA000003 /* ConnectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100003 /* ConnectView.swift */; };
 		AA000004 /* ServerPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100004 /* ServerPickerView.swift */; };
@@ -181,6 +182,7 @@
 		5AE810893CC4B1EF12D98611 /* ScreenshotTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "WraithVPN/UITests/ScreenshotTests.swift"; sourceTree = SOURCE_ROOT; };
 		AA100001 /* WraithVPNApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WraithVPNApp.swift; sourceTree = "<group>"; };
 		AA100099 /* ScreenshotMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "App/ScreenshotMode.swift"; sourceTree = "<group>"; };
+		AA10009A /* AppGroupDiagnosticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Views/AppGroupDiagnosticsView.swift"; sourceTree = "<group>"; };
 		AA100002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		AA100003 /* ConnectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectView.swift; sourceTree = "<group>"; };
 		AA100004 /* ServerPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerPickerView.swift; sourceTree = "<group>"; };
@@ -342,6 +344,7 @@
 			children = (
 				AA100001 /* WraithVPNApp.swift */,
 				AA100099 /* ScreenshotMode.swift */,
+				AA10009A /* AppGroupDiagnosticsView.swift */,
 				AAGRP002 /* Views */,
 				AAGRP003 /* Managers */,
 				AAGRP004 /* Helpers */,
@@ -787,6 +790,7 @@
 			files = (
 				AA000001 /* WraithVPNApp.swift in Sources */,
 				AA000099 /* ScreenshotMode.swift in Sources */,
+				AA00009A /* AppGroupDiagnosticsView.swift in Sources */,
 				AA000002 /* ContentView.swift in Sources */,
 				AA000003 /* ConnectView.swift in Sources */,
 				AA000004 /* ServerPickerView.swift in Sources */,

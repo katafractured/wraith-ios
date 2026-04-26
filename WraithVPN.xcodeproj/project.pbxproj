@@ -341,6 +341,7 @@
 			isa = PBXGroup;
 			children = (
 				AA100001 /* WraithVPNApp.swift */,
+				AA100042 /* ScreenshotMode.swift */,
 				AAGRP002 /* Views */,
 				AAGRP003 /* Managers */,
 				AAGRP004 /* Helpers */,

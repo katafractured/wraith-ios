@@ -115,4 +115,172 @@ final class ShadowsocksAEADTests: XCTestCase {
 
         XCTAssertEqual(decrypted, plaintext, "Decrypted output must match original plaintext")
     }
+
+    // MARK: - BLAKE3 known-vector regression guard
+    //
+    // These vectors were computed with the Python `blake3` library and independently
+    // verified against the BLAKE3 reference implementation.
+    // They guard against recurrence of the DERIVE_KEY flag-shift bug (Sprint 3):
+    //   DERIVE_KEY_CONTEXT was 1<<4 (wrong), must be 1<<5
+    //   DERIVE_KEY_MATERIAL was 1<<5 (wrong), must be 1<<6
+
+    // Inline BLAKE3 — mirrors ShadowsocksTransport.swift exactly.
+    // Must stay in sync with the production implementation.
+    private let b3IV: [UInt32] = [
+        0x6A09E667, 0xBB67AE85, 0x3C6EF372, 0xA54FF53A,
+        0x510E527F, 0x9B05688C, 0x1F83D9AB, 0x5BE0CD19
+    ]
+    private let b3SIGMA: [[Int]] = [
+        [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],
+        [2,6,3,10,7,0,4,13,1,11,12,5,9,14,15,8],
+        [3,4,10,12,13,2,11,14,6,5,9,0,15,8,7,1],
+        [6,11,12,14,8,3,5,15,4,2,7,1,0,13,10,9],
+        [10,5,14,9,15,6,2,8,11,3,0,13,4,7,1,12],
+        [7,2,9,15,10,4,3,14,5,6,1,8,12,0,11,13],
+        [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],
+        [2,6,3,10,7,0,4,13,1,11,12,5,9,14,15,8]
+    ]
+    private let b3CHUNK_START: UInt32 = 1 << 0
+    private let b3CHUNK_END:   UInt32 = 1 << 1
+    private let b3ROOT:        UInt32 = 1 << 3
+    private let b3KEYED_HASH:  UInt32 = 1 << 4
+    private let b3DERIVE_KEY_CONTEXT:  UInt32 = 1 << 5   // <-- must be 1<<5
+    private let b3DERIVE_KEY_MATERIAL: UInt32 = 1 << 6   // <-- must be 1<<6
+
+    private func b3G(_ s: inout [UInt32], _ a: Int, _ b: Int, _ c: Int, _ d: Int,
+                     _ x: UInt32, _ y: UInt32) {
+        s[a] = s[a] &+ s[b] &+ x
+        s[d] = (s[d] ^ s[a]).rotateRight(16)
+        s[c] = s[c] &+ s[d]
+        s[b] = (s[b] ^ s[c]).rotateRight(12)
+        s[a] = s[a] &+ s[b] &+ y
+        s[d] = (s[d] ^ s[a]).rotateRight(8)
+        s[c] = s[c] &+ s[d]
+        s[b] = (s[b] ^ s[c]).rotateRight(7)
+    }
+
+    private func b3Compress(_ cv: [UInt32], _ block: [UInt32],
+                            _ counter: UInt64, _ blockLen: UInt32,
+                            _ flags: UInt32) -> [UInt32] {
+        var s: [UInt32] = [
+            cv[0], cv[1], cv[2], cv[3],
+            cv[4], cv[5], cv[6], cv[7],
+            b3IV[0], b3IV[1], b3IV[2], b3IV[3],
+            UInt32(counter & 0xFFFFFFFF), UInt32(counter >> 32),
+            blockLen, flags
+        ]
+        for r in 0..<7 {
+            let p = b3SIGMA[r]
+            b3G(&s, 0, 4,  8, 12, block[p[0]], block[p[1]])
+            b3G(&s, 1, 5,  9, 13, block[p[2]], block[p[3]])
+            b3G(&s, 2, 6, 10, 14, block[p[4]], block[p[5]])
+            b3G(&s, 3, 7, 11, 15, block[p[6]], block[p[7]])
+            b3G(&s, 0, 5, 10, 15, block[p[8]], block[p[9]])
+            b3G(&s, 1, 6, 11, 12, block[p[10]], block[p[11]])
+            b3G(&s, 2, 7,  8, 13, block[p[12]], block[p[13]])
+            b3G(&s, 3, 4,  9, 14, block[p[14]], block[p[15]])
+        }
+        var out = [UInt32](repeating: 0, count: 8)
+        for i in 0..<8 { out[i] = s[i] ^ s[i + 8] }
+        return out
+    }
+
+    private func b3BytesToWords(_ data: Data, paddedTo count: Int) -> [UInt32] {
+        var padded = [UInt8](data)
+        while padded.count < count { padded.append(0) }
+        var words = [UInt32](repeating: 0, count: count / 4)
+        for i in 0..<words.count {
+            words[i] = UInt32(padded[i*4]) |
+                       (UInt32(padded[i*4+1]) << 8) |
+                       (UInt32(padded[i*4+2]) << 16) |
+                       (UInt32(padded[i*4+3]) << 24)
+        }
+        return words
+    }
+
+    private func b3WordsToBytes(_ words: [UInt32]) -> Data {
+        var out = Data(count: words.count * 4)
+        for (i, w) in words.enumerated() {
+            out[i*4]   = UInt8(w & 0xFF)
+            out[i*4+1] = UInt8((w >> 8) & 0xFF)
+            out[i*4+2] = UInt8((w >> 16) & 0xFF)
+            out[i*4+3] = UInt8((w >> 24) & 0xFF)
+        }
+        return out
+    }
+
+    /// BLAKE3 plain hash (single chunk ≤64 bytes)
+    private func b3Hash(_ input: Data) -> Data {
+        precondition(input.count <= 64)
+        let block = b3BytesToWords(input, paddedTo: 64)
+        let flags = b3CHUNK_START | b3CHUNK_END | b3ROOT
+        let cv = b3Compress(b3IV, block, 0, UInt32(input.count), flags)
+        return b3WordsToBytes(cv)
+    }
+
+    /// BLAKE3 derive_key — context string + key material, both ≤64 bytes
+    private func b3DeriveKey(context: String, material: Data) -> Data {
+        precondition(material.count <= 64)
+        let ctxData = Data(context.utf8)
+        precondition(ctxData.count <= 64)
+        // Step 1: hash context string with DERIVE_KEY_CONTEXT flags
+        let ctxBlock = b3BytesToWords(ctxData, paddedTo: 64)
+        let ctxFlags = b3CHUNK_START | b3CHUNK_END | b3ROOT | b3DERIVE_KEY_CONTEXT
+        let ctxKey = b3Compress(b3IV, ctxBlock, 0, UInt32(ctxData.count), ctxFlags)
+        // Step 2: compress key material with DERIVE_KEY_MATERIAL flags, using ctxKey as CV
+        let matBlock = b3BytesToWords(material, paddedTo: 64)
+        let matFlags = b3CHUNK_START | b3CHUNK_END | b3ROOT | b3DERIVE_KEY_MATERIAL
+        let out = b3Compress(ctxKey, matBlock, 0, UInt32(material.count), matFlags)
+        return b3WordsToBytes(out)
+    }
+
+    func testBLAKE3EmptyHash() {
+        // BLAKE3() = af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262
+        let result = b3Hash(Data())
+        XCTAssertEqual(result.map { String(format: "%02x", $0) }.joined(),
+                       "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+                       "BLAKE3 empty hash must match reference")
+    }
+
+    func testBLAKE3SingleZeroByte() {
+        // BLAKE3(0x00) = 2d3adedff11b61f14c886e35afa036736dcd87a74d27b5c1510225d0f592e213
+        let result = b3Hash(Data([0x00]))
+        XCTAssertEqual(result.map { String(format: "%02x", $0) }.joined(),
+                       "2d3adedff11b61f14c886e35afa036736dcd87a74d27b5c1510225d0f592e213",
+                       "BLAKE3(0x00) must match reference")
+    }
+
+    func testBLAKE3DeriveKeyEIHVector() throws {
+        // These are the actual PSK values used in the Sprint 3 integration test (vpn-ewr-01)
+        // serverPSK = base64("P5xVorV89PY9SVbyjBey4h3VSLUjT8Bugu36ihT8A0Q=")
+        // userPSK   = base64("lEl+fVJfnax/Or9krKIhlhxjVM3Esoio3EvWb/sdDKc=")
+        // fixedSalt = 32 x 0x55 (test vector, not a real session salt)
+        //
+        // Expected: BLAKE3.derive_key("shadowsocks 2022 identity subkey", serverPSK||fixedSalt)
+        //           = faeb4244a8989631c0531edc987ef48a53c4a02b8c2ec4b84dfe46056a8eaaa7
+        //
+        // This test WILL FAIL if DERIVE_KEY_CONTEXT reverts to 1<<4.
+        let serverPSKB64 = "P5xVorV89PY9SVbyjBey4h3VSLUjT8Bugu36ihT8A0Q="
+        let serverPSK = Data(base64Encoded: serverPSKB64)!
+        let fixedSalt = Data(repeating: 0x55, count: 32)
+        var material = serverPSK
+        material.append(fixedSalt)  // 64 bytes total
+
+        let result = b3DeriveKey(context: "shadowsocks 2022 identity subkey", material: material)
+        XCTAssertEqual(result.map { String(format: "%02x", $0) }.joined(),
+                       "faeb4244a8989631c0531edc987ef48a53c4a02b8c2ec4b84dfe46056a8eaaa7",
+                       "BLAKE3 EIH subkey derivation must match reference vector; " +
+                       "failure = DERIVE_KEY_CONTEXT flag is wrong (must be 1<<5, not 1<<4)")
+    }
+
+    func testBLAKE3UserPSKHash() throws {
+        // BLAKE3.hash(userPSK) used in EIH block (first 16 bytes AES-128-ECB encrypted with DK[0..16])
+        // userPSK = base64("lEl+fVJfnax/Or9krKIhlhxjVM3Esoio3EvWb/sdDKc=")
+        // Expected = f53cbcb49c40489c38b6ed050a424a927655bac4f17a07ff78db82fd80982ab5
+        let userPSK = Data(base64Encoded: "lEl+fVJfnax/Or9krKIhlhxjVM3Esoio3EvWb/sdDKc=")!
+        let result = b3Hash(userPSK)
+        XCTAssertEqual(result.map { String(format: "%02x", $0) }.joined(),
+                       "f53cbcb49c40489c38b6ed050a424a927655bac4f17a07ff78db82fd80982ab5",
+                       "BLAKE3 userPSK hash must match reference vector")
+    }
 }

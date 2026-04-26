@@ -473,8 +473,8 @@ private let blake3MsgPermutation: [Int] = [2, 6, 3, 10, 7, 0, 4, 13, 1, 11, 12, 
 private let blake3CHUNK_START:        UInt32 = 1 << 0
 private let blake3CHUNK_END:          UInt32 = 1 << 1
 private let blake3ROOT:               UInt32 = 1 << 3
-private let blake3DERIVE_KEY_CONTEXT: UInt32 = 1 << 4
-private let blake3DERIVE_KEY_MATERIAL: UInt32 = 1 << 5
+private let blake3DERIVE_KEY_CONTEXT: UInt32 = 1 << 5
+private let blake3DERIVE_KEY_MATERIAL: UInt32 = 1 << 6
 
 private func blake3G(
     _ state: inout [UInt32], a: Int, b: Int, c: Int, d: Int,

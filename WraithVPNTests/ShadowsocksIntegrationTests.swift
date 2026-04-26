@@ -229,8 +229,8 @@ final class ShadowsocksIntegrationTests: XCTestCase {
     private let B3_CHUNK_START:         UInt32 = 1 << 0
     private let B3_CHUNK_END:           UInt32 = 1 << 1
     private let B3_ROOT:                UInt32 = 1 << 3
-    private let B3_DERIVE_KEY_CONTEXT:  UInt32 = 1 << 4
-    private let B3_DERIVE_KEY_MATERIAL: UInt32 = 1 << 5
+    private let B3_DERIVE_KEY_CONTEXT:  UInt32 = 1 << 5
+    private let B3_DERIVE_KEY_MATERIAL: UInt32 = 1 << 6
 
     private func b3G(_ state: inout [UInt32], a: Int, b: Int, c: Int, d: Int, mx: UInt32, my: UInt32) {
         state[a] = state[a] &+ state[b] &+ mx

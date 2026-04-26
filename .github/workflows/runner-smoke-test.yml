@@ -6,6 +6,7 @@ jobs:
   smoke:
     name: Smoke test on chronos-macbuilder
     runs-on: [self-hosted, chronos-macbuilder]
+    timeout-minutes: 5
     steps:
       - name: Identify the runner
         run: |

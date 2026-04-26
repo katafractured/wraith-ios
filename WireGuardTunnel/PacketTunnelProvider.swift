@@ -126,7 +126,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
 
         let tunnelConfig = SSTunnelConfig(
             server: ssConfig.server,
-            port: ssConfig.port,
+            port: UInt16(clamping: ssConfig.port),
             password: ssConfig.password,
             serverNodeIP: serverNodeIP
         )

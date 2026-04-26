@@ -54,6 +54,9 @@ final class KeychainHelper {
         case multiHopExitNodeId    = "com.katafract.wraith.multiHopExitNodeId"
         case multiHopEntryRegion   = "com.katafract.wraith.multiHopEntryRegion"
         case multiHopExitRegion    = "com.katafract.wraith.multiHopExitRegion"
+        // Shadowsocks fallback
+        case activeShadowsocksConfig = "com.katafract.wraith.activeShadowsocksConfig"
+        case transportModePreference = "com.katafract.wraith.transportModePreference"
     }
 
     // MARK: - String convenience
@@ -71,6 +74,19 @@ final class KeychainHelper {
 
     func readOptional(for key: Key) -> String? {
         try? read(for: key)
+    }
+
+    // MARK: - Codable convenience
+
+    func saveCodable<T: Encodable>(_ value: T, for key: Key) throws {
+        let data = try JSONEncoder().encode(value)
+        let str = String(data: data, encoding: .utf8) ?? ""
+        try save(str, for: key)
+    }
+
+    func readCodable<T: Decodable>(_ type: T.Type, for key: Key) throws -> T? {
+        guard let str = readOptional(for: key), let data = str.data(using: .utf8) else { return nil }
+        return try JSONDecoder().decode(type, from: data)
     }
 
     // MARK: - Sync policy

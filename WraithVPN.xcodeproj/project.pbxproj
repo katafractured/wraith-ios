@@ -51,6 +51,10 @@
 		AA000035 /* WireGuardKit in Frameworks */ = {isa = PBXBuildFile; productRef = BCWGPROD001 /* WireGuardKit */; };
 		AA000036 /* LatencyProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100040 /* LatencyProbe.swift */; };
 		AA000041 /* CodeRedemptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100041 /* CodeRedemptionView.swift */; };
+		AA000042 /* ShadowsocksTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100042 /* ShadowsocksTransport.swift */; };
+		BBMACTUNBF006 /* ShadowsocksTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100042 /* ShadowsocksTransport.swift */; };
+		AA000043 /* Models.swift in Sources (WireGuardTunnel) */ = {isa = PBXBuildFile; fileRef = AA100008 /* Models.swift */; };
+		BBMACTUNBF007 /* Models.swift in Sources (WraithVPNMacTunnel) */ = {isa = PBXBuildFile; fileRef = AA100008 /* Models.swift */; };
 		AACOPYREF001 /* WireGuardTunnel.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AAPROD002 /* WireGuardTunnel.appex */; platformFilters = (iphoneos, ); settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		AAPRIV001 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = AAPRIV100 /* PrivacyInfo.xcprivacy */; };
 		AATST200 /* ModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AATST100 /* ModelTests.swift */; };
@@ -59,6 +63,9 @@
 		AATST203 /* StoreKitManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AATST103 /* StoreKitManagerTests.swift */; };
 		AATST204 /* ServerListManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AATST104 /* ServerListManagerTests.swift */; };
 		AATST205 /* HavenDNSManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AATST105 /* HavenDNSManagerTests.swift */; };
+		AATST206 /* ShadowsocksConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AATST106 /* ShadowsocksConfigTests.swift */; };
+		AATST207 /* ShadowsocksAEADTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AATST107 /* ShadowsocksAEADTests.swift */; };
+		AATST208 /* ShadowsocksIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AATST108 /* ShadowsocksIntegrationTests.swift */; };
 		AATUNPRIV001 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = AATUNPRIV100 /* PrivacyInfo.xcprivacy */; };
 		BBMAC050 /* WraithVPNMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBMAC010 /* WraithVPNMacApp.swift */; };
 		BBMAC054 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100009 /* APIClient.swift */; };
@@ -223,6 +230,7 @@
 		AA100039 /* TelemetryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetryManager.swift; sourceTree = "<group>"; };
 		AA100040 /* LatencyProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LatencyProbe.swift; sourceTree = "<group>"; };
 		AA100041 /* CodeRedemptionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeRedemptionView.swift; sourceTree = "<group>"; };
+		AA100042 /* ShadowsocksTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShadowsocksTransport.swift; sourceTree = "<group>"; };
 		AAPRIV100 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		AAPROD001 /* WraithVPN.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WraithVPN.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AAPROD002 /* WireGuardTunnel.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WireGuardTunnel.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -232,6 +240,9 @@
 		AATST103 /* StoreKitManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitManagerTests.swift; sourceTree = "<group>"; };
 		AATST104 /* ServerListManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerListManagerTests.swift; sourceTree = "<group>"; };
 		AATST105 /* HavenDNSManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HavenDNSManagerTests.swift; sourceTree = "<group>"; };
+		AATST106 /* ShadowsocksConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShadowsocksConfigTests.swift; sourceTree = "<group>"; };
+		AATST107 /* ShadowsocksAEADTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShadowsocksAEADTests.swift; sourceTree = "<group>"; };
+		AATST108 /* ShadowsocksIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShadowsocksIntegrationTests.swift; sourceTree = "<group>"; };
 		AATST_PROD /* WraithVPNTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WraithVPNTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AATUNPRIV100 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		BBMAC010 /* WraithVPNMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WraithVPNMacApp.swift; sourceTree = "<group>"; };
@@ -419,6 +430,7 @@
 				AA100020 /* PacketTunnelProvider.swift */,
 				AA100022 /* TunnelConfiguration+WgQuickConfig.swift */,
 				AA100023 /* String+ArrayConversion.swift */,
+				AA100042 /* ShadowsocksTransport.swift */,
 				AA100021 /* WireGuardTunnel.entitlements */,
 				AATUNPRIV100 /* PrivacyInfo.xcprivacy */,
 			);
@@ -444,6 +456,9 @@
 				AATST103 /* StoreKitManagerTests.swift */,
 				AATST104 /* ServerListManagerTests.swift */,
 				AATST105 /* HavenDNSManagerTests.swift */,
+				AATST106 /* ShadowsocksConfigTests.swift */,
+				AATST107 /* ShadowsocksAEADTests.swift */,
+				AATST108 /* ShadowsocksIntegrationTests.swift */,
 			);
 			path = WraithVPNTests;
 			sourceTree = "<group>";
@@ -830,6 +845,8 @@
 				AA000020 /* PacketTunnelProvider.swift in Sources */,
 				AA000021 /* TunnelConfiguration+WgQuickConfig.swift in Sources */,
 				AA000022 /* String+ArrayConversion.swift in Sources */,
+				AA000042 /* ShadowsocksTransport.swift in Sources */,
+				AA000043 /* Models.swift in Sources (WireGuardTunnel) */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -843,6 +860,9 @@
 				AATST203 /* StoreKitManagerTests.swift in Sources */,
 				AATST204 /* ServerListManagerTests.swift in Sources */,
 				AATST205 /* HavenDNSManagerTests.swift in Sources */,
+				AATST206 /* ShadowsocksConfigTests.swift in Sources */,
+				AATST207 /* ShadowsocksAEADTests.swift in Sources */,
+				AATST208 /* ShadowsocksIntegrationTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -880,6 +900,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				BBMACTUNBF002 /* PacketTunnelProvider.swift in Sources */,
+				BBMACTUNBF006 /* ShadowsocksTransport.swift in Sources */,
+				BBMACTUNBF007 /* Models.swift in Sources (WraithVPNMacTunnel) */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

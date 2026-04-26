@@ -113,6 +113,25 @@ struct ProvisionRequest: Encodable {
     }
 }
 
+struct ShadowsocksConfig: Codable, Equatable {
+    let server: String
+    let port: Int
+    let method: String
+    let password: String       // Combined SERVER_PSK:USER_PSK
+    let plugin: String
+    let pluginOpts: String
+
+    enum CodingKeys: String, CodingKey {
+        case server, port, method, password, plugin
+        case pluginOpts = "plugin_opts"
+    }
+}
+
+enum TransportMode: String, Codable, CaseIterable {
+    case wireguard
+    case shadowsocks
+}
+
 struct ProvisionResponse: Decodable {
     let peerId: String
     let config: String        // Full WireGuard INI config text
@@ -122,6 +141,7 @@ struct ProvisionResponse: Decodable {
     let nodeId: String
     let endpoint: String
     let exitIpv4: String?
+    let shadowsocksFallback: ShadowsocksConfig?
 
     enum CodingKeys: String, CodingKey {
         case peerId       = "peer_id"
@@ -132,6 +152,7 @@ struct ProvisionResponse: Decodable {
         case nodeId       = "node_id"
         case endpoint
         case exitIpv4     = "exit_ipv4"
+        case shadowsocksFallback = "shadowsocks_fallback"
     }
 }
 
@@ -162,6 +183,7 @@ struct MultiHopProvisionResponse: Decodable {
     let exitNodeId:    String
     let entryEndpoint: String
     let exitEndpoint:  String
+    let entryShadowsocksFallback: ShadowsocksConfig?
 
     enum CodingKeys: String, CodingKey {
         case hopGroupId    = "hop_group_id"
@@ -174,6 +196,7 @@ struct MultiHopProvisionResponse: Decodable {
         case exitNodeId    = "exit_node_id"
         case entryEndpoint = "entry_endpoint"
         case exitEndpoint  = "exit_endpoint"
+        case entryShadowsocksFallback = "entry_shadowsocks_fallback"
     }
 }
 

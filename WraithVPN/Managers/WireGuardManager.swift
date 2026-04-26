@@ -48,6 +48,13 @@ final class WireGuardManager: ObservableObject {
     @Published var healthReport: TunnelHealthReport? = nil
     /// True when the active tunnel is a multi-hop (Enclave+) connection.
     @Published var isMultiHop: Bool = false
+    /// Which transport is currently carrying traffic (.wireguard or .shadowsocks).
+    @Published var activeTransport: TransportMode = .wireguard
+    /// User's persisted transport preference. .wireguard tries WG first with SS fallback.
+    /// .shadowsocks forces SS without a WG attempt.
+    @Published var transportPreference: TransportMode = TransportMode(
+        rawValue: UserDefaults.standard.string(forKey: "transportPreference") ?? ""
+    ) ?? .wireguard
     /// Entry node for the active multi-hop session (nil if single-hop).
     @Published var multiHopEntryServer: VPNServer? = nil
     /// Exit node for the active multi-hop session (same as connectedServer for multi-hop).
@@ -71,6 +78,7 @@ final class WireGuardManager: ObservableObject {
     private var lastLayer2ProbeAt: Date?
     private var previousStatus: VPNStatus = .disconnected
     private let tunnelBundleId = "com.katafract.wraith.tunnel"
+    private let appGroupDefaults = UserDefaults(suiteName: "group.com.katafract.wraith")
     /// True while any provision/switch is in-flight. Published so the UI can
     /// disable the connect button and show a loading state during provisioning.
     @Published private(set) var isProvisioning = false
@@ -758,10 +766,14 @@ final class WireGuardManager: ObservableObject {
         defer { isProvisioning = false }
         reprovisionAttempts += 1
 
-        // Attempt 1: soft reconnect — restart the tunnel without touching the backend.
-        // Handles roaming (WiFi ↔ cellular) where the peer is still valid but
-        // the UDP path changed and the WG handshake hasn't re-initiated yet.
+        // Attempt 1: try Shadowsocks fallback if a config is available; otherwise
+        // fall back to the original soft-reconnect path (restart tunnel, same peer).
         if reprovisionAttempts == 1 {
+            if appGroupDefaults?.data(forKey: "activeShadowsocksConfig") != nil {
+                DebugLogger.shared.wg("Health check FAILED: UDP blocked — attempting SS fallback (attempt 1/\(maxReprovisionAttempts))...")
+                await attemptShadowsocksFallback()
+                return
+            }
             DebugLogger.shared.wg("Health check FAILED: trying soft reconnect (attempt 1/\(maxReprovisionAttempts))...")
             manager?.connection.stopVPNTunnel()
             try? await Task.sleep(for: .milliseconds(1500))
@@ -795,6 +807,37 @@ final class WireGuardManager: ObservableObject {
         } catch {
             DebugLogger.shared.wg("Auto-reprovision FAILED: \(error.localizedDescription)")
             status = .failed("Tunnel dead, re-provision failed: \(error.localizedDescription)")
+        }
+    }
+
+    // MARK: - Shadowsocks fallback
+
+    /// Instructs the WireGuardTunnel extension to switch to Shadowsocks transport.
+    /// The extension reads `activeShadowsocksConfig` from App Group UserDefaults and
+    /// starts ShadowsocksTransport inline. Called when WG health check fails and a
+    /// provisioned SS config is available.
+    private func attemptShadowsocksFallback() async {
+        guard let session = tunnelProviderSession else {
+            DebugLogger.shared.wg("SS fallback: no tunnel session available")
+            return
+        }
+        // Message byte 1 = "switch to SS fallback"
+        let message = Data([0x01])
+        do {
+            let reply = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Data?, Error>) in
+                session.sendProviderMessage(message) { data in
+                    continuation.resume(returning: data)
+                }
+            }
+            if let reply, reply.first == 0x01 {
+                DebugLogger.shared.wg("SS fallback: extension confirmed transport switch")
+                activeTransport = .shadowsocks
+                status = .connected  // optimistic; will re-health-check on next cycle
+            } else {
+                DebugLogger.shared.wg("SS fallback: extension returned unexpected reply")
+            }
+        } catch {
+            DebugLogger.shared.wg("SS fallback: sendProviderMessage error — \(error.localizedDescription)")
         }
     }
 
@@ -872,6 +915,17 @@ final class WireGuardManager: ObservableObject {
             if let ip = exitIP { try KeychainHelper.shared.save(ip, for: .wgExitIP) }
         } catch {
             DebugLogger.shared.peer("CRITICAL: Keychain save failed for peerId=\(provision.peerId): \(error.localizedDescription)")
+        }
+        // Persist Shadowsocks fallback config + exit IP to App Group UserDefaults so the
+        // WireGuardTunnel extension can read them without a Keychain access-group.
+        if let ssConfig = provision.shadowsocksFallback,
+           let encoded = try? JSONEncoder().encode(ssConfig) {
+            appGroupDefaults?.set(encoded, forKey: "activeShadowsocksConfig")
+        } else {
+            appGroupDefaults?.removeObject(forKey: "activeShadowsocksConfig")
+        }
+        if let ip = exitIP {
+            appGroupDefaults?.set(ip, forKey: "wgExitIP")
         }
         DebugLogger.shared.peer("Provisioned: peerId=\(provision.peerId) ip=\(provision.assignedIpv4) node=\(provision.nodeId) exit=\(exitIP ?? "nil")")
     }

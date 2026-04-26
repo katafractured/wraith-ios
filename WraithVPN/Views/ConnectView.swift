@@ -354,6 +354,23 @@ struct ConnectView: View {
                     }
                     .foregroundStyle(Color.kataChampagne.opacity(0.5))
                 }
+
+                if vpn.activeTransport == .shadowsocks {
+                    HStack(spacing: 4) {
+                        Image(systemName: "eye.slash")
+                            .font(.system(size: 10, weight: .semibold))
+                        Text("Stealth")
+                            .font(.kataMono(10))
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(Color.kataGold.opacity(0.15))
+                    .foregroundStyle(Color.kataGold)
+                    .clipShape(Capsule())
+                    .overlay(Capsule().stroke(Color.kataGold.opacity(0.35), lineWidth: 0.5))
+                    .transition(.scale.combined(with: .opacity))
+                    .animation(.easeInOut(duration: 0.3), value: vpn.activeTransport)
+                }
             } else {
                 Text(storeKit.isHavenOnly ? "DNS Protected" : vpn.status.label)
                     .font(KFFont.heading(24))

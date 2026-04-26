@@ -7,6 +7,7 @@
 import NetworkExtension
 import WireGuardKit
 import os.log
+import Foundation
 
 private let log = Logger(subsystem: "com.katafract.wraith.tunnel", category: "PacketTunnelProvider")
 private let appGroupDefaults = UserDefaults(suiteName: "group.com.katafract.wraith")
@@ -24,6 +25,9 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
             log.log(level: logLevel.osLogType, "\(message, privacy: .public)")
         }
     }()
+
+    /// Active Shadowsocks transport (non-nil when SS fallback is running).
+    private var shadowsocksTransport: ShadowsocksTransport?
 
     override func startTunnel(
         options: [String: NSObject]?,
@@ -85,12 +89,62 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     override func handleAppMessage(_ messageData: Data, completionHandler: ((Data?) -> Void)?) {
         guard let completionHandler else { return }
 
-        if messageData.count == 1, messageData[0] == 0 {
+        if messageData.count == 1, messageData[0] == 0x00 {
+            // Message 0x00: get runtime WireGuard config string
             adapter.getRuntimeConfiguration { config in
                 completionHandler(config?.data(using: .utf8))
             }
+
+        } else if messageData.count == 1, messageData[0] == 0x01 {
+            // Message 0x01: switch to Shadowsocks fallback transport
+            Task {
+                let success = await self.startShadowsocksFallback()
+                completionHandler(Data([success ? 0x01 : 0x00]))
+            }
+
         } else {
             completionHandler(nil)
+        }
+    }
+
+    /// Reads activeShadowsocksConfig from App Group UserDefaults and starts
+    /// ShadowsocksTransport. Stops WireGuard adapter first to avoid UDP/TCP conflict.
+    private func startShadowsocksFallback() async -> Bool {
+        guard let configData = appGroupDefaults?.data(forKey: "activeShadowsocksConfig"),
+              let ssConfig = try? JSONDecoder().decode(ShadowsocksConfig.self, from: configData) else {
+            log.error("SS fallback: activeShadowsocksConfig missing or decode failed")
+            return false
+        }
+
+        // Derive WG server public IP from the loaded config's server field — this is the
+        // node public IP (e.g., 87.99.128.159) that WireGuard also connects to.
+        // For SS-2022, serverNodeIP is the WG peer endpoint IP (passed as SOCKS5 target).
+        // We store it in the SS config's pluginOpts field as "tls;host=<hostname>".
+        // The actual WG destination IP is the assigned peer's endpoint — stored separately.
+        // Use the server hostname's resolved IP (or fall back to an App Group stored value).
+        let serverNodeIP = appGroupDefaults?.string(forKey: "wgExitIP") ?? ssConfig.server
+
+        let tunnelConfig = SSTunnelConfig(
+            server: ssConfig.server,
+            port: ssConfig.port,
+            password: ssConfig.password,
+            serverNodeIP: serverNodeIP
+        )
+
+        // Stop the WireGuard adapter (frees the TUN fd so SS can use the packet flow)
+        adapter.stop { _ in }
+        try? await Task.sleep(nanoseconds: 500_000_000)  // 500ms
+
+        // Start SS transport
+        let transport = ShadowsocksTransport()
+        do {
+            try await transport.start(config: tunnelConfig, packetFlow: packetFlow)
+            self.shadowsocksTransport = transport
+            log.info("SS fallback: transport started successfully")
+            return true
+        } catch {
+            log.error("SS fallback: transport start failed — \(error.localizedDescription, privacy: .public)")
+            return false
         }
     }
 }

@@ -66,6 +66,7 @@ actor ShadowsocksTransport {
     private var subkey: Data?
     private var serverPSK: Data?
     private var userPSK: Data?
+    private var serverFQDN: String = ""  // stored for WS Host header
 
     nonisolated private let log = { (msg: String) in
         NSLog("[ShadowsocksTransport] %@", msg)
@@ -75,6 +76,7 @@ actor ShadowsocksTransport {
 
     func start(config: SSTunnelConfig, packetFlow: NEPacketTunnelFlow) async throws {
         log("Starting to \(config.server):\(config.port)")
+        self.serverFQDN = config.server
 
         // Parse "SERVER_PSK_b64:USER_PSK_b64"
         let (serverPSKData, userPSKData) = try parsePassword(config.password)
@@ -138,11 +140,16 @@ actor ShadowsocksTransport {
         try await waitForConnectionReady(connection: conn)
         log("TLS connected")
 
+        // Perform WebSocket Upgrade handshake (v2ray-plugin requires WS before SS bytes)
+        try await wsHandshake(connection: conn, host: config.server)
+        log("WebSocket upgrade complete")
+
         // Wire format: salt(32) + EIH(16) + AEAD(fixedHeader) + AEAD(addrData)
         // salt must precede EIH — server reads salt first to derive the EIH decryption key
         let wirePrefix = requestSalt + eihBlock + encryptedHeader + encryptedAddrData
-        try await sendData(wirePrefix, connection: conn)
-        log("Sent wire prefix (\(wirePrefix.count) bytes)")
+        let wrappedPrefix = wsWrapBinary(wirePrefix)
+        try await sendData(wrappedPrefix, connection: conn)
+        log("Sent wire prefix (\(wirePrefix.count) bytes, \(wrappedPrefix.count) on wire)")
 
         self.running = true
 
@@ -167,12 +174,19 @@ actor ShadowsocksTransport {
                     throw ShadowsocksError.invalidState("Subkey not set")
                 }
 
-                // Encrypted length: 2-byte plaintext + 16-byte GCM tag = 18 bytes on wire
-                let encLen = try await receiveExactly(18, from: connection)
+                // Receive one WS BINARY frame containing one full SS-2022 chunk
+                // Frame contains: encLen(18 bytes) + encPayload(payloadLen + 16 bytes)
+                let wsFrame = try await wsReceiveFrame(from: connection)
+                guard wsFrame.count >= 18 else {
+                    throw ShadowsocksError.decryptionFailed("WS frame too short for SS header: \(wsFrame.count)")
+                }
+
+                // Parse encLen from first 18 bytes of frame
+                let encLen = wsFrame.prefix(18)
                 let lenData = try decryptAEAD(
                     key: subkey,
                     nonce: makeNonce(counter: recvNonce),
-                    ciphertext: encLen,
+                    ciphertext: Data(encLen),
                     aad: Data()
                 )
                 guard lenData.count == 2 else {
@@ -181,12 +195,16 @@ actor ShadowsocksTransport {
                 let payloadLen = Int(lenData.withUnsafeBytes { $0.load(as: UInt16.self).bigEndian })
                 recvNonce += 1
 
-                // Encrypted payload: N bytes + 16-byte GCM tag
-                let encPayload = try await receiveExactly(payloadLen + 16, from: connection)
+                // Parse encPayload from remaining bytes of frame
+                let expectedFrameLen = 18 + payloadLen + 16
+                guard wsFrame.count == expectedFrameLen else {
+                    throw ShadowsocksError.decryptionFailed("WS frame size mismatch: got \(wsFrame.count), expected \(expectedFrameLen)")
+                }
+                let encPayload = wsFrame.dropFirst(18)
                 let payload = try decryptAEAD(
                     key: subkey,
                     nonce: makeNonce(counter: recvNonce),
-                    ciphertext: encPayload,
+                    ciphertext: Data(encPayload),
                     aad: Data()
                 )
                 recvNonce += 1
@@ -246,8 +264,9 @@ actor ShadowsocksTransport {
                     sendNonce += 1
 
                     let chunk = encLen + encPayload
-                    try await sendData(chunk, connection: connection)
-                    log("WG → \(payload.count) bytes (\(chunk.count) on wire)")
+                    let wsChunk = wsWrapBinary(chunk)
+                    try await sendData(wsChunk, connection: connection)
+                    log("WG → \(payload.count) bytes (\(wsChunk.count) on wire)")
                 }
 
             } catch {
@@ -255,6 +274,143 @@ actor ShadowsocksTransport {
                 running = false
             }
         }
+    }
+
+    // MARK: - WebSocket Transport Layer
+
+    /// Perform RFC 6455 WebSocket Upgrade handshake over an already-open TLS connection.
+    /// v2ray-plugin in TLS+websocket mode requires this before any SS-2022 bytes.
+    private func wsHandshake(connection: NWConnection, host: String) async throws {
+        // Generate random 16-byte key for Sec-WebSocket-Key
+        var keyBytes = Data(count: 16)
+        _ = keyBytes.withUnsafeMutableBytes { SecRandomCopyBytes(kSecRandomDefault, 16, $0.baseAddress!) }
+        let wsKey = keyBytes.base64EncodedString()
+
+        // Compute expected Sec-WebSocket-Accept
+        let magic = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+        let acceptInput = Data((wsKey + magic).utf8)
+        var digestBytes = [UInt8](repeating: 0, count: Int(CC_SHA1_DIGEST_LENGTH))
+        acceptInput.withUnsafeBytes {
+            _ = CC_SHA1($0.baseAddress, CC_LONG($0.count), &digestBytes)
+        }
+        let expectedAccept = Data(digestBytes).base64EncodedString()
+
+        // Build HTTP/1.1 Upgrade request
+        let request = [
+            "GET / HTTP/1.1",
+            "Host: \(host)",
+            "Upgrade: websocket",
+            "Connection: Upgrade",
+            "Sec-WebSocket-Key: \(wsKey)",
+            "Sec-WebSocket-Version: 13",
+            "",
+            ""
+        ].joined(separator: "\r\n")
+
+        try await sendData(Data(request.utf8), connection: connection)
+
+        // Read HTTP response line-by-line until \r\n\r\n
+        var responseData = Data()
+        var gotAccept = false
+        var got101 = false
+        let maxResponseBytes = 4096
+
+        while responseData.count < maxResponseBytes {
+            let chunk = try await receiveExactly(1, from: connection)
+            responseData.append(contentsOf: chunk)
+            if responseData.suffix(4) == Data([0x0D, 0x0A, 0x0D, 0x0A]) {
+                break
+            }
+        }
+
+        let responseStr = String(data: responseData, encoding: .utf8) ?? ""
+        let lines = responseStr.components(separatedBy: "\r\n")
+
+        for (i, line) in lines.enumerated() {
+            if i == 0 {
+                got101 = line.contains("101")
+            } else {
+                let lower = line.lowercased()
+                if lower.hasPrefix("sec-websocket-accept:") {
+                    let parts = line.split(separator: ":", maxSplits: 1)
+                    if parts.count == 2 {
+                        let serverAccept = String(parts[1]).trimmingCharacters(in: .whitespaces)
+                        gotAccept = (serverAccept == expectedAccept)
+                    }
+                }
+            }
+        }
+
+        guard got101 else {
+            throw ShadowsocksError.connectionFailed("WebSocket upgrade failed: no 101 response. Got: \(lines.first ?? "(empty)")")
+        }
+        guard gotAccept else {
+            throw ShadowsocksError.connectionFailed("WebSocket upgrade failed: Sec-WebSocket-Accept mismatch. Expected: \(expectedAccept)")
+        }
+    }
+
+    /// Wrap data in a WebSocket BINARY frame (RFC 6455, client→server, unmasked).
+    /// v2ray-plugin server accepts unmasked frames (standard for server-to-server).
+    /// Frame format: 0x82 (FIN+binary) | length encoding | payload
+    nonisolated func wsWrapBinary(_ payload: Data) -> Data {
+        var frame = Data()
+        frame.append(0x82)  // FIN=1, opcode=2 (binary)
+        let len = payload.count
+        if len <= 125 {
+            frame.append(UInt8(len))
+        } else if len <= 65535 {
+            frame.append(126)
+            var lenBE = UInt16(len).bigEndian
+            frame.append(Data(bytes: &lenBE, count: 2))
+        } else {
+            frame.append(127)
+            var lenBE = UInt64(len).bigEndian
+            frame.append(Data(bytes: &lenBE, count: 8))
+        }
+        frame.append(payload)
+        return frame
+    }
+
+    /// Receive one complete WebSocket frame and return its payload.
+    /// Handles 7-bit, 16-bit, and 64-bit payload lengths. Strips opcode/mask header.
+    private func wsReceiveFrame(from connection: NWConnection) async throws -> Data {
+        // Read first 2 header bytes
+        let header = try await receiveExactly(2, from: connection)
+        // header[0]: FIN + opcode (we expect 0x82 = binary, but accept any opcode)
+        let lenByte = header[1] & 0x7F
+        let isMasked = (header[1] & 0x80) != 0
+
+        // Determine payload length
+        let payloadLen: Int
+        if lenByte <= 125 {
+            payloadLen = Int(lenByte)
+        } else if lenByte == 126 {
+            let extLen = try await receiveExactly(2, from: connection)
+            payloadLen = Int(extLen.withUnsafeBytes { $0.load(as: UInt16.self).bigEndian })
+        } else {  // 127
+            let extLen = try await receiveExactly(8, from: connection)
+            payloadLen = Int(extLen.withUnsafeBytes { $0.load(as: UInt64.self).bigEndian })
+        }
+
+        // Read mask key if present (server→client frames are typically unmasked)
+        var maskKey = Data(count: 4)
+        if isMasked {
+            maskKey = try await receiveExactly(4, from: connection)
+        }
+
+        // Read payload
+        var payload = try await receiveExactly(payloadLen, from: connection)
+
+        // Unmask if necessary
+        if isMasked {
+            payload.withUnsafeMutableBytes { buf in
+                for i in 0..<payloadLen {
+                    buf[i] ^= maskKey[i % 4]
+                }
+            }
+        }
+
+        return payload
     }
 
     // MARK: - Cryptography

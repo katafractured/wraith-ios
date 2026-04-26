@@ -582,6 +582,31 @@ struct SettingsView: View {
 
             Divider().background(Color.kfBorder)
 
+            Divider().background(Color.kfBorder)
+
+            VStack(alignment: .leading, spacing: 4) {
+                SettingsRow(icon: "waveform.path.ecg.rectangle", label: "Connection Mode") {
+                    Picker("Connection Mode", selection: Binding(
+                        get: { vpn.transportPreference },
+                        set: { vpn.transportPreference = $0 }
+                    )) {
+                        Text("WireGuard").tag(TransportMode.wireguard)
+                        Text("Stealth").tag(TransportMode.shadowsocks)
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(width: 160)
+                }
+                Text(vpn.transportPreference == .shadowsocks
+                     ? "Stealth mode tunnels traffic through an obfuscated layer to bypass deep packet inspection. Uses more battery."
+                     : "WireGuard is fast, lightweight, and works in most networks.")
+                    .font(KFFont.caption(11))
+                    .foregroundStyle(Color.kfTextMuted)
+                    .padding(.leading, 36)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Divider().background(Color.kfBorder)
+
             Button {
                 showRevokeAlert = true
             } label: {

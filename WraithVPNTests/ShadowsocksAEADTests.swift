@@ -283,4 +283,108 @@ final class ShadowsocksAEADTests: XCTestCase {
                        "f53cbcb49c40489c38b6ed050a424a927655bac4f17a07ff78db82fd80982ab5",
                        "BLAKE3 userPSK hash must match reference vector")
     }
+    // MARK: - WebSocket framing (Sprint 4)
+    // These tests validate the WS handshake accept-key derivation and BINARY frame
+    // wrapping/parsing that ShadowsocksTransport uses to tunnel SS-2022 through v2ray-plugin.
+    // All tests are self-contained; no network access required.
+
+    // Inline wsWrapBinary for test isolation (mirrors ShadowsocksTransport.wsWrapBinary)
+    private func wsWrapBinary(_ payload: Data) -> Data {
+        var frame = Data()
+        frame.append(0x82) // FIN=1, opcode=2 (binary)
+        let len = payload.count
+        if len <= 125 {
+            frame.append(UInt8(len))
+        } else if len <= 65535 {
+            frame.append(126)
+            frame.append(UInt8((len >> 8) & 0xFF))
+            frame.append(UInt8(len & 0xFF))
+        } else {
+            frame.append(127)
+            for shift in stride(from: 56, through: 0, by: -8) {
+                frame.append(UInt8((len >> shift) & 0xFF))
+            }
+        }
+        frame.append(contentsOf: payload)
+        return frame
+    }
+
+    // Inline wsParseFrame for test isolation
+    private func wsParseFrame(_ data: Data) throws -> Data {
+        guard data.count >= 2 else { throw NSError(domain: "WSTest", code: 1) }
+        let lenByte = data[1] & 0x7F
+        let headerEnd: Int
+        let payloadLen: Int
+        if lenByte <= 125 {
+            payloadLen = Int(lenByte)
+            headerEnd = 2
+        } else if lenByte == 126 {
+            guard data.count >= 4 else { throw NSError(domain: "WSTest", code: 2) }
+            payloadLen = (Int(data[2]) << 8) | Int(data[3])
+            headerEnd = 4
+        } else {
+            guard data.count >= 10 else { throw NSError(domain: "WSTest", code: 3) }
+            payloadLen = (Int(data[2]) << 56) | (Int(data[3]) << 48) |
+                         (Int(data[4]) << 40) | (Int(data[5]) << 32) |
+                         (Int(data[6]) << 24) | (Int(data[7]) << 16) |
+                         (Int(data[8]) << 8)  | Int(data[9])
+            headerEnd = 10
+        }
+        return data[headerEnd ..< headerEnd + payloadLen]
+    }
+
+    func testWSAcceptKeyDerivation() throws {
+        // RFC 6455 §4.2.2: Accept = base64(SHA1(Key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"))
+        // Known vector from RFC 6455 §1.3 example:
+        // Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==
+        // Expected Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
+        let wsKey = "dGhlIHNhbXBsZSBub25jZQ=="
+        let magic = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+        let combined = wsKey + magic
+        let sha1 = Insecure.SHA1.hash(data: Data(combined.utf8))
+        let accept = Data(sha1).base64EncodedString()
+        XCTAssertEqual(accept, "s3pPLMBiTxaQ9kYGzzhZRbK+xOo=",
+                       "WS Accept key derivation must match RFC 6455 §1.3 known vector")
+    }
+
+    func testWSBinaryFrameShortPayload() {
+        // Payload <= 125 bytes: header is 2 bytes (0x82, len)
+        let payload = Data(repeating: 0xAB, count: 32)
+        let frame = wsWrapBinary(payload)
+        XCTAssertEqual(frame.count, 34, "Short payload frame must be 2-byte header + 32-byte payload")
+        XCTAssertEqual(frame[0], 0x82, "First byte must be FIN=1 + opcode=2 (binary)")
+        XCTAssertEqual(frame[1], 32, "Length byte must equal payload length for short frames")
+        XCTAssertEqual(frame[2...], payload, "Payload bytes must follow header unchanged")
+    }
+
+    func testWSBinaryFrameExtended16BitPayload() {
+        // Payload 126..65535: header is 4 bytes (0x82, 126, len_hi, len_lo)
+        let payload = Data(repeating: 0xCD, count: 200)
+        let frame = wsWrapBinary(payload)
+        XCTAssertEqual(frame.count, 204, "Extended-16 frame must be 4-byte header + 200-byte payload")
+        XCTAssertEqual(frame[0], 0x82, "First byte must be FIN=1 + opcode=2")
+        XCTAssertEqual(frame[1], 126, "Length indicator must be 126 for 16-bit extended length")
+        let encodedLen = (Int(frame[2]) << 8) | Int(frame[3])
+        XCTAssertEqual(encodedLen, 200, "Encoded 16-bit length must equal payload byte count")
+        XCTAssertEqual(frame[4...], payload, "Payload bytes must follow extended header unchanged")
+    }
+
+    func testWSBinaryFrameRoundTrip() throws {
+        // Encode then decode; payload must be recovered intact
+        let original = Data((0..<64).map { UInt8($0) })
+        let frame = wsWrapBinary(original)
+        let recovered = try wsParseFrame(frame)
+        XCTAssertEqual(recovered, original,
+                       "Parsed payload must exactly equal original after WS BINARY frame round-trip")
+    }
+
+    func testWSBinaryFrameRoundTripExtended() throws {
+        // Round-trip for a 300-byte payload (forces 16-bit extended length path)
+        let original = Data(repeating: 0xFF, count: 300)
+        let frame = wsWrapBinary(original)
+        let recovered = try wsParseFrame(frame)
+        XCTAssertEqual(recovered, original,
+                       "Parsed payload must exactly equal original for extended-length WS frame")
+    }
+
 }

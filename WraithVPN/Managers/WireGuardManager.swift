@@ -825,7 +825,7 @@ final class WireGuardManager: ObservableObject {
         let message = Data([0x01])
         do {
             let reply = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Data?, Error>) in
-                session.sendProviderMessage(message) { data in
+                try? session.sendProviderMessage(message) { data in
                     continuation.resume(returning: data)
                 }
             }

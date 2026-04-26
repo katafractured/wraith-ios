@@ -3,9 +3,10 @@
 //
 // Pure-Swift SS-2022 AEAD client transport.
 // Cipher: 2022-blake3-aes-256-gcm
-// Wire: EIH(16) + RequestSalt(32) + AEAD(FixedHeader, aad=salt) + AEAD chunks
+// Wire: salt(32) + EIH(16) + AEAD(fixedHeader, aad=salt) + AEAD(addrData, aad=Data()) + AEAD chunks
 // Subkey: HKDF-SHA1(ikm=userPSK, salt=requestSalt, info="ss-subkey")
-// EIH key: BLAKE3(serverPSK || requestSalt)[0..16]  (inline BLAKE3 — no external dep)
+// EIH key: BLAKE3.deriveKey("shadowsocks 2022 identity subkey", serverPSK||requestSalt)[0..32]
+// EIH plaintext: BLAKE3.hash(userPSK)[0..16]
 // No Go toolchain required.
 
 import Foundation
@@ -59,7 +60,7 @@ enum ShadowsocksError: LocalizedError {
 actor ShadowsocksTransport {
     private var connection: NWConnection?
     private var running = false
-    private var sendNonce: UInt64 = 1   // nonce 0 consumed by fixed header
+    private var sendNonce: UInt64 = 2   // nonces 0+1 consumed by fixedHeader + addrData
     private var recvNonce: UInt64 = 0   // server responses start at 0
 
     private var subkey: Data?
@@ -101,8 +102,9 @@ actor ShadowsocksTransport {
         )
 
         // Build and encrypt the fixed header (nonce=0, aad=requestSalt)
-        let fixedHeaderPlaintext = try buildFixedHeader(
-            serverNodeIP: config.serverNodeIP,
+        // Fixed header plaintext: type(1) + timestamp(8) + length(2) = 11 bytes
+        // where length is the size of the address data that follows (9 bytes)
+        let fixedHeaderPlaintext = buildFixedHeader(
             timestamp: UInt64(Date().timeIntervalSince1970)
         )
         let encryptedHeader = try encryptAEAD(
@@ -111,7 +113,17 @@ actor ShadowsocksTransport {
             plaintext: fixedHeaderPlaintext,
             aad: requestSalt
         )
-        self.sendNonce = 1
+
+        // Build and encrypt the address data (nonce=1, aad=Data())
+        // Address data plaintext: ATYP(1) + IPv4(4) + port(2) + padding_len(2) = 9 bytes
+        let addrDataPlaintext = try buildAddressData(serverNodeIP: config.serverNodeIP)
+        let encryptedAddrData = try encryptAEAD(
+            key: derivedSubkey,
+            nonce: makeNonce(counter: 1),
+            plaintext: addrDataPlaintext,
+            aad: Data()
+        )
+        self.sendNonce = 2
 
         // Open TLS connection (v2ray-plugin terminates TLS on the server side)
         let host = NWEndpoint.Host(config.server)
@@ -126,8 +138,9 @@ actor ShadowsocksTransport {
         try await waitForConnectionReady(connection: conn)
         log("TLS connected")
 
-        // Wire prefix: EIH(16) + salt(32) + AEAD(fixedHeader)
-        let wirePrefix = eihBlock + requestSalt + encryptedHeader
+        // Wire format: salt(32) + EIH(16) + AEAD(fixedHeader) + AEAD(addrData)
+        // salt must precede EIH — server reads salt first to derive the EIH decryption key
+        let wirePrefix = requestSalt + eihBlock + encryptedHeader + encryptedAddrData
         try await sendData(wirePrefix, connection: conn)
         log("Sent wire prefix (\(wirePrefix.count) bytes)")
 
@@ -273,40 +286,48 @@ actor ShadowsocksTransport {
         return derivedKey.withUnsafeBytes { Data($0) }
     }
 
-    /// EIH = AES-128-ECB(key: BLAKE3(serverPSK||requestSalt)[0..16], plaintext: userPSK[0..16])
+    /// EIH = AES-256-ECB(
+    ///   key:       blake3DeriveKey("shadowsocks 2022 identity subkey", serverPSK||requestSalt)[0..32],
+    ///   plaintext: blake3Hash(userPSK)[0..16]
+    /// )
     private func buildEIH(serverPSK: Data, userPSK: Data, requestSalt: Data) throws -> Data {
-        var hashInput = Data()
-        hashInput.append(serverPSK)
-        hashInput.append(requestSalt)
-        let hash = blake3Hash(hashInput)          // real BLAKE3 — see bottom of file
-        let eihKey = hash.prefix(16)
-        let plaintext = userPSK.prefix(16)
-        return try aesECBEncrypt(key: Data(eihKey), plaintext: Data(plaintext))
+        // Key material for derive_key: serverPSK || requestSalt
+        var keyMaterial = Data()
+        keyMaterial.append(serverPSK)
+        keyMaterial.append(requestSalt)
+        // Derive 32-byte AES-256 key using BLAKE3 key-derivation mode
+        let eihKeyFull = blake3DeriveKey(context: "shadowsocks 2022 identity subkey", keyMaterial: keyMaterial)
+        // EIH plaintext is the first 16 bytes of blake3Hash(userPSK)
+        let userPSKHash = blake3Hash(userPSK)
+        let plaintext = userPSKHash.prefix(16)
+        return try aesECBEncrypt(key: Data(eihKeyFull), plaintext: Data(plaintext))
     }
 
-    /// SS-2022 TCP fixed header: type(1) + timestamp(8) + addr_type(1) + ipv4(4) + port(2) + padding_len(2)
-    private func buildFixedHeader(serverNodeIP: String, timestamp: UInt64) throws -> Data {
+    /// SS-2022 TCP fixed header plaintext: type(1) + timestamp(8) + length(2) = 11 bytes
+    /// where length is the byte count of the address data chunk (9 bytes)
+    private func buildFixedHeader(timestamp: UInt64) -> Data {
         var header = Data()
-
-        header.append(0x00)  // type: TCP request
-
+        header.append(0x00)                             // type: TCP request
         var ts = timestamp.bigEndian
-        header.append(Data(bytes: &ts, count: 8))
+        header.append(Data(bytes: &ts, count: 8))       // 8-byte timestamp
+        var addrLen = UInt16(9).bigEndian               // address data is 9 bytes
+        header.append(Data(bytes: &addrLen, count: 2))  // 2-byte length field
+        return header  // 11 bytes total
+    }
 
-        header.append(0x01)  // addr_type: IPv4
-
+    /// SS-2022 TCP address data plaintext: ATYP(1) + IPv4(4) + port(2) + padding_len(2) = 9 bytes
+    private func buildAddressData(serverNodeIP: String) throws -> Data {
+        var addr = Data()
+        addr.append(0x01)  // ATYP: IPv4
         let octets = serverNodeIP.split(separator: ".").compactMap { UInt8($0) }
         guard octets.count == 4 else {
             throw ShadowsocksError.encryptionFailed("Invalid IPv4: \(serverNodeIP)")
         }
-        header.append(contentsOf: octets)
-
+        addr.append(contentsOf: octets)                     // 4 bytes IPv4
         var wgPort = UInt16(51820).bigEndian
-        header.append(Data(bytes: &wgPort, count: 2))
-
-        header.append(contentsOf: [0x00, 0x00])  // initial payload length = 0
-
-        return header
+        addr.append(Data(bytes: &wgPort, count: 2))         // 2-byte port
+        addr.append(contentsOf: [0x00, 0x00])               // 2-byte padding length = 0
+        return addr  // 9 bytes total
     }
 
     private func encryptAEAD(key: Data, nonce: Data, plaintext: Data, aad: Data) throws -> Data {
@@ -435,10 +456,12 @@ actor ShadowsocksTransport {
 
 // MARK: - Inline BLAKE3
 //
-// Minimal BLAKE3 hash (output: 32 bytes) for SS-2022 EIH key derivation.
-// Implements the BLAKE3 spec (https://github.com/BLAKE3-team/BLAKE3-specs)
-// for inputs ≤ 64 bytes (single chunk, ROOT flag set).
-// Only the hash function is implemented — no XOF, no keyed mode.
+// Implements two BLAKE3 operations required by SS-2022:
+//   blake3Hash(_:)      — plain hash (CHUNK_START | CHUNK_END | ROOT flags)
+//   blake3DeriveKey(_:) — key derivation mode (DERIVE_KEY_CONTEXT then DERIVE_KEY_MATERIAL)
+//
+// Both handle inputs up to 64 bytes (single chunk).
+// Reference: https://github.com/BLAKE3-team/BLAKE3-specs/blob/master/blake3.pdf
 
 private let blake3IV: [UInt32] = [
     0x6A09E667, 0xBB67AE85, 0x3C6EF372, 0xA54FF53A,
@@ -447,9 +470,11 @@ private let blake3IV: [UInt32] = [
 
 private let blake3MsgPermutation: [Int] = [2, 6, 3, 10, 7, 0, 4, 13, 1, 11, 12, 5, 9, 14, 15, 8]
 
-private let blake3CHUNK_START:  UInt32 = 1 << 0
-private let blake3CHUNK_END:    UInt32 = 1 << 1
-private let blake3ROOT:         UInt32 = 1 << 3
+private let blake3CHUNK_START:        UInt32 = 1 << 0
+private let blake3CHUNK_END:          UInt32 = 1 << 1
+private let blake3ROOT:               UInt32 = 1 << 3
+private let blake3DERIVE_KEY_CONTEXT: UInt32 = 1 << 4
+private let blake3DERIVE_KEY_MATERIAL: UInt32 = 1 << 5
 
 private func blake3G(
     _ state: inout [UInt32], a: Int, b: Int, c: Int, d: Int,
@@ -505,13 +530,10 @@ private func blake3Compress(
     return state
 }
 
-/// Compute BLAKE3(input) → 32 bytes. Handles inputs up to 64 bytes.
-func blake3Hash(_ input: Data) -> Data {
-    // Pad input to 64 bytes (one BLAKE3 block)
-    var padded = [UInt8](input) + [UInt8](repeating: 0, count: max(0, 64 - input.count))
-    padded = Array(padded.prefix(64))
-
-    // Read 16 little-endian uint32 words from the 64-byte block
+/// Pack a byte slice (up to 64 bytes) into 16 little-endian uint32 words.
+private func blake3BlockWords(from input: Data, padToCount: Int = 64) -> [UInt32] {
+    var padded = [UInt8](input) + [UInt8](repeating: 0, count: max(0, padToCount - input.count))
+    padded = Array(padded.prefix(padToCount))
     var block = [UInt32](repeating: 0, count: 16)
     for i in 0..<16 {
         let off = i * 4
@@ -520,8 +542,27 @@ func blake3Hash(_ input: Data) -> Data {
             | (UInt32(padded[off + 2]) << 16)
             | (UInt32(padded[off + 3]) << 24)
     }
+    return block
+}
 
-    // Single chunk: CHUNK_START | CHUNK_END | ROOT
+/// Pack a [UInt32] output state's first 8 words into 32 bytes (little-endian).
+private func blake3OutputBytes(from state: [UInt32]) -> Data {
+    var out = Data(count: 32)
+    out.withUnsafeMutableBytes { buf in
+        for i in 0..<8 {
+            let v = state[i]
+            buf[i * 4 + 0] = UInt8(v & 0xFF)
+            buf[i * 4 + 1] = UInt8((v >> 8) & 0xFF)
+            buf[i * 4 + 2] = UInt8((v >> 16) & 0xFF)
+            buf[i * 4 + 3] = UInt8((v >> 24) & 0xFF)
+        }
+    }
+    return out
+}
+
+/// Compute BLAKE3(input) → 32 bytes. Handles inputs up to 64 bytes.
+func blake3Hash(_ input: Data) -> Data {
+    let block = blake3BlockWords(from: input)
     let flags: UInt32 = blake3CHUNK_START | blake3CHUNK_END | blake3ROOT
     let outputState = blake3Compress(
         cv: blake3IV,
@@ -530,19 +571,43 @@ func blake3Hash(_ input: Data) -> Data {
         counter: 0,
         flags: flags
     )
+    return blake3OutputBytes(from: outputState)
+}
 
-    // First 8 words of output state → 32-byte hash (little-endian)
-    var out = Data(count: 32)
-    out.withUnsafeMutableBytes { buf in
-        for i in 0..<8 {
-            let v = outputState[i]
-            buf[i * 4 + 0] = UInt8(v & 0xFF)
-            buf[i * 4 + 1] = UInt8((v >> 8) & 0xFF)
-            buf[i * 4 + 2] = UInt8((v >> 16) & 0xFF)
-            buf[i * 4 + 3] = UInt8((v >> 24) & 0xFF)
-        }
-    }
-    return out
+/// Compute BLAKE3.derive_key(context, keyMaterial) → 32 bytes.
+///
+/// This is BLAKE3's two-pass key derivation:
+///   1. Hash the context string with DERIVE_KEY_CONTEXT flag → 32-byte context key
+///   2. Compress the key material with DERIVE_KEY_MATERIAL flag using context key as CV
+///
+/// context must be a short ASCII string (≤ 64 bytes).
+/// keyMaterial must be ≤ 64 bytes.
+func blake3DeriveKey(context: String, keyMaterial: Data) -> Data {
+    // Pass 1: hash the context string to get the chaining value (CV)
+    let contextData = Data(context.utf8)
+    let contextBlock = blake3BlockWords(from: contextData)
+    let contextFlags: UInt32 = blake3CHUNK_START | blake3CHUNK_END | blake3ROOT | blake3DERIVE_KEY_CONTEXT
+    let contextState = blake3Compress(
+        cv: blake3IV,
+        block: contextBlock,
+        blockLen: UInt32(min(contextData.count, 64)),
+        counter: 0,
+        flags: contextFlags
+    )
+    // The first 8 words of the output form the derived CV
+    let derivedCV = Array(contextState.prefix(8))
+
+    // Pass 2: compress the key material using the derived CV
+    let materialBlock = blake3BlockWords(from: keyMaterial)
+    let materialFlags: UInt32 = blake3CHUNK_START | blake3CHUNK_END | blake3ROOT | blake3DERIVE_KEY_MATERIAL
+    let outputState = blake3Compress(
+        cv: derivedCV,
+        block: materialBlock,
+        blockLen: UInt32(min(keyMaterial.count, 64)),
+        counter: 0,
+        flags: materialFlags
+    )
+    return blake3OutputBytes(from: outputState)
 }
 
 private extension UInt32 {

@@ -79,6 +79,7 @@
 		BBMAC071 /* TelemetryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100039 /* TelemetryManager.swift */; };
 		BBMAC099 /* LatencyProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100040 /* LatencyProbe.swift */; };
 		BBMAC100 /* MacMainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBMAC025 /* MacMainView.swift */; };
+		BBMAC101 /* ScreenshotMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100099 /* ScreenshotMode.swift */; };
 		BBMACNFW001 /* MacRegionPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBMACNEW001 /* MacRegionPickerView.swift */; };
 		BBMACNFW002 /* MacMultiHopPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBMACNEW002 /* MacMultiHopPickerView.swift */; };
 		BBMACNFW003 /* MacHavenDNSSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBMACNEW003 /* MacHavenDNSSettingsView.swift */; };
@@ -851,6 +852,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				BBMAC050 /* WraithVPNMacApp.swift in Sources */,
+				BBMAC101 /* ScreenshotMode.swift in Sources */,
 				BBMAC054 /* APIClient.swift in Sources */,
 				BBMAC055 /* StoreKitManager.swift in Sources */,
 				BBMAC056 /* HavenDNSManager.swift in Sources */,

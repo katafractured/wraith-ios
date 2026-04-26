@@ -85,8 +85,8 @@ actor ShadowsocksTransport {
 
         // 32-byte random request salt
         var requestSalt = Data(count: 32)
-        let saltResult = requestSalt.withUnsafeMutableBytes {
-            SecRandomCopyBytes(kSecRandomDefault, 32, $0.baseAddress!)
+        let saltResult = requestSalt.withUnsafeMutableBytes { (buf: UnsafeMutableRawBufferPointer) -> OSStatus in
+            SecRandomCopyBytes(kSecRandomDefault, 32, buf.baseAddress!)
         }
         guard saltResult == errSecSuccess else {
             throw ShadowsocksError.encryptionFailed("SecRandomCopyBytes failed")
@@ -133,7 +133,8 @@ actor ShadowsocksTransport {
             throw ShadowsocksError.connectionFailed("Invalid port: \(config.port)")
         }
         let tlsParams = NWParameters(tls: NWProtocolTLS.Options())
-        tlsParams.preferNoProxy = true
+        // Note: NWParameters.preferNoProxy is not a public API on iOS.
+        // NEPacketTunnelProvider runs outside the system proxy stack automatically.
         let conn = NWConnection(host: host, port: port, using: tlsParams)
         self.connection = conn
 
@@ -403,7 +404,7 @@ actor ShadowsocksTransport {
 
         // Unmask if necessary
         if isMasked {
-            payload.withUnsafeMutableBytes { buf in
+            payload.withUnsafeMutableBytes { (buf: UnsafeMutableRawBufferPointer) in
                 for i in 0..<payloadLen {
                     buf[i] ^= maskKey[i % 4]
                 }
@@ -533,7 +534,7 @@ actor ShadowsocksTransport {
     /// SS-2022 nonce: 4 zero bytes + 8-byte counter big-endian = 12 bytes
     private func makeNonce(counter: UInt64) -> Data {
         var nonce = Data(count: 12)
-        nonce.withUnsafeMutableBytes { buf in
+        nonce.withUnsafeMutableBytes { (buf: UnsafeMutableRawBufferPointer) in
             var c = counter.bigEndian
             memcpy(buf.baseAddress! + 4, &c, 8)
         }
@@ -704,7 +705,7 @@ private func blake3BlockWords(from input: Data, padToCount: Int = 64) -> [UInt32
 /// Pack a [UInt32] output state's first 8 words into 32 bytes (little-endian).
 private func blake3OutputBytes(from state: [UInt32]) -> Data {
     var out = Data(count: 32)
-    out.withUnsafeMutableBytes { buf in
+    out.withUnsafeMutableBytes { (buf: UnsafeMutableRawBufferPointer) in
         for i in 0..<8 {
             let v = state[i]
             buf[i * 4 + 0] = UInt8(v & 0xFF)

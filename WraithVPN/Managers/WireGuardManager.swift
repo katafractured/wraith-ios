@@ -102,6 +102,10 @@ final class WireGuardManager: ObservableObject {
     /// Holds the current in-flight connect operation (provisionAndInstall or connectToServer).
     /// Allows disconnect to cancel the connect Task and force immediate teardown.
     private var connectTask: Task<Void, Error>?
+    /// Tracks whether we should engage SS fallback on the next .connected transition.
+    /// Set by connectToServer() when transportPreference==.shadowsocks, cleared after
+    /// engagement so it doesn't fire on every reconnect.
+    private var pendingShadowsocksEngagement: Bool = false
 
     // MARK: - Phase E2.2 latency reporting + periodic Layer 2
 
@@ -270,11 +274,15 @@ final class WireGuardManager: ObservableObject {
         // explicitly set wireguard so stale .shadowsocks values don't persist.
         if transportPreference != .shadowsocks || appGroupDefaults?.data(forKey: "activeShadowsocksConfig") == nil {
             self.activeTransport = .wireguard
+            pendingShadowsocksEngagement = false
         }
 
         // Issue #3: Honor transportPreference on fresh connect
+        // Set a flag so syncStatus() will engage SS once the tunnel reaches .connected.
+        // This avoids the race where startTunnel() only submits the request; the NE
+        // extension isn't ready for IPC yet.
         if transportPreference == .shadowsocks, appGroupDefaults?.data(forKey: "activeShadowsocksConfig") != nil {
-            await attemptShadowsocksFallback()
+            pendingShadowsocksEngagement = true
         }
     }
 
@@ -1281,6 +1289,13 @@ final class WireGuardManager: ObservableObject {
             // Do NOT reset reprovisionAttempts here — .connected just means the NE
             // extension started, NOT that the WG handshake succeeded. The health check
             // resets the counter when it confirms the tunnel is actually routing traffic.
+
+            // Issue #3 fix: If we set transportPreference to .shadowsocks before connect,
+            // engage the SS fallback now that the tunnel has reached .connected.
+            if pendingShadowsocksEngagement {
+                pendingShadowsocksEngagement = false
+                Task { await self.attemptShadowsocksFallback() }
+            }
         case .reasserting:
             status = .connecting
         case .disconnecting:

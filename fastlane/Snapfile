@@ -1,5 +1,7 @@
 # Katafract screenshot pipeline — fastlane snapshot config
 
+project("./WraithVPN.xcodeproj")
+
 devices([
   "iPhone 17 Pro Max",
   "iPad Pro 13-inch (M5)",

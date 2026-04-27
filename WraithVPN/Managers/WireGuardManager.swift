@@ -82,6 +82,8 @@ final class WireGuardManager: ObservableObject {
     /// True while any provision/switch is in-flight. Published so the UI can
     /// disable the connect button and show a loading state during provisioning.
     @Published private(set) var isProvisioning = false
+    /// Issue #5: Guards against rapid transport mode toggles queuing concurrent calls
+    private var isTransportSwitching = false
     /// Tracks the manager-load task so `autoProvisionIfNeeded` can await it
     /// before inspecting `isProvisioned`, preventing a race condition that
     /// causes spurious re-provisioning on launch.
@@ -100,6 +102,10 @@ final class WireGuardManager: ObservableObject {
     /// Holds the current in-flight connect operation (provisionAndInstall or connectToServer).
     /// Allows disconnect to cancel the connect Task and force immediate teardown.
     private var connectTask: Task<Void, Error>?
+    /// Tracks whether we should engage SS fallback on the next .connected transition.
+    /// Set by connectToServer() when transportPreference==.shadowsocks, cleared after
+    /// engagement so it doesn't fire on every reconnect.
+    private var pendingShadowsocksEngagement: Bool = false
 
     // MARK: - Phase E2.2 latency reporting + periodic Layer 2
 
@@ -263,6 +269,21 @@ final class WireGuardManager: ObservableObject {
         await applyOnDemand(autoConnectEnabled)
         try? await manager?.loadFromPreferences()
         try startTunnel()
+
+        // Issue #7: Ensure activeTransport reflects the attempt — if not engaging SS,
+        // explicitly set wireguard so stale .shadowsocks values don't persist.
+        if transportPreference != .shadowsocks || appGroupDefaults?.data(forKey: "activeShadowsocksConfig") == nil {
+            self.activeTransport = .wireguard
+            pendingShadowsocksEngagement = false
+        }
+
+        // Issue #3: Honor transportPreference on fresh connect
+        // Set a flag so syncStatus() will engage SS once the tunnel reaches .connected.
+        // This avoids the race where startTunnel() only submits the request; the NE
+        // extension isn't ready for IPC yet.
+        if transportPreference == .shadowsocks, appGroupDefaults?.data(forKey: "activeShadowsocksConfig") != nil {
+            pendingShadowsocksEngagement = true
+        }
     }
 
     /// Phase F — region-first connect.
@@ -702,6 +723,49 @@ final class WireGuardManager: ObservableObject {
         await applyOnDemand(enabled)
     }
 
+    /// Changes the transport mode preference and reconnects if currently connected.
+    /// When switching to .shadowsocks (Stealth), uses the fallback transport.
+    /// When switching to .wireguard, reconnects to re-try plain WG with fallback available.
+    func setTransportMode(_ mode: TransportMode) async {
+        // Issue #5: Guard against rapid toggles queuing concurrent calls
+        guard !isTransportSwitching else { return }
+        isTransportSwitching = true
+        defer { isTransportSwitching = false }
+
+        // Persist the preference immediately so the UI reflects it
+        transportPreference = mode
+        UserDefaults.standard.set(mode.rawValue, forKey: "transportPreference")
+
+        // Only reconnect if the tunnel is already up and connected
+        guard case .connected = status, isProvisioned else {
+            // Not connected — preference is saved, will take effect on next connect
+            return
+        }
+
+        DebugLogger.shared.wg("Transport mode change requested: \(mode.rawValue)")
+
+        // If switching to Shadowsocks, attempt the fallback transport immediately
+        if mode == .shadowsocks {
+            await attemptShadowsocksFallback()
+            return
+        }
+
+        // If switching to WireGuard, reconnect by dropping and restarting the tunnel.
+        // This gives WireGuard priority but keeps SS available as fallback if UDP is blocked.
+        DebugLogger.shared.wg("Reconnecting to try WireGuard transport…")
+        manager?.connection.stopVPNTunnel()
+        // Issue #2: Poll until disconnected instead of fixed sleep (NE teardown is load-dependent)
+        for _ in 0..<20 {
+            try? await Task.sleep(for: .milliseconds(100))
+            let s = manager?.connection.status
+            if s == .disconnected || s == .invalid { break }
+        }
+        try? startTunnel()
+
+        // Issue #7: Reset activeTransport to wireguard after successful reconnect
+        self.activeTransport = .wireguard
+    }
+
     /// Revokes all active peers (single-hop or multi-hop) and removes the local profile.
     func revokePeer() async {
         await revokeAllPeers()
@@ -819,6 +883,10 @@ final class WireGuardManager: ObservableObject {
     private func attemptShadowsocksFallback() async {
         guard let session = tunnelProviderSession else {
             DebugLogger.shared.wg("SS fallback: no tunnel session available")
+            // Issue #8: Surface IPC failure to user
+            status = .failed("Stealth unavailable — using direct WireGuard")
+            transportPreference = .wireguard
+            activeTransport = .wireguard
             return
         }
         // Message byte 1 = "switch to SS fallback"
@@ -835,9 +903,17 @@ final class WireGuardManager: ObservableObject {
                 status = .connected  // optimistic; will re-health-check on next cycle
             } else {
                 DebugLogger.shared.wg("SS fallback: extension returned unexpected reply")
+                // Issue #8: Surface unexpected reply to user
+                status = .failed("Stealth unavailable — using direct WireGuard")
+                transportPreference = .wireguard
+                activeTransport = .wireguard
             }
         } catch {
             DebugLogger.shared.wg("SS fallback: sendProviderMessage error — \(error.localizedDescription)")
+            // Issue #8: Surface IPC error to user
+            status = .failed("Stealth unavailable — using direct WireGuard")
+            transportPreference = .wireguard
+            activeTransport = .wireguard
         }
     }
 
@@ -1213,6 +1289,13 @@ final class WireGuardManager: ObservableObject {
             // Do NOT reset reprovisionAttempts here — .connected just means the NE
             // extension started, NOT that the WG handshake succeeded. The health check
             // resets the counter when it confirms the tunnel is actually routing traffic.
+
+            // Issue #3 fix: If we set transportPreference to .shadowsocks before connect,
+            // engage the SS fallback now that the tunnel has reached .connected.
+            if pendingShadowsocksEngagement {
+                pendingShadowsocksEngagement = false
+                Task { await self.attemptShadowsocksFallback() }
+            }
         case .reasserting:
             status = .connecting
         case .disconnecting:

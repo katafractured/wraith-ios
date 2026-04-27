@@ -588,7 +588,7 @@ struct SettingsView: View {
                 SettingsRow(icon: "waveform.path.ecg.rectangle", label: "Connection Mode") {
                     Picker("Connection Mode", selection: Binding(
                         get: { vpn.transportPreference },
-                        set: { vpn.transportPreference = $0 }
+                        set: { mode in Task { await vpn.setTransportMode(mode) } }
                     )) {
                         Text("WireGuard").tag(TransportMode.wireguard)
                         Text("Stealth").tag(TransportMode.shadowsocks)

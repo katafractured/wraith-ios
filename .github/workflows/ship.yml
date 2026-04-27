@@ -104,8 +104,8 @@ jobs:
             BUILD_NUM=$((GITHUB_RUN_NUMBER + 400))
           else
             ASC_MAX=$(curl -s -m 10 -H "Authorization: Bearer $JWT" \
-              "https://api.appstoreconnect.apple.com/v1/builds?filter[app]=$APP_ID&sort=-version&limit=1&fields[builds]=version" \
-              | python3 -c 'import sys,json; d=json.load(sys.stdin).get("data") or [{}]; v=(d[0].get("attributes") or {}).get("version") or "0"; print(int(v) if v.isdigit() else 0)' 2>/dev/null || echo 0)
+              "https://api.appstoreconnect.apple.com/v1/builds?filter[app]=$APP_ID&sort=-uploadedDate&limit=50&fields[builds]=version" \
+              | python3 -c 'import sys,json; d=json.load(sys.stdin).get("data") or []; vs=[int((b.get("attributes") or {}).get("version") or "0") for b in d if ((b.get("attributes") or {}).get("version") or "").isdigit()]; print(max(vs) if vs else 0)' 2>/dev/null || echo 0)
             ASC_MAX=${ASC_MAX:-0}
             RUN_BUILD=$((GITHUB_RUN_NUMBER + 400))
             if [ "$ASC_MAX" -ge "$RUN_BUILD" ]; then
@@ -141,6 +141,11 @@ jobs:
 
       - name: Clean
         run: xcodebuild -project WraithVPN.xcodeproj -scheme WraithVPN -destination "generic/platform=iOS" clean
+
+      - name: Clean export dir (prevent stale IPA upload)
+        run: |
+          rm -rf "$EXPORT_PATH"
+          mkdir -p "$EXPORT_PATH"
 
       - name: Archive
         env:
@@ -180,10 +185,37 @@ jobs:
 
       - name: Export IPA
         run: |
+          set -o pipefail
           xcodebuild -exportArchive \
             -archivePath "$ARCHIVE_PATH" \
             -exportOptionsPlist "$EXPORT_OPTIONS" \
-            -exportPath "$EXPORT_PATH" 2>&1 | grep -E "error:|\*\* " | tail -10
+            -exportPath "$EXPORT_PATH" 2>&1 | tee /tmp/export.log
+          # Fail loudly if export didn't produce an IPA or the log says EXPORT FAILED
+          if grep -q "EXPORT FAILED" /tmp/export.log; then
+            echo "::error::Export IPA failed — see log above"; exit 1
+          fi
+          IPA=$(ls "$EXPORT_PATH"/*.ipa 2>/dev/null | head -1)
+          if [ -z "$IPA" ]; then
+            echo "::error::No IPA produced at $EXPORT_PATH"; exit 1
+          fi
+          # Verify IPA was just produced (mtime within last 10 minutes)
+          IPA_AGE=$(( $(date +%s) - $(stat -f %m "$IPA") ))
+          if [ "$IPA_AGE" -gt 600 ]; then
+            echo "::error::IPA at $IPA is $IPA_AGE seconds old (stale) — refusing to upload"; exit 1
+          fi
+          # Verify IPA's main bundle CFBundleVersion matches BUILD_NUM
+          TMPD=$(mktemp -d)
+          unzip -q "$IPA" -d "$TMPD"
+          APPDIR=$(ls -d "$TMPD/Payload"/*.app 2>/dev/null | head -1)
+          if [ -z "$APPDIR" ] || [ ! -f "$APPDIR/Info.plist" ]; then
+            echo "::error::IPA structure unexpected — no Payload/*.app/Info.plist"; rm -rf "$TMPD"; exit 1
+          fi
+          IPA_VERSION=$(plutil -extract CFBundleVersion raw -o - "$APPDIR/Info.plist" 2>/dev/null || echo "")
+          rm -rf "$TMPD"
+          if [ "$IPA_VERSION" != "$BUILD_NUM" ]; then
+            echo "::error::IPA main bundle CFBundleVersion=$IPA_VERSION does not match BUILD_NUM=$BUILD_NUM"; exit 1
+          fi
+          echo "✓ IPA at $IPA, version $IPA_VERSION, age ${IPA_AGE}s"
           ls -la "$EXPORT_PATH"
 
       - name: Notify Matrix - Archive succeeded

@@ -920,8 +920,12 @@ final class WireGuardManager: ObservableObject {
         let message = Data([0x01])
         do {
             let reply = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Data?, Error>) in
-                try? session.sendProviderMessage(message) { data in
-                    continuation.resume(returning: data)
+                do {
+                    try session.sendProviderMessage(message) { data in
+                        continuation.resume(returning: data)
+                    }
+                } catch {
+                    continuation.resume(throwing: error)
                 }
             }
             if let reply, reply.first == 0x01 {
@@ -958,8 +962,12 @@ final class WireGuardManager: ObservableObject {
         let message = Data([0x02])
         do {
             let reply = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Data?, Error>) in
-                try? session.sendProviderMessage(message) { data in
-                    continuation.resume(returning: data)
+                do {
+                    try session.sendProviderMessage(message) { data in
+                        continuation.resume(returning: data)
+                    }
+                } catch {
+                    continuation.resume(throwing: error)
                 }
             }
             if let reply, reply.first == 0x01 {

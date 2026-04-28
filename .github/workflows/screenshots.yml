@@ -38,7 +38,6 @@ jobs:
       BUNDLE_ID: com.katafract.wraith
       SCHEME: WraithVPN
       FASTLANE_LANE: submit_version_screenshots
-      RBENV_RUBY: /Users/christianflores/.rbenv/versions/3.3.11
       DOCS_INTERNAL_REPO: katafract-io/docs-internal
 
     steps:
@@ -92,14 +91,36 @@ jobs:
             echo "no xcodegen needed"
           fi
 
-      - name: Install Ruby deps (Ruby 3.3.11 via rbenv)
+      - name: Reset vendor/bundle (avoid stale bundler cache)
+        run: rm -rf vendor/bundle
+
+      - name: Install Ruby deps (Ruby 3.3.x via rbenv or system)
         run: |
-          export PATH="${RBENV_RUBY}/bin:$PATH"
-          ruby --version
-          ${RBENV_RUBY}/bin/bundle --version || ${RBENV_RUBY}/bin/gem install bundler
-          ${RBENV_RUBY}/bin/bundle config set --local path 'vendor/bundle'
-          ${RBENV_RUBY}/bin/bundle install --jobs 4 --retry 3 2>&1 | tail -20
-          ${RBENV_RUBY}/bin/bundle exec fastlane --version 2>&1 | head -3
+          # Probe for Ruby 3.3.11: cmfmbp $HOME/.rbenv, chronos $HOME/.rbenv, or fallback to system
+          RUBY_BIN=""
+          if [ -x "${HOME}/.rbenv/versions/3.3.11/bin/ruby" ]; then
+            RUBY_BIN="${HOME}/.rbenv/versions/3.3.11/bin/ruby"
+          elif command -v rbenv >/dev/null 2>&1; then
+            # rbenv on PATH; use it to locate ruby
+            eval "$(rbenv init - bash)"
+            RUBY_BIN="$(rbenv which ruby 2>/dev/null)"
+          fi
+
+          # Fall back to system ruby if rbenv not found
+          if [ -z "$RUBY_BIN" ] || [ ! -x "$RUBY_BIN" ]; then
+            RUBY_BIN="$(command -v ruby 2>/dev/null)"
+          fi
+
+          if [ -z "$RUBY_BIN" ] || [ ! -x "$RUBY_BIN" ]; then
+            echo "::error::Could not find Ruby 3.3.x"; exit 1
+          fi
+
+          export PATH="$(dirname "$RUBY_BIN"):$PATH"
+          $RUBY_BIN --version
+          $RUBY_BIN -S bundle --version || $RUBY_BIN -S gem install bundler
+          $RUBY_BIN -S bundle config set --local path 'vendor/bundle'
+          $RUBY_BIN -S bundle install --jobs 4 --retry 3 2>&1 | tail -20
+          $RUBY_BIN -S bundle exec fastlane --version 2>&1 | head -3
 
       - name: Resolve SPM
         run: |
@@ -119,9 +140,20 @@ jobs:
           FASTLANE_DISABLE_COLORS: 1
         run: |
           set -o pipefail
-          export PATH="${RBENV_RUBY}/bin:$PATH"
+          # Use same Ruby probe as Install step
+          RUBY_BIN=""
+          if [ -x "${HOME}/.rbenv/versions/3.3.11/bin/ruby" ]; then
+            RUBY_BIN="${HOME}/.rbenv/versions/3.3.11/bin/ruby"
+          elif command -v rbenv >/dev/null 2>&1; then
+            eval "$(rbenv init - bash)"
+            RUBY_BIN="$(rbenv which ruby 2>/dev/null)"
+          fi
+          if [ -z "$RUBY_BIN" ] || [ ! -x "$RUBY_BIN" ]; then
+            RUBY_BIN="$(command -v ruby 2>/dev/null)"
+          fi
+          export PATH="$(dirname "$RUBY_BIN"):$PATH"
           rm -rf fastlane/screenshots
-          ${RBENV_RUBY}/bin/bundle exec fastlane ${FASTLANE_LANE} 2>&1 | tee /tmp/fastlane.log | tail -80
+          $RUBY_BIN -S bundle exec fastlane ${FASTLANE_LANE} 2>&1 | tee /tmp/fastlane.log | tail -80
           echo "shot_count=$(find fastlane/screenshots -name '*.png' 2>/dev/null | wc -l | tr -d ' ')" >> "$GITHUB_OUTPUT"
 
       - name: Collect artifacts

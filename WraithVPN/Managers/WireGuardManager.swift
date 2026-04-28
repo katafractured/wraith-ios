@@ -764,9 +764,26 @@ final class WireGuardManager: ObservableObject {
 
         DebugLogger.shared.wg("Transport mode change requested: \(mode.rawValue)")
 
-        // If switching to Shadowsocks, attempt the fallback transport immediately
+        // If switching to Shadowsocks, set the engagement flag + reconnect.
+        // postConnectHealthCheck will fire attemptShadowsocksFallback() once WG is verified healthy.
         if mode == .shadowsocks {
-            await attemptShadowsocksFallback()
+            // Verify SS config available before triggering reconnect
+            guard appGroupDefaults?.data(forKey: "activeShadowsocksConfig") != nil else {
+                DebugLogger.shared.wg("Stealth toggle: no activeShadowsocksConfig in App Group; aborting")
+                status = .failed("Stealth unavailable — peer not provisioned with SS fallback; preference kept as Stealth, will retry on next reconnect")
+                activeTransport = .wireguard
+                return
+            }
+            pendingShadowsocksEngagement = true
+            DebugLogger.shared.wg("Reconnecting to gate Stealth engagement on healthy WG…")
+            manager?.connection.stopVPNTunnel()
+            // Same poll-until-disconnected pattern as the WG path (Issue #2)
+            for _ in 0..<20 {
+                try? await Task.sleep(for: .milliseconds(100))
+                let s = manager?.connection.status
+                if s == .disconnected || s == .invalid { break }
+            }
+            try? startTunnel()
             return
         }
 
@@ -948,8 +965,7 @@ final class WireGuardManager: ObservableObject {
     /// Sends IPC message 0x02 to the extension to restart WG adapter, ensuring the user
     /// retains connectivity even when Stealth mode cannot engage.
     private func restartWireGuardAfterSSFailure() async {
-        DebugLogger.shared.wg("SS fallback failed — restarting WireGuard adapter")
-        transportPreference = .wireguard
+        DebugLogger.shared.wg("SS fallback failed — restarting WireGuard adapter; preference kept as Stealth, will retry on next reconnect")
         activeTransport = .wireguard
 
         guard let session = tunnelProviderSession else {

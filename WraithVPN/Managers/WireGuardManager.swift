@@ -770,8 +770,7 @@ final class WireGuardManager: ObservableObject {
             // Verify SS config available before triggering reconnect
             guard appGroupDefaults?.data(forKey: "activeShadowsocksConfig") != nil else {
                 DebugLogger.shared.wg("Stealth toggle: no activeShadowsocksConfig in App Group; aborting")
-                status = .failed("Stealth unavailable — peer not provisioned with SS fallback")
-                transportPreference = .wireguard
+                status = .failed("Stealth unavailable — peer not provisioned with SS fallback; preference kept as Stealth, will retry on next reconnect")
                 activeTransport = .wireguard
                 return
             }
@@ -966,8 +965,7 @@ final class WireGuardManager: ObservableObject {
     /// Sends IPC message 0x02 to the extension to restart WG adapter, ensuring the user
     /// retains connectivity even when Stealth mode cannot engage.
     private func restartWireGuardAfterSSFailure() async {
-        DebugLogger.shared.wg("SS fallback failed — restarting WireGuard adapter")
-        transportPreference = .wireguard
+        DebugLogger.shared.wg("SS fallback failed — restarting WireGuard adapter; preference kept as Stealth, will retry on next reconnect")
         activeTransport = .wireguard
 
         guard let session = tunnelProviderSession else {

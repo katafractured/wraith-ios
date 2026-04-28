@@ -182,10 +182,10 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
         return await withCheckedContinuation { continuation in
             adapter.start(tunnelConfiguration: tunnelConfiguration) { adapterError in
                 if let adapterError {
-                    self.log.error("restartWireGuardAdapter: start failed — \(adapterError, privacy: .public)")
+                    log.error("restartWireGuardAdapter: start failed — \(adapterError, privacy: .public)")
                     continuation.resume(returning: false)
                 } else {
-                    self.log.info("WireGuard adapter restarted successfully")
+                    log.info("WireGuard adapter restarted successfully")
                     continuation.resume(returning: true)
                 }
             }

@@ -152,11 +152,22 @@ actor ShadowsocksTransport {
         try await sendData(wrappedPrefix, connection: conn)
         log("Sent wire prefix (\(wirePrefix.count) bytes, \(wrappedPrefix.count) on wire)")
 
+        // NB: do NOT set running=true / spawn loops yet. The PacketTunnelProvider
+        // calls verifyServerAccepted() between start() and engaging the loops so
+        // we don't claim Stealth is active when the server silently rejected us.
         self.running = true
+    }
 
-        // Spawn read + write loops
-        Task { await self.readLoop(connection: conn, packetFlow: packetFlow) }
-        Task { await self.writeLoop(connection: conn, packetFlow: packetFlow) }
+    /// Spawn the bidirectional packet pumps. Caller must invoke this only after
+    /// verifyServerAccepted() has returned true; otherwise we'd silently feed
+    /// real WG packets into a dead/rejected SS connection.
+    func startPumps(packetFlow: NEPacketTunnelFlow) {
+        guard let connection, running else {
+            log("startPumps called but transport not running")
+            return
+        }
+        Task { await self.readLoop(connection: connection, packetFlow: packetFlow) }
+        Task { await self.writeLoop(connection: connection, packetFlow: packetFlow) }
     }
 
     func stop() async {
@@ -164,6 +175,54 @@ actor ShadowsocksTransport {
         running = false
         connection?.cancel()
         connection = nil
+    }
+
+    /// Verify the SS-2022 connection was actually accepted by the server.
+    ///
+    /// The server (shadowsocks-rust ssservice) is a SOCKS5-style relay — it
+    /// only emits bytes back to us when the target (127.0.0.1:51820 = WG
+    /// server) replies. So a positive-data probe doesn't work when no
+    /// traffic is flowing yet.
+    ///
+    /// We instead poll `connection.state` for `timeoutSeconds`. A silent
+    /// server reject (bad PSK, EIH mismatch, WS handshake rejected after
+    /// the fact) typically tears down the TCP conn within ~50-200ms after
+    /// the bad SS-2022 prefix arrives. So if state stays `.ready` for
+    /// 2-3 seconds, auth was almost certainly accepted.
+    ///
+    /// Returns `true` if the connection stays `.ready` for the full window.
+    func verifyServerAccepted(timeoutSeconds: Double) async -> Bool {
+        guard let connection else {
+            log("verify: no connection")
+            return false
+        }
+        guard running else {
+            log("verify: not running")
+            return false
+        }
+
+        let pollIntervalNanos: UInt64 = 100_000_000  // 100ms
+        let totalIterations = max(1, Int(timeoutSeconds * 10))
+
+        for i in 0..<totalIterations {
+            switch connection.state {
+            case .failed(let err):
+                log("verify: state=failed at i=\(i) — \(err.localizedDescription)")
+                return false
+            case .cancelled:
+                log("verify: state=cancelled at i=\(i)")
+                return false
+            case .ready:
+                break  // continue polling
+            default:
+                // .setup, .preparing, .waiting — should already be past these.
+                log("verify: state=\(String(describing: connection.state)) at i=\(i)")
+            }
+            try? await Task.sleep(nanoseconds: pollIntervalNanos)
+        }
+
+        log("verify: connection stayed .ready for \(timeoutSeconds)s — accepting")
+        return true
     }
 
     // MARK: - Read Loop (Server → WireGuard)
@@ -310,19 +369,34 @@ actor ShadowsocksTransport {
 
         try await sendData(Data(request.utf8), connection: connection)
 
-        // Read HTTP response line-by-line until \r\n\r\n
-        var responseData = Data()
+        // Read HTTP response line-by-line until \r\n\r\n. Race against a
+        // 5-second hard timeout so a misconfigured server (e.g., v2ray-plugin
+        // with no `mode=websocket` falling back to raw TLS passthrough that
+        // forwards our HTTP-shaped bytes to ssservice as garbage SS) doesn't
+        // hang the extension forever.
+        let maxResponseBytes = 4096
+        let responseData: Data = try await withThrowingTaskGroup(of: Data.self, returning: Data.self) { group in
+            group.addTask { [self] in
+                var buf = Data()
+                while buf.count < maxResponseBytes {
+                    let chunk = try await self.receiveExactly(1, from: connection)
+                    buf.append(contentsOf: chunk)
+                    if buf.suffix(4) == Data([0x0D, 0x0A, 0x0D, 0x0A]) {
+                        return buf
+                    }
+                }
+                throw ShadowsocksError.connectionFailed("WS upgrade response exceeded \(maxResponseBytes) bytes without \\r\\n\\r\\n terminator")
+            }
+            group.addTask {
+                try await Task.sleep(nanoseconds: 5_000_000_000)  // 5s
+                throw ShadowsocksError.connectionFailed("WS upgrade timed out (5s) — server may not be configured for mode=websocket")
+            }
+            let result = try await group.next() ?? Data()
+            group.cancelAll()
+            return result
+        }
         var gotAccept = false
         var got101 = false
-        let maxResponseBytes = 4096
-
-        while responseData.count < maxResponseBytes {
-            let chunk = try await receiveExactly(1, from: connection)
-            responseData.append(contentsOf: chunk)
-            if responseData.suffix(4) == Data([0x0D, 0x0A, 0x0D, 0x0A]) {
-                break
-            }
-        }
 
         let responseStr = String(data: responseData, encoding: .utf8) ?? ""
         let lines = responseStr.components(separatedBy: "\r\n")
@@ -588,24 +662,30 @@ actor ShadowsocksTransport {
         var buffer = Data()
         while buffer.count < count {
             let remaining = count - buffer.count
+            // Use minimumIncompleteLength: 1 so the callback fires only when
+            // bytes ARE available (or the connection terminates). Avoids the
+            // 1ms busy-poll the previous implementation degenerated into when
+            // an empty-data callback fired.
             let chunk: Data = try await withCheckedThrowingContinuation { continuation in
+                var resumed = false
                 connection.receive(minimumIncompleteLength: 1, maximumLength: remaining) { data, _, isComplete, error in
+                    guard !resumed else { return }
+                    resumed = true
                     if let error = error {
                         continuation.resume(throwing: ShadowsocksError.ioError(error.localizedDescription))
-                    } else if let data = data, !data.isEmpty {
+                    } else if let data, !data.isEmpty {
                         continuation.resume(returning: data)
                     } else if isComplete {
                         continuation.resume(throwing: ShadowsocksError.ioError("Connection closed"))
                     } else {
-                        continuation.resume(returning: Data())
+                        // Should not happen with minimumIncompleteLength: 1 —
+                        // but if it does, surface as an error rather than
+                        // burn CPU spin-looping.
+                        continuation.resume(throwing: ShadowsocksError.ioError("Empty receive callback"))
                     }
                 }
             }
-            if chunk.isEmpty {
-                try await Task.sleep(nanoseconds: 1_000_000)
-            } else {
-                buffer.append(chunk)
-            }
+            buffer.append(chunk)
         }
         return buffer
     }

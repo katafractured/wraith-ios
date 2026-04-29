@@ -495,6 +495,7 @@ final class WireGuardManager: ObservableObject {
         }
     }
 
+
     /// Debounced wrapper around `runLatencyReport` — collapses rapid triggers
     /// (network change + foreground in quick succession) into a single probe.
     private func scheduleLatencyReport(reason: String) {

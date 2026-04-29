@@ -123,6 +123,28 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
 
     /// Reads activeShadowsocksConfig from App Group UserDefaults and starts
     /// ShadowsocksTransport. Stops WireGuard adapter first to avoid UDP/TCP conflict.
+    ///
+    /// Bug fix (2026-04-29): previously this returned success the moment
+    /// `transport.start()` returned — but `transport.start()` only sends the
+    /// SS-2022 wire prefix (salt+EIH+enc(header)+enc(addrData)) and does NOT
+    /// verify that the server actually authenticated and accepted it. If PSK
+    /// is wrong, server certificate fails, or the v2ray-plugin WS layer
+    /// rejects, the failure shows up only later in the read/write loops —
+    /// well after the IPC reply has already gone back as 0x01. The main app
+    /// then flips `activeTransport=.shadowsocks` even though zero SS bytes
+    /// reach the server. This was the TestFlight 1456 ghost-Stealth bug.
+    ///
+    /// New flow:
+    ///   1. Await `adapter.stop` to completion (was fire-and-forget).
+    ///   2. Tear down tunnel network settings to nil so any NWConnection we
+    ///      open inside the extension uses the underlying physical interface
+    ///      instead of a defunct utun.
+    ///   3. Re-apply tunnel network settings (route 0/0, DNS) so packetFlow
+    ///      remains valid for the SS read/write loops.
+    ///   4. Start ShadowsocksTransport.
+    ///   5. Call `transport.verify()` — sends a real WG handshake-init packet
+    ///      through the SS tunnel and waits for the server to echo a response
+    ///      within 3s. Only then return 0x01 to the main app.
     private func startShadowsocksFallback() async -> Bool {
         let blobLen = appGroupDefaults?.data(forKey: "activeShadowsocksConfig")?.count ?? 0
         TunnelLog.stealth(.info, "extension: startShadowsocksFallback ENTRY, configBlobLen=\(blobLen)")
@@ -148,22 +170,120 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
             password: ssConfig.password,
             serverNodeIP: serverNodeIP
         )
+        TunnelLog.stealth(.info, "Config: server=\(Redact.ends(ssConfig.server)) port=\(ssConfig.port) targetWG=\(Redact.ends(serverNodeIP))")
 
-        // Stop the WireGuard adapter (frees the TUN fd so SS can use the packet flow)
-        TunnelLog.stealth(.info, "extension: stopping WG adapter to free packetFlow for SS transport")
-        adapter.stop { _ in }
-        try? await Task.sleep(nanoseconds: 500_000_000)  // 500ms
+        // 1. Await WG adapter stop to completion before opening new sockets.
+        TunnelLog.stealth(.info, "Stopping WireGuard adapter (awaiting completion)…")
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            adapter.stop { error in
+                if let error {
+                    TunnelLog.stealth(.error, "adapter.stop error: \(error)")
+                } else {
+                    TunnelLog.stealth(.info, "adapter.stop completed")
+                }
+                continuation.resume()
+            }
+        }
 
-        // Start SS transport
+        // 2. Drop tunnel network settings to nil so the extension's outbound
+        // NWConnection is forced onto the physical interface (Wi-Fi/cellular)
+        // instead of trying to route via the now-defunct utun.
+        TunnelLog.stealth(.info, "Clearing tunnel network settings (so SS NWConnection bypasses utun)…")
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            self.setTunnelNetworkSettings(nil) { error in
+                if let error {
+                    TunnelLog.stealth(.error, "setTunnelNetworkSettings(nil) error: \(error.localizedDescription)")
+                } else {
+                    TunnelLog.stealth(.info, "setTunnelNetworkSettings(nil) ok")
+                }
+                continuation.resume()
+            }
+        }
+
+        // 3. Start SS transport (TLS connect + WS handshake + send wire prefix).
+        TunnelLog.stealth(.info, "Starting ShadowsocksTransport…")
         let transport = ShadowsocksTransport()
         do {
             try await transport.start(config: tunnelConfig, packetFlow: packetFlow)
-            self.shadowsocksTransport = transport
-            TunnelLog.stealth(.info, "extension: SS transport started successfully")
-            return true
         } catch {
-            TunnelLog.stealth(.error, "extension: SS transport start FAILED — \(error.localizedDescription)")
+            TunnelLog.stealth(.error, "transport.start FAILED: \(error.localizedDescription)")
             return false
+        }
+        TunnelLog.stealth(.info, "transport.start ok (TLS+WS+SS prefix sent)")
+
+        // 4. Verify server actually accepted the SS auth — without this check
+        // we'd return success even when the server silently rejected the PSK.
+        TunnelLog.stealth(.info, "Verifying SS connection (polling state for 3s)…")
+        let verified = await transport.verifyServerAccepted(timeoutSeconds: 3)
+        guard verified else {
+            TunnelLog.stealth(.error, "VERIFY FAILED: connection state went unhealthy within 3s — SS rejected by server (PSK / cert / WS / DPI). Tearing down.")
+            await transport.stop()
+            return false
+        }
+        TunnelLog.stealth(.info, "Connection healthy — SS auth accepted")
+
+        // 5. Re-apply tunnel network settings so packetFlow keeps producing
+        // packets from the OS routing table. We re-use the WG-era settings
+        // (route 0/0, DNS) — only the underlying transport is different.
+        if let proto = self.protocolConfiguration as? NETunnelProviderProtocol,
+           let providerConfig = proto.providerConfiguration,
+           let wgConfig = providerConfig["wgConfig"] as? String {
+            await applyTunnelSettings(forWGConfig: wgConfig, tag: "SS-mode")
+        } else {
+            TunnelLog.stealth(.warning, "cannot re-apply tunnel settings — providerConfiguration missing. packetFlow may stop yielding.")
+        }
+
+        // 6. Spawn read/write loops only AFTER verify succeeded.
+        await transport.startPumps(packetFlow: packetFlow)
+
+        self.shadowsocksTransport = transport
+        TunnelLog.stealth(.info, "SS fallback engaged (transport active, pumps running)")
+        return true
+    }
+
+    /// Re-applies network settings derived from a WG config (used after
+    /// switching transports). Pulls Address + DNS from the WG INI text and
+    /// installs a 0/0 default route. Best-effort: failures are logged but
+    /// not fatal because packetFlow still works without re-applied settings
+    /// in the simple case where the OS hasn't torn them down yet.
+    private func applyTunnelSettings(forWGConfig wgConfig: String, tag: String) async {
+        // Parse the few fields we need out of the wg-quick INI.
+        var address: String?
+        var dnsServers: [String] = []
+        for rawLine in wgConfig.split(whereSeparator: \.isNewline) {
+            let line = rawLine.trimmingCharacters(in: .whitespaces)
+            guard let eq = line.firstIndex(of: "=") else { continue }
+            let key = line[..<eq].trimmingCharacters(in: .whitespaces).lowercased()
+            let val = line[line.index(after: eq)...].trimmingCharacters(in: .whitespaces)
+            if key == "address" {
+                address = val.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.first
+            } else if key == "dns" {
+                dnsServers.append(contentsOf: val.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) })
+            }
+        }
+
+        let v4: String
+        if let a = address?.split(separator: "/").first.map(String.init) { v4 = a } else { v4 = "10.0.0.2" }
+
+        let settings = NEPacketTunnelNetworkSettings(tunnelRemoteAddress: v4)
+        let v4Settings = NEIPv4Settings(addresses: [v4], subnetMasks: ["255.255.255.255"])
+        v4Settings.includedRoutes = [NEIPv4Route.default()]
+        settings.ipv4Settings = v4Settings
+        if !dnsServers.isEmpty {
+            settings.dnsSettings = NEDNSSettings(servers: dnsServers)
+        }
+        settings.mtu = 1420
+
+        TunnelLog.stealth(.info, "Applying tunnel network settings (\(tag)) — addr=\(v4) dns=\(dnsServers.joined(separator: ","))")
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            self.setTunnelNetworkSettings(settings) { error in
+                if let error {
+                    TunnelLog.stealth(.error, "setTunnelNetworkSettings(\(tag)) error: \(error.localizedDescription)")
+                } else {
+                    TunnelLog.stealth(.info, "setTunnelNetworkSettings(\(tag)) applied")
+                }
+                continuation.resume()
+            }
         }
     }
 

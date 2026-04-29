@@ -9,19 +9,26 @@ import WireGuardKit
 import os.log
 import Foundation
 
+// File-scoped os.log Logger kept around for the WireGuardKit adapter
+// callback (which expects an `OSLogType`-style sink). Everything else
+// in this file goes through `TunnelLog` so the in-app Diagnostics
+// screen sees the same lines on-device.
 private let log = Logger(subsystem: "com.katafract.wraith.tunnel", category: "PacketTunnelProvider")
 private let appGroupDefaults = UserDefaults(suiteName: "group.com.katafract.wraith")
 
 private func writeTunnelError(_ message: String) {
     let entry = "\(ISO8601DateFormatter().string(from: Date())) \(message)"
     appGroupDefaults?.set(entry, forKey: "lastTunnelError")
-    log.error("\(message, privacy: .public)")
+    // Mirror to TunnelLog so the in-app Diagnostics screen captures the line.
+    TunnelLog.ne(.error, message)
 }
 
 final class PacketTunnelProvider: NEPacketTunnelProvider {
 
     private lazy var adapter: WireGuardAdapter = {
         WireGuardAdapter(with: self) { logLevel, message in
+            // WireGuard kernel-level log lines stay raw on os.log only —
+            // they're high-frequency and would dominate the in-app buffer.
             log.log(level: logLevel.osLogType, "\(message, privacy: .public)")
         }
     }()
@@ -33,7 +40,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
         options: [String: NSObject]?,
         completionHandler: @escaping (Error?) -> Void
     ) {
-        log.info("startTunnel called")
+        TunnelLog.ne(.info, "startTunnel called")
 
         guard let proto = protocolConfiguration as? NETunnelProviderProtocol,
               let providerConfig = proto.providerConfiguration,
@@ -62,7 +69,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
             guard let adapterError else {
                 let interfaceName = self.adapter.interfaceName ?? "unknown"
                 appGroupDefaults?.removeObject(forKey: "lastTunnelError")
-                log.info("WireGuard tunnel started on interface \(interfaceName, privacy: .public)")
+                TunnelLog.wg(.info, "WireGuard tunnel started on interface \(interfaceName)")
                 completionHandler(nil)
                 return
             }
@@ -76,11 +83,11 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
         with reason: NEProviderStopReason,
         completionHandler: @escaping () -> Void
     ) {
-        log.info("stopTunnel called, reason=\(reason.rawValue)")
+        TunnelLog.ne(.info, "stopTunnel called, reason=\(reason.rawValue)")
 
         adapter.stop { adapterError in
             if let adapterError {
-                log.error("Failed to stop WireGuard adapter: \(String(describing: adapterError), privacy: .public)")
+                TunnelLog.wg(.error, "Failed to stop WireGuard adapter: \(String(describing: adapterError))")
             }
             completionHandler()
         }
@@ -117,11 +124,15 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     /// Reads activeShadowsocksConfig from App Group UserDefaults and starts
     /// ShadowsocksTransport. Stops WireGuard adapter first to avoid UDP/TCP conflict.
     private func startShadowsocksFallback() async -> Bool {
+        let blobLen = appGroupDefaults?.data(forKey: "activeShadowsocksConfig")?.count ?? 0
+        TunnelLog.stealth(.info, "extension: startShadowsocksFallback ENTRY, configBlobLen=\(blobLen)")
+
         guard let configData = appGroupDefaults?.data(forKey: "activeShadowsocksConfig"),
               let ssConfig = try? JSONDecoder().decode(ShadowsocksConfig.self, from: configData) else {
-            log.error("SS fallback: activeShadowsocksConfig missing or decode failed")
+            TunnelLog.stealth(.error, "extension: activeShadowsocksConfig missing or decode failed (blobLen=\(blobLen))")
             return false
         }
+        TunnelLog.stealth(.info, "extension: SS config parsed OK — server=\(Redact.ends(ssConfig.server)) port=\(ssConfig.port)")
 
         // Derive WG server public IP from the loaded config's server field — this is the
         // node public IP (e.g., 87.99.128.159) that WireGuard also connects to.
@@ -139,6 +150,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
         )
 
         // Stop the WireGuard adapter (frees the TUN fd so SS can use the packet flow)
+        TunnelLog.stealth(.info, "extension: stopping WG adapter to free packetFlow for SS transport")
         adapter.stop { _ in }
         try? await Task.sleep(nanoseconds: 500_000_000)  // 500ms
 
@@ -147,10 +159,10 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
         do {
             try await transport.start(config: tunnelConfig, packetFlow: packetFlow)
             self.shadowsocksTransport = transport
-            log.info("SS fallback: transport started successfully")
+            TunnelLog.stealth(.info, "extension: SS transport started successfully")
             return true
         } catch {
-            log.error("SS fallback: transport start failed — \(error.localizedDescription, privacy: .public)")
+            TunnelLog.stealth(.error, "extension: SS transport start FAILED — \(error.localizedDescription)")
             return false
         }
     }
@@ -159,7 +171,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     /// Called via IPC message 0x02 from the main app when SS engagement fails.
     /// This ensures the user retains connectivity via direct WireGuard.
     private func restartWireGuardAdapter() async -> Bool {
-        log.info("Restarting WireGuard adapter (SS fallback failed)")
+        TunnelLog.stealth(.info, "extension: restartWireGuardAdapter (SS fallback failed)")
         // Stop any active Shadowsocks transport first
         if let transport = shadowsocksTransport {
             await transport.stop()
@@ -169,23 +181,23 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
         guard let proto = protocolConfiguration as? NETunnelProviderProtocol,
               let providerConfig = proto.providerConfiguration,
               let wgConfig = providerConfig["wgConfig"] as? String else {
-            log.error("restartWireGuardAdapter: missing wgConfig")
+            TunnelLog.wg(.error, "restartWireGuardAdapter: missing wgConfig")
             return false
         }
         let tunnelConfiguration: TunnelConfiguration
         do {
             tunnelConfiguration = try TunnelConfiguration.makeWraithConfiguration(from: wgConfig, name: "wraith")
         } catch {
-            log.error("restartWireGuardAdapter: config parse failed — \(error.localizedDescription, privacy: .public)")
+            TunnelLog.wg(.error, "restartWireGuardAdapter: config parse failed — \(error.localizedDescription)")
             return false
         }
         return await withCheckedContinuation { continuation in
             adapter.start(tunnelConfiguration: tunnelConfiguration) { adapterError in
                 if let adapterError {
-                    log.error("restartWireGuardAdapter: start failed — \(adapterError, privacy: .public)")
+                    TunnelLog.wg(.error, "restartWireGuardAdapter: start failed — \(adapterError)")
                     continuation.resume(returning: false)
                 } else {
-                    log.info("WireGuard adapter restarted successfully")
+                    TunnelLog.wg(.info, "WireGuard adapter restarted successfully")
                     continuation.resume(returning: true)
                 }
             }

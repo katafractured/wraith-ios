@@ -29,6 +29,9 @@ struct DebugLogView: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
                         filterButton(nil, label: "All")
+                        // Stealth first so it's the easiest target for Tek's
+                        // primary debugging flow.
+                        filterButton(.stealth, label: "Stealth")
                         filterButton(.api, label: "API")
                         filterButton(.wg, label: "WG")
                         filterButton(.ne, label: "NE")
@@ -132,6 +135,12 @@ struct DebugLogView: View {
                 ShareSheet(activityItems: [url])
             }
         }
+        .onAppear {
+            // Pull any tunnel-extension writes that landed since the
+            // app last had the screen open. Cheap (file read + dedup
+            // by UUID) and runs only when Tek opens the screen.
+            logger.refreshFromSharedStore()
+        }
     }
 
     // MARK: - Subviews
@@ -160,7 +169,23 @@ struct DebugLogView: View {
             Text(entry.category.rawValue)
                 .font(.system(size: 10, weight: .bold, design: .monospaced))
                 .foregroundColor(categoryColor(entry.category))
-                .frame(width: 36, alignment: .leading)
+                .frame(width: 56, alignment: .leading)
+                .lineLimit(1)
+
+            // Origin badge: "ext" entries originate in the WireGuardTunnel
+            // process. Helps Tek see whether a missing log line is a main-app
+            // path issue or an extension-side issue.
+            if entry.origin == "ext" {
+                Text("ext")
+                    .font(.system(size: 9, weight: .bold, design: .monospaced))
+                    .foregroundColor(.orange)
+                    .padding(.horizontal, 4)
+                    .padding(.vertical, 1)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 3)
+                            .stroke(Color.orange.opacity(0.5), lineWidth: 0.5)
+                    )
+            }
 
             Text(entry.message)
                 .font(.system(size: 11, design: .monospaced))
@@ -173,12 +198,13 @@ struct DebugLogView: View {
 
     private func categoryColor(_ cat: DebugLogCategory) -> Color {
         switch cat {
-        case .api:  return .blue
-        case .wg:   return .green
-        case .ne:   return .kataGold.opacity(0.7)
-        case .dns:  return .purple
-        case .peer: return .cyan
-        case .app:  return .gray
+        case .api:     return .blue
+        case .wg:      return .green
+        case .ne:      return .kataGold.opacity(0.7)
+        case .dns:     return .purple
+        case .peer:    return .cyan
+        case .app:     return .gray
+        case .stealth: return .pink
         }
     }
 

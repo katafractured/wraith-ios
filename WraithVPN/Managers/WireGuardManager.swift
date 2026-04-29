@@ -795,20 +795,20 @@ final class WireGuardManager: ObservableObject {
             return
         }
 
-        DebugLogger.shared.wg("Transport mode change requested: \(mode.rawValue)")
+        DebugLogger.shared.stealth("setTransportMode: change requested → \(mode.rawValue) (current activeTransport=\(activeTransport.rawValue))")
 
         // If switching to Shadowsocks, set the engagement flag + reconnect.
         // postConnectHealthCheck will fire attemptShadowsocksFallback() once WG is verified healthy.
         if mode == .shadowsocks {
             // Verify SS config available before triggering reconnect
             guard appGroupDefaults?.data(forKey: "activeShadowsocksConfig") != nil else {
-                DebugLogger.shared.wg("Stealth toggle: no activeShadowsocksConfig in App Group; aborting")
+                DebugLogger.shared.stealth("Stealth toggle: no activeShadowsocksConfig in App Group; aborting (preference kept; will retry on next reconnect)")
                 status = .failed("Stealth unavailable — peer not provisioned with SS fallback; preference kept as Stealth, will retry on next reconnect")
                 activeTransport = .wireguard
                 return
             }
             pendingShadowsocksEngagement = true
-            DebugLogger.shared.wg("Reconnecting to gate Stealth engagement on healthy WG…")
+            DebugLogger.shared.stealth("Reconnecting to gate Stealth engagement on healthy WG…")
             manager?.connection.stopVPNTunnel()
             // Same poll-until-disconnected pattern as the WG path (Issue #2)
             for _ in 0..<20 {
@@ -882,13 +882,13 @@ final class WireGuardManager: ObservableObject {
             // instead of on bare .connected transition. Engage only once per connect cycle.
             if pendingShadowsocksEngagement {
                 pendingShadowsocksEngagement = false
-                DebugLogger.shared.wg("postConnectHealthCheck: WG healthy + pendingShadowsocksEngagement=true → firing attemptShadowsocksFallback()")
+                DebugLogger.shared.stealth("postConnectHealthCheck: WG healthy + pendingShadowsocksEngagement=true → firing attemptShadowsocksFallback()")
                 Task { await self.attemptShadowsocksFallback() }
             } else if transportPreference == .shadowsocks {
                 // Stealth requested but no engagement queued. This shouldn't happen if
                 // connect paths set the flag correctly — log it loudly so we catch any
                 // future regression like PR #47's missing entry points.
-                DebugLogger.shared.wg("postConnectHealthCheck: WARNING — transportPreference=.shadowsocks but pendingShadowsocksEngagement=false. Stealth will NOT engage. Likely a connect-path regression.")
+                DebugLogger.shared.stealth("postConnectHealthCheck: WARNING — transportPreference=.shadowsocks but pendingShadowsocksEngagement=false. Stealth will NOT engage. Likely a connect-path regression.")
             }
             return
         }
@@ -969,28 +969,28 @@ final class WireGuardManager: ObservableObject {
     /// server-side despite badge claiming Stealth — see
     /// `project_wraith_ios_ui_truth_bugs_2026_04_29.md`).
     private func attemptShadowsocksFallback() async {
-        DebugLogger.shared.wg("attemptShadowsocksFallback ENTRY: transportPreference=\(transportPreference.rawValue) activeTransport=\(activeTransport.rawValue) status=\(status.label)")
+        DebugLogger.shared.stealth("attemptShadowsocksFallback ENTRY: pendingFlag=\(pendingShadowsocksEngagement) transportPref=\(transportPreference.rawValue) activeTransport=\(activeTransport.rawValue) status=\(status.label)")
 
         // Pre-flight: SS config must be in App Group for the extension to read.
         let configBlobLen = appGroupDefaults?.data(forKey: "activeShadowsocksConfig")?.count ?? 0
         guard configBlobLen > 0 else {
-            DebugLogger.shared.wg("SS fallback BAIL: activeShadowsocksConfig MISSING from App Group (provision response did not include shadowsocks_fallback?)")
+            DebugLogger.shared.stealth("ABORT (cause=missing-config): App Group SS config blob length=0 — provision response likely lacked shadowsocks_fallback")
             // Surface to user — Stealth was requested but cannot engage.
             // Per feedback_user_intent_sacred.md: PRESERVE transportPreference (intent)
             // but reflect reality. activeTransport stays .wireguard.
             status = .failed("Stealth unreachable: server did not provision SS fallback. Tunnel still on WireGuard.")
             return
         }
-        DebugLogger.shared.wg("SS fallback: activeShadowsocksConfig present (\(configBlobLen) bytes)")
+        DebugLogger.shared.stealth("App Group SS config blob length=\(configBlobLen), parsed successfully")
 
         guard let session = tunnelProviderSession else {
-            DebugLogger.shared.wg("SS fallback BAIL: tunnelProviderSession is nil — NE manager not loaded or tunnel not running")
+            DebugLogger.shared.stealth("ABORT (cause=no-session): tunnelProviderSession is nil — NE manager not loaded or tunnel not running")
             // Don't touch user's preference; surface failure clearly.
             status = .failed("Stealth unreachable: tunnel session not available.")
             await restartWireGuardAfterSSFailure(reason: "no tunnel session")
             return
         }
-        DebugLogger.shared.wg("SS fallback: sending IPC 0x01 (switch to SS) to tunnel extension…")
+        DebugLogger.shared.stealth("IPC start: sending 0x01 (switch to SS) to tunnel extension")
 
         // Message byte 1 = "switch to SS fallback"
         let message = Data([0x01])
@@ -1005,19 +1005,19 @@ final class WireGuardManager: ObservableObject {
                 }
             }
             let replyByte = reply?.first.map { String(format: "0x%02x", $0) } ?? "nil"
-            DebugLogger.shared.wg("SS fallback: extension reply=\(replyByte) bytes=\(reply?.count ?? 0)")
+            DebugLogger.shared.stealth("IPC end: extension reply=\(replyByte) bytes=\(reply?.count ?? 0)")
             if let reply, reply.first == 0x01 {
-                DebugLogger.shared.wg("SS fallback: extension confirmed transport switch — activeTransport=.shadowsocks")
+                DebugLogger.shared.stealth("extension confirmed transport switch — activeTransport=.shadowsocks")
                 activeTransport = .shadowsocks
                 status = .connected  // optimistic; will re-health-check on next cycle
             } else {
-                DebugLogger.shared.wg("SS fallback: extension returned non-success reply (likely transport.start failed inside extension — check unified log com.katafract.wraith.tunnel for the underlying error)")
+                DebugLogger.shared.stealth("ABORT (cause=ext-reply-nonsuccess): extension returned non-0x01 — transport.start likely failed inside extension; check 'ext'-tagged Stealth lines for underlying cause")
                 // Surface to the user that Stealth didn't engage.
                 status = .failed("Stealth unreachable: tunnel extension could not start SS transport. On WireGuard.")
                 await restartWireGuardAfterSSFailure(reason: "extension reply != 0x01")
             }
         } catch {
-            DebugLogger.shared.wg("SS fallback: sendProviderMessage threw — \(error.localizedDescription)")
+            DebugLogger.shared.stealth("ABORT (cause=ipc-throw): sendProviderMessage threw — \(error.localizedDescription)")
             status = .failed("Stealth unreachable: IPC error — \(error.localizedDescription)")
             await restartWireGuardAfterSSFailure(reason: "IPC threw: \(error.localizedDescription)")
         }
@@ -1032,11 +1032,11 @@ final class WireGuardManager: ObservableObject {
     /// (`activeTransport`, `status`) but leave the user's picker choice alone, so
     /// the next reconnect retries Stealth and the badge shows the warning state.
     private func restartWireGuardAfterSSFailure(reason: String = "unknown") async {
-        DebugLogger.shared.wg("SS engagement failed (reason=\(reason)) — restarting WG adapter; transportPreference=\(transportPreference.rawValue) (preserved per user-intent doctrine)")
+        DebugLogger.shared.stealth("status updated to .failed(...) — SS engagement failed (reason=\(reason)); restarting WG adapter; transportPreference=\(transportPreference.rawValue) (preserved per user-intent doctrine)")
         activeTransport = .wireguard
 
         guard let session = tunnelProviderSession else {
-            DebugLogger.shared.wg("Cannot restart WG: no tunnel session available")
+            DebugLogger.shared.stealth("Cannot restart WG: no tunnel session available")
             status = .failed("Stealth mode unavailable. Direct WireGuard restart failed.")
             return
         }
@@ -1054,18 +1054,18 @@ final class WireGuardManager: ObservableObject {
                 }
             }
             if let reply, reply.first == 0x01 {
-                DebugLogger.shared.wg("WG restart: extension confirmed adapter restart")
+                DebugLogger.shared.stealth("WG restart: extension confirmed adapter restart")
                 // Status was set to .failed by the caller with a Stealth-specific
                 // message. The badge state (transportPreference != activeTransport)
                 // already conveys the gap; promoting back to .connected lets the
                 // tunnel be marked usable while the warning badge stays visible.
                 status = .connected
             } else {
-                DebugLogger.shared.wg("WG restart: unexpected reply from extension")
+                DebugLogger.shared.stealth("WG restart: unexpected reply from extension")
                 status = .failed("Stealth mode unavailable. WireGuard restart failed.")
             }
         } catch {
-            DebugLogger.shared.wg("WG restart: IPC error — \(error.localizedDescription)")
+            DebugLogger.shared.stealth("WG restart: IPC error — \(error.localizedDescription)")
             status = .failed("Stealth mode unavailable. WireGuard restart failed.")
         }
     }

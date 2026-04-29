@@ -38,6 +38,12 @@
 		AA000023 /* DebugLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100024 /* DebugLogger.swift */; };
 		AA000024 /* DNSHealthCheck.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100025 /* DNSHealthCheck.swift */; };
 		AA000025 /* DebugLogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100026 /* DebugLogView.swift */; };
+		AA0000D0 /* DebugLogStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1000D0 /* DebugLogStore.swift */; };
+		AA0000D1 /* DebugLogStore.swift in Sources (WireGuardTunnel) */ = {isa = PBXBuildFile; fileRef = AA1000D0 /* DebugLogStore.swift */; };
+		BBMAC0D0 /* DebugLogStore.swift in Sources (WraithVPNMac) */ = {isa = PBXBuildFile; fileRef = AA1000D0 /* DebugLogStore.swift */; };
+		BBMACTUNBF010 /* DebugLogStore.swift in Sources (WraithVPNMacTunnel) */ = {isa = PBXBuildFile; fileRef = AA1000D0 /* DebugLogStore.swift */; };
+		AA0000D2 /* TunnelLog.swift in Sources (WireGuardTunnel) */ = {isa = PBXBuildFile; fileRef = AA1000D2 /* TunnelLog.swift */; };
+		BBMACTUNBF011 /* TunnelLog.swift in Sources (WraithVPNMacTunnel) */ = {isa = PBXBuildFile; fileRef = AA1000D2 /* TunnelLog.swift */; };
 		AA000026 /* ConnectVPNIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100027 /* ConnectVPNIntent.swift */; };
 		AA000027 /* DisconnectVPNIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100028 /* DisconnectVPNIntent.swift */; };
 		AA000028 /* WraithAppShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100029 /* WraithAppShortcuts.swift */; };
@@ -219,6 +225,8 @@
 		AA100024 /* DebugLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugLogger.swift; sourceTree = "<group>"; };
 		AA100025 /* DNSHealthCheck.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DNSHealthCheck.swift; sourceTree = "<group>"; };
 		AA100026 /* DebugLogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugLogView.swift; sourceTree = "<group>"; };
+		AA1000D0 /* DebugLogStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugLogStore.swift; sourceTree = "<group>"; };
+		AA1000D2 /* TunnelLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TunnelLog.swift; sourceTree = "<group>"; };
 		AA100027 /* ConnectVPNIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectVPNIntent.swift; sourceTree = "<group>"; };
 		AA100028 /* DisconnectVPNIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisconnectVPNIntent.swift; sourceTree = "<group>"; };
 		AA100029 /* WraithAppShortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WraithAppShortcuts.swift; sourceTree = "<group>"; };
@@ -360,6 +368,7 @@
 				AAGRP003 /* Managers */,
 				AAGRP004 /* Helpers */,
 				AAGRP004B /* Models */,
+				AAGRP004C /* Diagnostics */,
 				AAGRP005B /* Intents */,
 				AA100015 /* Assets.xcassets */,
 				AA100016 /* Info.plist */,
@@ -368,6 +377,14 @@
 				7E6FDCD9D7CA227E5DE41B2E /* UITests */,
 			);
 			path = WraithVPN;
+			sourceTree = "<group>";
+		};
+		AAGRP004C /* Diagnostics */ = {
+			isa = PBXGroup;
+			children = (
+				AA1000D0 /* DebugLogStore.swift */,
+			);
+			path = Diagnostics;
 			sourceTree = "<group>";
 		};
 		AAGRP002 /* Views */ = {
@@ -431,6 +448,7 @@
 				AA100022 /* TunnelConfiguration+WgQuickConfig.swift */,
 				AA100023 /* String+ArrayConversion.swift */,
 				AA100042 /* ShadowsocksTransport.swift */,
+				AA1000D2 /* TunnelLog.swift */,
 				AA100021 /* WireGuardTunnel.entitlements */,
 				AATUNPRIV100 /* PrivacyInfo.xcprivacy */,
 			);
@@ -828,6 +846,7 @@
 				AA000014 /* DesignSystem.swift in Sources */,
 				AA000016 /* HavenDNSManager.swift in Sources */,
 				AA000023 /* DebugLogger.swift in Sources */,
+				AA0000D0 /* DebugLogStore.swift in Sources */,
 				AA000024 /* DNSHealthCheck.swift in Sources */,
 				AA000025 /* DebugLogView.swift in Sources */,
 				AA000026 /* ConnectVPNIntent.swift in Sources */,
@@ -847,6 +866,8 @@
 				AA000022 /* String+ArrayConversion.swift in Sources */,
 				AA000042 /* ShadowsocksTransport.swift in Sources */,
 				AA000043 /* Models.swift in Sources (WireGuardTunnel) */,
+				AA0000D1 /* DebugLogStore.swift in Sources (WireGuardTunnel) */,
+				AA0000D2 /* TunnelLog.swift in Sources (WireGuardTunnel) */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -889,6 +910,7 @@
 				BBMACNFW005 /* MacAchievementsView.swift in Sources */,
 				BBMACNFW006 /* MacUpgradeSheet.swift in Sources */,
 				BBMAC069 /* DebugLogger.swift in Sources */,
+				BBMAC0D0 /* DebugLogStore.swift in Sources (WraithVPNMac) */,
 				BBMAC070 /* DNSHealthCheck.swift in Sources */,
 				BBMAC071 /* TelemetryManager.swift in Sources */,
 				BBMAC099 /* LatencyProbe.swift in Sources */,
@@ -902,6 +924,8 @@
 				BBMACTUNBF002 /* PacketTunnelProvider.swift in Sources */,
 				BBMACTUNBF006 /* ShadowsocksTransport.swift in Sources */,
 				BBMACTUNBF007 /* Models.swift in Sources (WraithVPNMacTunnel) */,
+				BBMACTUNBF010 /* DebugLogStore.swift in Sources (WraithVPNMacTunnel) */,
+				BBMACTUNBF011 /* TunnelLog.swift in Sources (WraithVPNMacTunnel) */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

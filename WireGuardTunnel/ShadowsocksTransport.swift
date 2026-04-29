@@ -179,21 +179,18 @@ actor ShadowsocksTransport {
         // dial the resolved IP literal (not the hostname). TLS SNI still
         // gets the correct serverName via NWProtocolTLS.Options sec_protocol
         // — `tls_protocol_options_set_server_name`.
-        guard let port = NWEndpoint.Port(rawValue: config.port) else {
+        guard let port = Network.NWEndpoint.Port(rawValue: config.port) else {
             throw ShadowsocksError.connectionFailed("Invalid port: \(config.port)")
         }
-        let host: NWEndpoint.Host
+        let host: Network.NWEndpoint.Host
         if let v4 = IPv4Address(config.serverResolvedIP) {
             host = .ipv4(v4)
         } else if let v6 = IPv6Address(config.serverResolvedIP) {
             host = .ipv6(v6)
         } else {
-            // serverResolvedIP wasn't actually an IP literal — fall back to
-            // hostname (best-effort) and surface a warning in logs. Caller
-            // should always pass a real IP; this branch exists for defense.
             log("WARN: serverResolvedIP not a valid IP literal: \(config.serverResolvedIP) — falling back to hostname")
             TunnelLog.stealth(.warning, "transport.start: serverResolvedIP not parseable — falling back to in-extension DNS (likely to fail)")
-            host = NWEndpoint.Host(config.server)
+            host = Network.NWEndpoint.Host(config.server)
         }
 
         let tlsOptions = NWProtocolTLS.Options()

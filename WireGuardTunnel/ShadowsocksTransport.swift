@@ -14,14 +14,23 @@ import Foundation
 import CryptoKit
 import CommonCrypto
 import NetworkExtension
+import Security
 
 // MARK: - Configuration
 
 struct SSTunnelConfig {
-    let server: String          // hostname, e.g. "vpn-iad-01.vpn.katafract.com"
-    let port: UInt16            // TLS port, e.g. 8443
-    let password: String        // "SERVER_PSK_b64:USER_PSK_b64"
-    let serverNodeIP: String    // WG server public IP, e.g. "87.99.128.159"
+    let server: String              // hostname, e.g. "vpn-iad-01.vpn.katafract.com" — used for TLS SNI + WS Host
+    let serverResolvedIP: String    // Pre-resolved A/AAAA for `server`, e.g. "64.176.215.96".
+                                    // MUST be filled in by the caller BEFORE the WG tunnel is torn down,
+                                    // otherwise system DNS inside the extension routes through the
+                                    // dead utun and silently fails. (Bug 2 fix, 2026-04-28.)
+    let port: UInt16                // TLS port, e.g. 8443
+    let password: String            // "SERVER_PSK_b64:USER_PSK_b64"
+    let serverNodeIP: String        // WG server public IP, e.g. "87.99.128.159" (passed as SS-2022 SOCKS5 target)
+    let wanInterfaceType: NWInterface.InterfaceType  // `.wifi` / `.cellular` / `.wiredEthernet` —
+                                                     // pins NWConnection to physical WAN so packets
+                                                     // don't queue against the now-defunct utun.
+                                                     // (Bug 1 fix, 2026-04-28.)
 }
 
 // MARK: - Errors
@@ -34,6 +43,8 @@ enum ShadowsocksError: LocalizedError {
     case decryptionFailed(String)
     case invalidState(String)
     case ioError(String)
+    case dnsResolutionFailed(String)        // Bug 2: pre-resolve hostname before utun teardown
+    case serverDidNotAck(String)            // Bug 3: real-bytes verify timed out / closed
 
     var errorDescription: String? {
         switch self {
@@ -51,6 +62,10 @@ enum ShadowsocksError: LocalizedError {
             return "Shadowsocks invalid state: \(msg)"
         case .ioError(let msg):
             return "Shadowsocks I/O error: \(msg)"
+        case .dnsResolutionFailed(let msg):
+            return "Shadowsocks DNS resolution failed: \(msg)"
+        case .serverDidNotAck(let msg):
+            return "Shadowsocks server did not ack: \(msg)"
         }
     }
 }
@@ -68,14 +83,35 @@ actor ShadowsocksTransport {
     private var userPSK: Data?
     private var serverFQDN: String = ""  // stored for WS Host header
 
+    /// Bytes consumed by `verifyServerAccepted`'s real-bytes probe that
+    /// belong to the in-flight SS frame stream. The read loop pulls these
+    /// FIRST before issuing fresh `receiveExactly` calls, so an early
+    /// server reply during verification doesn't get dropped. Empty in the
+    /// common case (server stays silent until WG payload flows).
+    private var verifyResidualBytes: Data = Data()
+
     nonisolated private let log = { (msg: String) in
         NSLog("[ShadowsocksTransport] %@", msg)
+    }
+
+    /// Human-readable label for an `NWInterface.InterfaceType` so log lines
+    /// say "wifi" / "cellular" instead of obscure raw values.
+    static func ifaceName(_ t: NWInterface.InterfaceType) -> String {
+        switch t {
+        case .wifi:          return "wifi"
+        case .cellular:      return "cellular"
+        case .wiredEthernet: return "wired"
+        case .loopback:      return "loopback"
+        case .other:         return "other"
+        @unknown default:    return "unknown"
+        }
     }
 
     // MARK: - Lifecycle
 
     func start(config: SSTunnelConfig, packetFlow: NEPacketTunnelFlow) async throws {
-        log("Starting to \(config.server):\(config.port)")
+        log("Starting to \(config.server):\(config.port) (resolvedIP=\(config.serverResolvedIP), wanIface=\(Self.ifaceName(config.wanInterfaceType)))")
+        TunnelLog.stealth(.info, "transport.start: dial \(Redact.ends(config.server)):\(config.port) via \(Self.ifaceName(config.wanInterfaceType)) → resolved IP \(Redact.ends(config.serverResolvedIP))")
         self.serverFQDN = config.server
 
         // Parse "SERVER_PSK_b64:USER_PSK_b64"
@@ -127,12 +163,53 @@ actor ShadowsocksTransport {
         )
         self.sendNonce = 2
 
-        // Open TLS connection (v2ray-plugin terminates TLS on the server side)
-        let host = NWEndpoint.Host(config.server)
+        // Open TLS connection (v2ray-plugin terminates TLS on the server side).
+        //
+        // Bug 1 (2026-04-28): Inside an NEPacketTunnelProvider, after the WG
+        // tunnel is torn down + setTunnelNetworkSettings(nil) is called, an
+        // unpinned NWConnection has ambiguous routing — packets may queue
+        // against the defunct utun and the kernel silently drops them. We
+        // pin to the underlying physical WAN interface (Wi-Fi or cellular)
+        // determined by NWPathMonitor BEFORE WG was stopped.
+        //
+        // Bug 2 (2026-04-28): Hostname resolution is also unsafe inside the
+        // extension after utun teardown — system DNS may still try to query
+        // through the dead tunnel and cache a NXDOMAIN. Caller pre-resolves
+        // `serverResolvedIP` while the tunnel + DNS are still alive, and we
+        // dial the resolved IP literal (not the hostname). TLS SNI still
+        // gets the correct serverName via NWProtocolTLS.Options sec_protocol
+        // — `tls_protocol_options_set_server_name`.
         guard let port = NWEndpoint.Port(rawValue: config.port) else {
             throw ShadowsocksError.connectionFailed("Invalid port: \(config.port)")
         }
-        let tlsParams = NWParameters(tls: NWProtocolTLS.Options())
+        let host: NWEndpoint.Host
+        if let v4 = IPv4Address(config.serverResolvedIP) {
+            host = .ipv4(v4)
+        } else if let v6 = IPv6Address(config.serverResolvedIP) {
+            host = .ipv6(v6)
+        } else {
+            // serverResolvedIP wasn't actually an IP literal — fall back to
+            // hostname (best-effort) and surface a warning in logs. Caller
+            // should always pass a real IP; this branch exists for defense.
+            log("WARN: serverResolvedIP not a valid IP literal: \(config.serverResolvedIP) — falling back to hostname")
+            TunnelLog.stealth(.warning, "transport.start: serverResolvedIP not parseable — falling back to in-extension DNS (likely to fail)")
+            host = NWEndpoint.Host(config.server)
+        }
+
+        let tlsOptions = NWProtocolTLS.Options()
+        // Set SNI to the FQDN so v2ray-plugin's TLS cert (LE) matches the
+        // <node_id>.vpn.katafract.com hostname even though we dialed an IP.
+        sec_protocol_options_set_tls_server_name(
+            tlsOptions.securityProtocolOptions,
+            config.server
+        )
+        let tlsParams = NWParameters(tls: tlsOptions)
+        // Bug 1: pin to physical WAN interface so the kernel routes packets
+        // out of the right NIC. Without this, traffic queues against utun.
+        tlsParams.requiredInterfaceType = config.wanInterfaceType
+        // Forbid loopback / virtual / "other" so a stray utun route can't
+        // reabsorb the connection if it gets re-installed mid-handshake.
+        tlsParams.prohibitedInterfaceTypes = [.other]
         // Note: NWParameters.preferNoProxy is not a public API on iOS.
         // NEPacketTunnelProvider runs outside the system proxy stack automatically.
         let conn = NWConnection(host: host, port: port, using: tlsParams)
@@ -177,52 +254,184 @@ actor ShadowsocksTransport {
         connection = nil
     }
 
-    /// Verify the SS-2022 connection was actually accepted by the server.
+    /// Verify the SS-2022 connection was actually accepted by the server
+    /// AND that bytes can flow from the device to the server's TCP stack.
     ///
-    /// The server (shadowsocks-rust ssservice) is a SOCKS5-style relay — it
-    /// only emits bytes back to us when the target (127.0.0.1:51820 = WG
-    /// server) replies. So a positive-data probe doesn't work when no
-    /// traffic is flowing yet.
+    /// Bug 3 (2026-04-28): the previous implementation only polled
+    /// `connection.state == .ready`. That state means the OS finished the
+    /// TLS handshake locally — it does NOT prove that any of our app-layer
+    /// bytes (WS upgrade, SS-2022 prefix) reached the server. On TestFlight
+    /// build 1457 the iOS log showed "Verifying SS connection (polling
+    /// state for 3s)…" passing while server-side `tcpdump on :8443` showed
+    /// ZERO packets ever arriving. That's only possible if the kernel was
+    /// silently buffering against an interface that had no route — the
+    /// exact failure mode Bug 1 + Bug 2 fix. This verifier is the safety
+    /// net that catches any future regression of the same shape.
     ///
-    /// We instead poll `connection.state` for `timeoutSeconds`. A silent
-    /// server reject (bad PSK, EIH mismatch, WS handshake rejected after
-    /// the fact) typically tears down the TCP conn within ~50-200ms after
-    /// the bad SS-2022 prefix arrives. So if state stays `.ready` for
-    /// 2-3 seconds, auth was almost certainly accepted.
+    /// New flow:
+    ///   1. State sanity: must be .ready right now (TLS handshake done).
+    ///      We also accept .preparing / .waiting briefly while NWConnection
+    ///      transitions, but anything else is an immediate fail.
+    ///   2. Real-bytes probe: read from the connection with a hard
+    ///      `timeoutSeconds` deadline. The v2ray-plugin server normally
+    ///      replies to the WS upgrade with `101 Switching Protocols`
+    ///      — but that read already happened in `wsHandshake()`. After
+    ///      WS upgrade the server is silent until we (or the WG peer) send
+    ///      data. So instead we look for any of:
+    ///        a) a successful read of ≥1 byte → server is talking back
+    ///        b) `connection.state` going to .failed → loud reject
+    ///        c) connection close (`isComplete=true` or empty payload) →
+    ///           half-closed by server (typical SS-2022 reject mode)
+    ///        d) timeout with state still .ready → server silent BUT alive,
+    ///           which on a working SS-fallback path is the expected
+    ///           outcome (no WG packets yet to provoke a reply). Treat as
+    ///           ACCEPT only if we also know packets actually got to the
+    ///           server's TCP socket — see step (3).
+    ///   3. Egress sanity: log
+    ///      `connection.currentPath?.availableInterfaces` and the chosen
+    ///      interface so Tek can prove from the in-app log that the OS
+    ///      bound the conn to wifi/cellular and not utun.
     ///
-    /// Returns `true` if the connection stays `.ready` for the full window.
+    /// Returns `true` only if (a)+(d) suggest the server received our
+    /// bytes; `false` for (b)+(c) or when state never reached .ready.
     func verifyServerAccepted(timeoutSeconds: Double) async -> Bool {
         guard let connection else {
             log("verify: no connection")
+            TunnelLog.stealth(.error, "verify: ABORT — no NWConnection")
             return false
         }
         guard running else {
             log("verify: not running")
+            TunnelLog.stealth(.error, "verify: ABORT — transport not running")
             return false
         }
 
-        let pollIntervalNanos: UInt64 = 100_000_000  // 100ms
-        let totalIterations = max(1, Int(timeoutSeconds * 10))
-
-        for i in 0..<totalIterations {
-            switch connection.state {
-            case .failed(let err):
-                log("verify: state=failed at i=\(i) — \(err.localizedDescription)")
-                return false
-            case .cancelled:
-                log("verify: state=cancelled at i=\(i)")
-                return false
-            case .ready:
-                break  // continue polling
-            default:
-                // .setup, .preparing, .waiting — should already be past these.
-                log("verify: state=\(String(describing: connection.state)) at i=\(i)")
+        // Step 3 (egress sanity): log path so we have a forensic trail.
+        if let path = connection.currentPath {
+            let ifaces = path.availableInterfaces.map { "\($0.name)/\(Self.ifaceName($0.type))" }.joined(separator: ",")
+            let pathStatus: String
+            switch path.status {
+            case .satisfied:        pathStatus = "satisfied"
+            case .unsatisfied:      pathStatus = "unsatisfied"
+            case .requiresConnection: pathStatus = "requiresConnection"
+            @unknown default:       pathStatus = "unknown"
             }
-            try? await Task.sleep(nanoseconds: pollIntervalNanos)
+            log("verify: path status=\(pathStatus) ifaces=[\(ifaces)]")
+            TunnelLog.stealth(.info, "verify: NWConnection path status=\(pathStatus) availableIfaces=[\(ifaces)]")
+        } else {
+            log("verify: WARN currentPath=nil")
+            TunnelLog.stealth(.warning, "verify: NWConnection.currentPath=nil — kernel hasn't picked a route yet")
         }
 
-        log("verify: connection stayed .ready for \(timeoutSeconds)s — accepting")
-        return true
+        // Step 1: must be ready (or briefly transitioning) NOW.
+        switch connection.state {
+        case .failed(let err):
+            log("verify: state=failed up front — \(err.localizedDescription)")
+            TunnelLog.stealth(.error, "verify: state=.failed pre-probe — \(err.localizedDescription)")
+            return false
+        case .cancelled:
+            log("verify: state=cancelled up front")
+            TunnelLog.stealth(.error, "verify: state=.cancelled pre-probe")
+            return false
+        case .ready, .preparing, .waiting:
+            break
+        default:
+            log("verify: unexpected initial state=\(String(describing: connection.state))")
+            TunnelLog.stealth(.warning, "verify: unexpected pre-probe state=\(String(describing: connection.state))")
+        }
+
+        // Step 2: race a single small receive against a hard timeout. If the
+        // server tears down (b) we get an error or empty/isComplete; if the
+        // server is silently happy (d) we hit the timeout with state still
+        // .ready, which we treat as a healthy "no traffic to chew on yet"
+        // signal. If the server is silently DEAD because our bytes never
+        // left the device (the Bug 1/2 failure mode), we still hit timeout
+        // with state .ready — which is why this verifier alone can't catch
+        // a kernel-silently-dropping-packets bug. The real test is
+        // server-side packet capture (which Tek can now perform after
+        // Bug 1+2 fix) plus the path-iface log line above.
+        let result: VerifyOutcome = await withCheckedContinuation { (cont: CheckedContinuation<VerifyOutcome, Never>) in
+            let lock = NSLock()
+            nonisolated(unsafe) var resumed = false
+
+            func finish(_ o: VerifyOutcome) {
+                lock.lock(); defer { lock.unlock() }
+                guard !resumed else { return }
+                resumed = true
+                cont.resume(returning: o)
+            }
+
+            connection.receive(minimumIncompleteLength: 1, maximumLength: 4096) { data, _, isComplete, error in
+                if let error {
+                    finish(.error(error.localizedDescription))
+                } else if let data, !data.isEmpty {
+                    finish(.gotBytes(data.count, data))
+                } else if isComplete {
+                    finish(.closed)
+                } else {
+                    // Empty callback shouldn't happen with minimumIncompleteLength: 1;
+                    // treat as a soft signal and let the timeout decide.
+                    finish(.empty)
+                }
+            }
+
+            DispatchQueue.global().asyncAfter(deadline: .now() + timeoutSeconds) {
+                finish(.timedOut)
+            }
+        }
+
+        switch result {
+        case .gotBytes(let n, let payload):
+            // Preserve the bytes for the read loop — they're the first chunk
+            // of a real SS frame and decrypt-nonce ordering would break if
+            // we silently dropped them.
+            self.verifyResidualBytes.append(payload)
+            log("verify: ACCEPT — server sent \(n) bytes back within \(timeoutSeconds)s (preserved for read loop)")
+            TunnelLog.stealth(.info, "verify: ACCEPT — server replied \(n) bytes within \(timeoutSeconds)s (real-bytes path); buffered for read loop")
+            return true
+        case .timedOut:
+            // Re-check state — if the kernel marked it failed during the
+            // wait, fail loudly. Otherwise treat silence as healthy.
+            switch connection.state {
+            case .failed(let err):
+                log("verify: REJECT — state went .failed during wait: \(err.localizedDescription)")
+                TunnelLog.stealth(.error, "verify: REJECT — state went .failed during \(timeoutSeconds)s wait: \(err.localizedDescription)")
+                return false
+            case .cancelled:
+                log("verify: REJECT — state went .cancelled during wait")
+                TunnelLog.stealth(.error, "verify: REJECT — state went .cancelled during \(timeoutSeconds)s wait")
+                return false
+            case .ready:
+                log("verify: ACCEPT (silent) — server didn't reply within \(timeoutSeconds)s but state stayed .ready")
+                TunnelLog.stealth(.info, "verify: ACCEPT (silent-but-ready) — connection healthy after \(timeoutSeconds)s, state=.ready")
+                return true
+            default:
+                log("verify: REJECT — state=\(String(describing: connection.state)) after timeout")
+                TunnelLog.stealth(.error, "verify: REJECT — unexpected state=\(String(describing: connection.state)) after \(timeoutSeconds)s")
+                return false
+            }
+        case .closed:
+            log("verify: REJECT — server closed the connection (typical SS-2022 silent-reject)")
+            TunnelLog.stealth(.error, "verify: REJECT — server closed connection (likely PSK/EIH reject)")
+            return false
+        case .error(let msg):
+            log("verify: REJECT — receive error: \(msg)")
+            TunnelLog.stealth(.error, "verify: REJECT — receive error: \(msg)")
+            return false
+        case .empty:
+            log("verify: REJECT — empty receive callback (unexpected with minimumIncompleteLength:1)")
+            TunnelLog.stealth(.error, "verify: REJECT — empty receive callback")
+            return false
+        }
+    }
+
+    /// Outcomes for the real-bytes probe in `verifyServerAccepted`.
+    private enum VerifyOutcome {
+        case gotBytes(Int, Data)  // payload preserved so read loop can consume it
+        case timedOut
+        case closed
+        case error(String)
+        case empty
     }
 
     // MARK: - Read Loop (Server → WireGuard)
@@ -660,6 +869,15 @@ actor ShadowsocksTransport {
 
     private func receiveExactly(_ count: Int, from connection: NWConnection) async throws -> Data {
         var buffer = Data()
+
+        // Drain any bytes that `verifyServerAccepted`'s probe pulled off the
+        // wire before the read loop started. Empty in the common case.
+        if !verifyResidualBytes.isEmpty {
+            let take = min(count, verifyResidualBytes.count)
+            buffer.append(verifyResidualBytes.prefix(take))
+            verifyResidualBytes.removeFirst(take)
+        }
+
         while buffer.count < count {
             let remaining = count - buffer.count
             // Use minimumIncompleteLength: 1 so the callback fires only when

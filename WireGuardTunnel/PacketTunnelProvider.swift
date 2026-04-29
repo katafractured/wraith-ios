@@ -8,6 +8,8 @@ import NetworkExtension
 import WireGuardKit
 import os.log
 import Foundation
+import Network
+import Darwin
 
 // File-scoped os.log Logger kept around for the WireGuardKit adapter
 // callback (which expects an `OSLogType`-style sink). Everything else
@@ -124,27 +126,40 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     /// Reads activeShadowsocksConfig from App Group UserDefaults and starts
     /// ShadowsocksTransport. Stops WireGuard adapter first to avoid UDP/TCP conflict.
     ///
-    /// Bug fix (2026-04-29): previously this returned success the moment
-    /// `transport.start()` returned — but `transport.start()` only sends the
-    /// SS-2022 wire prefix (salt+EIH+enc(header)+enc(addrData)) and does NOT
-    /// verify that the server actually authenticated and accepted it. If PSK
-    /// is wrong, server certificate fails, or the v2ray-plugin WS layer
-    /// rejects, the failure shows up only later in the read/write loops —
-    /// well after the IPC reply has already gone back as 0x01. The main app
-    /// then flips `activeTransport=.shadowsocks` even though zero SS bytes
-    /// reach the server. This was the TestFlight 1456 ghost-Stealth bug.
+    /// Bug-fix history:
+    ///   • PR #51 (2026-04-29, build 1457): added await adapter.stop +
+    ///     setTunnelNetworkSettings(nil) + verifyServerAccepted before
+    ///     returning success — closed the "transport.start optimistic OK"
+    ///     hole. But TestFlight build 1457 still showed ZERO packets ever
+    ///     reaching the server (server-side tcpdump :8443 = empty), proving
+    ///     the kernel was silently dropping our bytes.
+    ///   • THIS PR (2026-04-28): fix the kernel-drop. Three real bugs:
+    ///       Bug 1 — NWConnection wasn't pinned to a physical WAN interface.
+    ///         After utun teardown the kernel had no obvious route, so
+    ///         packets queued against the dead utun and were never sent.
+    ///         Fix: snapshot WAN type via NWPathMonitor BEFORE adapter.stop,
+    ///         then construct NWParameters with requiredInterfaceType set.
+    ///       Bug 2 — Hostname resolution went through the dead utun's DNS,
+    ///         sometimes caching NXDOMAIN. Fix: getaddrinfo BEFORE clearing
+    ///         tunnel settings; pass IP literal to ShadowsocksTransport;
+    ///         set TLS SNI explicitly so the cert still matches.
+    ///       Bug 3 — verifyServerAccepted only polled connection.state, which
+    ///         only proves local TLS handshake succeeded — NOT that bytes
+    ///         left the device. Fix: race a real receive() against a hard
+    ///         timeout and log NWConnection.currentPath.availableInterfaces
+    ///         so server-silence vs interface-misroute is distinguishable.
     ///
     /// New flow:
-    ///   1. Await `adapter.stop` to completion (was fire-and-forget).
-    ///   2. Tear down tunnel network settings to nil so any NWConnection we
-    ///      open inside the extension uses the underlying physical interface
-    ///      instead of a defunct utun.
-    ///   3. Re-apply tunnel network settings (route 0/0, DNS) so packetFlow
-    ///      remains valid for the SS read/write loops.
-    ///   4. Start ShadowsocksTransport.
-    ///   5. Call `transport.verify()` — sends a real WG handshake-init packet
-    ///      through the SS tunnel and waits for the server to echo a response
-    ///      within 3s. Only then return 0x01 to the main app.
+    ///   0a. Snapshot WAN interface type (Bug 1 pre-flight).
+    ///   0b. Resolve SS hostname → IP (Bug 2 pre-flight).
+    ///   1.  Await `adapter.stop` to completion.
+    ///   2.  Tear down tunnel network settings to nil so the extension's
+    ///       NWConnection routes through the physical interface it pinned
+    ///       at step 0a.
+    ///   3.  Start ShadowsocksTransport with pre-resolved IP + pinned iface.
+    ///   4.  Call verifyServerAccepted (now a real-bytes probe).
+    ///   5.  Re-apply tunnel network settings so packetFlow keeps producing.
+    ///   6.  Spawn read/write pumps.
     private func startShadowsocksFallback() async -> Bool {
         let blobLen = appGroupDefaults?.data(forKey: "activeShadowsocksConfig")?.count ?? 0
         TunnelLog.stealth(.info, "extension: startShadowsocksFallback ENTRY, configBlobLen=\(blobLen)")
@@ -164,13 +179,43 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
         // Use the server hostname's resolved IP (or fall back to an App Group stored value).
         let serverNodeIP = appGroupDefaults?.string(forKey: "wgExitIP") ?? ssConfig.server
 
+        // ----- Pre-flight (Bug 1+2 fix, 2026-04-28) -----
+        // We must capture two pieces of WAN state BEFORE we tear down the WG
+        // adapter, otherwise:
+        //   • NWPathMonitor sees only utun and reports `.other` (Bug 1)
+        //   • System resolver tries (and fails) to query DNS through the dead
+        //     utun, sometimes caching NXDOMAIN (Bug 2)
+        //
+        // Both of those failures are silent — the kernel just drops packets,
+        // server-side tcpdump shows nothing, and the iOS log claims success.
+        // That was the TestFlight build 1457 ghost-Stealth bug.
+
+        // 1a. Snapshot the underlying physical WAN interface type.
+        let wanIface = await snapshotWANInterfaceType()
+        TunnelLog.stealth(.info, "Pre-flight: physical WAN interface = \(ShadowsocksTransport.ifaceName(wanIface))")
+
+        // 1b. Resolve SS server hostname to an IP literal while DNS still
+        // routes through the live tunnel (or the system DNS, depending on
+        // current state). On failure we abort with a specific error rather
+        // than silently letting the in-extension resolver fail later.
+        let resolvedSSIP: String
+        do {
+            resolvedSSIP = try resolveHostnameSync(ssConfig.server)
+            TunnelLog.stealth(.info, "Pre-flight: resolved SS server \(Redact.ends(ssConfig.server)) → \(Redact.ends(resolvedSSIP))")
+        } catch {
+            TunnelLog.stealth(.error, "Pre-flight: DNS resolution FAILED for \(Redact.ends(ssConfig.server)) — \(error.localizedDescription). Stealth: hostname unresolvable.")
+            return false
+        }
+
         let tunnelConfig = SSTunnelConfig(
             server: ssConfig.server,
+            serverResolvedIP: resolvedSSIP,
             port: UInt16(clamping: ssConfig.port),
             password: ssConfig.password,
-            serverNodeIP: serverNodeIP
+            serverNodeIP: serverNodeIP,
+            wanInterfaceType: wanIface
         )
-        TunnelLog.stealth(.info, "Config: server=\(Redact.ends(ssConfig.server)) port=\(ssConfig.port) targetWG=\(Redact.ends(serverNodeIP))")
+        TunnelLog.stealth(.info, "Config: server=\(Redact.ends(ssConfig.server)) port=\(ssConfig.port) targetWG=\(Redact.ends(serverNodeIP)) iface=\(ShadowsocksTransport.ifaceName(wanIface))")
 
         // 1. Await WG adapter stop to completion before opening new sockets.
         TunnelLog.stealth(.info, "Stopping WireGuard adapter (awaiting completion)…")
@@ -285,6 +330,112 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
                 continuation.resume()
             }
         }
+    }
+
+    // MARK: - Pre-flight helpers (Bug 1 + Bug 2 fix, 2026-04-28)
+
+    /// Snapshot the underlying physical WAN interface BEFORE WG teardown.
+    ///
+    /// Inside an NEPacketTunnelProvider, NWPathMonitor sees both the
+    /// physical interface (en0/pdp_ip0) AND any active utun. Once we tear
+    /// down WG and call setTunnelNetworkSettings(nil), the path summary
+    /// degenerates to `.other` and there's no way to recover the physical
+    /// type — meaning we can't pin a fresh NWConnection to .wifi vs .cellular.
+    ///
+    /// Calling this BEFORE adapter.stop() captures the right value while
+    /// both interfaces are visible. If neither wifi nor cellular is
+    /// detectable (rare — wired iPad on USB-C ethernet, etc.), we return
+    /// `.wifi` as the safest default since iOS's "main interface" is
+    /// almost always wifi.
+    private func snapshotWANInterfaceType() async -> NWInterface.InterfaceType {
+        await withCheckedContinuation { (cont: CheckedContinuation<NWInterface.InterfaceType, Never>) in
+            let monitor = NWPathMonitor()
+            let lock = NSLock()
+            nonisolated(unsafe) var resumed = false
+
+            func finish(_ t: NWInterface.InterfaceType) {
+                lock.lock(); defer { lock.unlock() }
+                guard !resumed else { return }
+                resumed = true
+                monitor.cancel()
+                cont.resume(returning: t)
+            }
+
+            monitor.pathUpdateHandler = { path in
+                // Prefer the type of the first available physical interface.
+                // Skip .other (utun) and .loopback. Order: wifi, cellular, wired.
+                if path.usesInterfaceType(.wifi) { finish(.wifi); return }
+                if path.usesInterfaceType(.cellular) { finish(.cellular); return }
+                if path.usesInterfaceType(.wiredEthernet) { finish(.wiredEthernet); return }
+                // Fall back: scan availableInterfaces explicitly.
+                for iface in path.availableInterfaces {
+                    if iface.type == .wifi { finish(.wifi); return }
+                    if iface.type == .cellular { finish(.cellular); return }
+                    if iface.type == .wiredEthernet { finish(.wiredEthernet); return }
+                }
+                // No physical iface visible (very rare). Default to wifi.
+                finish(.wifi)
+            }
+            monitor.start(queue: .global(qos: .userInitiated))
+
+            // Hard 1.5s deadline — pathUpdateHandler usually fires within ~50ms.
+            DispatchQueue.global().asyncAfter(deadline: .now() + 1.5) {
+                finish(.wifi)  // safe default
+            }
+        }
+    }
+
+    /// Synchronous getaddrinfo wrapper — mirrors WireGuardKit's DNSResolver
+    /// pattern. Run BEFORE setTunnelNetworkSettings(nil). Prefers IPv4 over
+    /// IPv6 because v2ray-plugin server LE certs are CN=hostname for the
+    /// IPv4 record (and most Vultr/Hetzner nodes are dual-stack with the
+    /// IPv4 in DNS as the canonical record).
+    ///
+    /// Throws `ShadowsocksError.dnsResolutionFailed` on failure.
+    private func resolveHostnameSync(_ hostname: String) throws -> String {
+        var hints = addrinfo()
+        hints.ai_flags = AI_ALL
+        hints.ai_family = AF_UNSPEC
+        hints.ai_socktype = SOCK_STREAM
+        hints.ai_protocol = IPPROTO_TCP
+
+        var resultPointer: UnsafeMutablePointer<addrinfo>?
+        defer { resultPointer.flatMap { freeaddrinfo($0) } }
+
+        let errCode = getaddrinfo(hostname, nil, &hints, &resultPointer)
+        guard errCode == 0 else {
+            let msg = String(cString: gai_strerror(errCode))
+            throw ShadowsocksError.dnsResolutionFailed("getaddrinfo \(hostname): \(msg) (errno=\(errCode))")
+        }
+
+        var ipv4: String?
+        var ipv6: String?
+
+        var next: UnsafeMutablePointer<addrinfo>? = resultPointer
+        while let cur = next?.pointee {
+            if cur.ai_family == AF_INET {
+                cur.ai_addr.withMemoryRebound(to: sockaddr_in.self, capacity: 1) { sin in
+                    var addr = sin.pointee.sin_addr
+                    var buf = [CChar](repeating: 0, count: Int(INET_ADDRSTRLEN))
+                    if inet_ntop(AF_INET, &addr, &buf, socklen_t(INET_ADDRSTRLEN)) != nil {
+                        if ipv4 == nil { ipv4 = String(cString: buf) }
+                    }
+                }
+            } else if cur.ai_family == AF_INET6 {
+                cur.ai_addr.withMemoryRebound(to: sockaddr_in6.self, capacity: 1) { sin6 in
+                    var addr = sin6.pointee.sin6_addr
+                    var buf = [CChar](repeating: 0, count: Int(INET6_ADDRSTRLEN))
+                    if inet_ntop(AF_INET6, &addr, &buf, socklen_t(INET6_ADDRSTRLEN)) != nil {
+                        if ipv6 == nil { ipv6 = String(cString: buf) }
+                    }
+                }
+            }
+            next = cur.ai_next
+        }
+
+        if let v4 = ipv4 { return v4 }
+        if let v6 = ipv6 { return v6 }
+        throw ShadowsocksError.dnsResolutionFailed("getaddrinfo \(hostname) returned no A/AAAA")
     }
 
     /// Restarts the WireGuard adapter after a failed Shadowsocks fallback attempt.
